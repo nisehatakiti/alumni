@@ -165,6 +165,17 @@
 	font-size: 0.85em;
 }
 
+/* The date shown ahead of the title for events — a stronger treatment
+   than the trailing date shown for news, since it's the primary
+   information for an event card/detail page. */
+.alumni-news-event-card-date-event,
+.alumni-news-event-date-event {
+	color: #2c5aa0;
+	font-weight: 600;
+	font-size: 0.95em;
+	margin-bottom: 0.3em;
+}
+
 .news-event-single .alumni-news-event-type {
 	margin-bottom: 0.5em;
 }

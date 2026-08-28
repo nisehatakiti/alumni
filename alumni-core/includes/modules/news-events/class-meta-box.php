@@ -12,8 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Renders and saves the ニュース／イベント post type's two custom fields:
- * コンテンツ種別 (news/event) and イベント開催日 (event only).
+ * Renders and saves the ニュース／イベント post type's fixed input form:
+ * 内容 (plain textarea, saved to post_content), コンテンツ種別 (news/event,
+ * saved to postmeta), and イベント開催日 (event only, saved to postmeta).
+ *
+ * This CPT has no 'editor' support (see Post_Type::register()), so the
+ * block/classic content editor never renders — this meta box, placed in
+ * the 'normal'/'high' position, takes its place in the main column
+ * instead, keeping the whole edit screen to a fixed, predictable set of
+ * fields rather than free-form WordPress page building.
  */
 class Meta_Box {
 
@@ -29,11 +36,11 @@ class Meta_Box {
 	public function register() {
 		add_meta_box(
 			'alumni-news-event-details',
-			__( 'ニュース／イベント詳細', 'alumni-core' ),
+			__( 'ニュース／イベント内容', 'alumni-core' ),
 			array( $this, 'render' ),
 			Post_Type::SLUG,
-			'side',
-			'default'
+			'normal',
+			'high'
 		);
 	}
 
@@ -68,23 +75,31 @@ class Meta_Box {
 		$content_type = Post_Type::get_content_type( $post );
 		$event_date   = get_post_meta( $post->ID, Post_Type::META_EVENT_DATE, true );
 		?>
-		<p>
-			<label>
-				<input type="radio" name="alumni_content_type" value="<?php echo esc_attr( Post_Type::TYPE_NEWS ); ?>"
-					<?php checked( Post_Type::TYPE_NEWS, $content_type ); ?> />
-				<?php esc_html_e( 'ニュース', 'alumni-core' ); ?>
-			</label>
-			<br />
-			<label>
-				<input type="radio" name="alumni_content_type" value="<?php echo esc_attr( Post_Type::TYPE_EVENT ); ?>"
-					<?php checked( Post_Type::TYPE_EVENT, $content_type ); ?> />
-				<?php esc_html_e( 'イベント', 'alumni-core' ); ?>
-			</label>
-		</p>
-		<p id="alumni-event-date-field" class="alumni-event-date-field">
-			<label for="alumni_event_date"><?php esc_html_e( 'イベント開催日', 'alumni-core' ); ?></label><br />
-			<input type="date" id="alumni_event_date" name="alumni_event_date" value="<?php echo esc_attr( $event_date ); ?>" />
-		</p>
+		<div class="alumni-news-event-fields">
+			<p>
+				<label for="alumni_content"><strong><?php esc_html_e( '内容', 'alumni-core' ); ?></strong></label><br />
+				<textarea id="alumni_content" name="alumni_content" rows="12" class="large-text"><?php echo esc_textarea( $post->post_content ); ?></textarea>
+			</p>
+
+			<p>
+				<strong><?php esc_html_e( '種別', 'alumni-core' ); ?></strong><br />
+				<label class="alumni-content-type-option">
+					<input type="radio" name="alumni_content_type" value="<?php echo esc_attr( Post_Type::TYPE_NEWS ); ?>"
+						<?php checked( Post_Type::TYPE_NEWS, $content_type ); ?> />
+					<?php esc_html_e( 'ニュース', 'alumni-core' ); ?>
+				</label>
+				<label class="alumni-content-type-option">
+					<input type="radio" name="alumni_content_type" value="<?php echo esc_attr( Post_Type::TYPE_EVENT ); ?>"
+						<?php checked( Post_Type::TYPE_EVENT, $content_type ); ?> />
+					<?php esc_html_e( 'イベント', 'alumni-core' ); ?>
+				</label>
+			</p>
+
+			<p id="alumni-event-date-field" class="alumni-event-date-field">
+				<label for="alumni_event_date"><strong><?php esc_html_e( '開催日', 'alumni-core' ); ?></strong></label><br />
+				<input type="date" id="alumni_event_date" name="alumni_event_date" value="<?php echo esc_attr( $event_date ); ?>" />
+			</p>
+		</div>
 		<?php
 	}
 
@@ -129,6 +144,43 @@ class Meta_Box {
 		} else {
 			delete_post_meta( $post_id, Post_Type::META_EVENT_DATE );
 		}
+	}
+
+	/**
+	 * Writes the 内容 textarea into post_content. Hooked to
+	 * wp_insert_post_data (not save_post_{type}) at a lower priority
+	 * number than Required_Fields::enforce(), so that filter's required-
+	 * content check sees the real submitted value.
+	 *
+	 * wp_insert_post_data fires from inside wp_insert_post() itself, so
+	 * setting post_content here — rather than calling wp_update_post()
+	 * from save_post_{type} — avoids triggering a second, recursive save.
+	 *
+	 * Unlike save() above, this only checks the nonce, not
+	 * current_user_can(): the admin post-save flow already enforces
+	 * capability before wp_insert_post() is ever called, and for a
+	 * brand-new post the final post ID isn't reliably available yet at
+	 * this point in the lifecycle (save_post_{type} fires later, once it
+	 * is).
+	 *
+	 * @param array $data    Slashed post data about to be saved.
+	 * @param array $postarr Raw $_POST-derived data.
+	 * @return array
+	 */
+	public function inject_content( $data, $postarr ) {
+		if ( Post_Type::SLUG !== $data['post_type'] ) {
+			return $data;
+		}
+
+		if ( ! isset( $_POST[ self::NONCE_NAME ] ) || ! wp_verify_nonce( wp_unslash( $_POST[ self::NONCE_NAME ] ), self::NONCE_ACTION ) ) {
+			return $data;
+		}
+
+		$content = isset( $_POST['alumni_content'] ) ? sanitize_textarea_field( wp_unslash( $_POST['alumni_content'] ) ) : '';
+
+		$data['post_content'] = wp_slash( $content );
+
+		return $data;
 	}
 
 	/**

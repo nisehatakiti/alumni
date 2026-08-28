@@ -71,7 +71,14 @@ class Post_Type {
 				// 同窓会 top-level menu instead of creating a new one.
 				'show_in_menu' => \AlumniCore\Admin\Admin::MENU_SLUG,
 				'show_in_rest' => true,
-				'supports'     => array( 'title', 'editor', 'thumbnail' ),
+				// No 'editor' support: this omits the native content editor
+				// box entirely, which also makes use_block_editor_for_post_type()
+				// return false for this CPT (it checks post type support for
+				// 'editor' before ever loading the block editor) — so both the
+				// classic and block editors are disabled without any extra
+				// filter. Meta_Box renders a plain textarea for 内容 in their
+				// place; see Meta_Box::render()/inject_content().
+				'supports'     => array( 'title', 'thumbnail' ),
 				'has_archive'  => 'news-events',
 				'rewrite'      => array(
 					'slug'       => 'news-events',

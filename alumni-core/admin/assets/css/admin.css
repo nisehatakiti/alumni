@@ -27,3 +27,16 @@
 	border: 1px solid #8c8f94;
 	cursor: pointer;
 }
+
+.alumni-news-event-fields textarea#alumni_content {
+	width: 100%;
+	max-width: 100%;
+}
+
+.alumni-news-event-fields .alumni-content-type-option {
+	margin-right: 1.5em;
+}
+
+.alumni-news-event-fields .alumni-event-date-field input[type="date"] {
+	min-width: 10em;
+}

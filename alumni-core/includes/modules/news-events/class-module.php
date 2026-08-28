@@ -47,6 +47,9 @@ class Module {
 		add_action( 'add_meta_boxes', array( $meta_box, 'register' ) );
 		add_action( 'admin_enqueue_scripts', array( $meta_box, 'enqueue_assets' ) );
 		add_action( 'save_post_' . Post_Type::SLUG, array( $meta_box, 'save' ), 10, 2 );
+		// Priority 5: must run before Required_Fields::enforce() (priority
+		// 10) so the required-content check sees the real submitted value.
+		add_filter( 'wp_insert_post_data', array( $meta_box, 'inject_content' ), 5, 2 );
 
 		$columns = new Admin_Columns();
 		add_filter( 'manage_' . Post_Type::SLUG . '_posts_columns', array( $columns, 'add_columns' ) );

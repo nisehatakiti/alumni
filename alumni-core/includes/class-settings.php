@@ -85,7 +85,11 @@ class Settings {
 		return array(
 			'association_name'      => '',
 			'school_name'            => '',
-			'school_founded_year'    => '',
+			// Only used as a fallback when the setting has never been saved
+			// at all (see get_all()/set_defaults()); an existing site's
+			// saved value — even an explicitly empty one — is never
+			// overwritten by this default.
+			'school_founded_year'    => 1950,
 			'first_graduation_year'  => '',
 			'color_feature_enabled'  => false,
 			'color_cycle'            => 1,
