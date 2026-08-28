@@ -64,6 +64,7 @@ final class Plugin {
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		if ( is_admin() ) {
+			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
 			( new \AlumniCore\Admin\Admin() )->run();
 		}
 	}

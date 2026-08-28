@@ -86,12 +86,20 @@ class Term_Calculator {
 	 * Resolves a graduation term straight to a color value, given the
 	 * colors array saved in 同窓会設定 (keyed 1..cycle).
 	 *
+	 * $colors is intentionally untyped (not `array $colors`): a corrupted
+	 * or unexpected option value must fail safe with null, never a fatal
+	 * TypeError, since this is called from public-facing theme code.
+	 *
 	 * @param int   $term   Graduation term (1-based).
 	 * @param int   $cycle  Number of colors in the cycle.
-	 * @param array $colors Colors keyed by 1-based position in the cycle.
+	 * @param mixed $colors Expected: colors keyed by 1-based cycle position.
 	 * @return string|null
 	 */
-	public static function term_to_color( $term, $cycle, array $colors ) {
+	public static function term_to_color( $term, $cycle, $colors ) {
+		if ( ! is_array( $colors ) ) {
+			return null;
+		}
+
 		$index = self::term_to_color_index( $term, $cycle );
 
 		if ( null === $index || ! isset( $colors[ $index ] ) ) {

@@ -7,6 +7,7 @@
 
 namespace AlumniCore\Admin\Pages;
 
+use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -33,7 +34,7 @@ class Settings_Page {
 	 * Renders the screen.
 	 */
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
 			return;
 		}
 
@@ -78,6 +79,7 @@ class Settings_Page {
 						</th>
 						<td>
 							<input type="number" inputmode="numeric" id="alumni_core_school_founded_year" name="school_founded_year" class="small-text"
+								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
 								value="<?php echo esc_attr( $settings['school_founded_year'] ); ?>" />
 						</td>
 					</tr>
@@ -87,6 +89,7 @@ class Settings_Page {
 						</th>
 						<td>
 							<input type="number" inputmode="numeric" id="alumni_core_first_graduation_year" name="first_graduation_year" class="small-text"
+								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
 								value="<?php echo esc_attr( $settings['first_graduation_year'] ); ?>" />
 							<p class="description"><?php esc_html_e( '例：1950 と設定すると、1950年卒業が第1期になります。', 'alumni-core' ); ?></p>
 						</td>
@@ -161,7 +164,7 @@ class Settings_Page {
 	 * Handles the settings form submission (admin_post_alumni_core_save_settings).
 	 */
 	public function handle_save() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
 			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
 		}
 

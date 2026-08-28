@@ -30,6 +30,21 @@ class Settings {
 	const MAX_COLOR_CYCLE = 100;
 
 	/**
+	 * Sanity floor for 学校創立年 / 第1期卒業年. Not a real historical
+	 * constraint, just low enough to reject obvious garbage (negative
+	 * numbers, single/double-digit values) without ever rejecting a real
+	 * school's founding year.
+	 */
+	const MIN_YEAR = 1000;
+
+	/**
+	 * How many years past the current year 学校創立年 / 第1期卒業年 may be
+	 * set to. Kept as an offset from "now" (not a fixed year) so the
+	 * allowed range doesn't need updating as time passes.
+	 */
+	const YEAR_FUTURE_BUFFER = 10;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Settings|null
@@ -98,12 +113,32 @@ class Settings {
 	 */
 	public function get_all() {
 		if ( null === $this->settings ) {
-			$saved          = get_option( self::OPTION_NAME, array() );
-			$saved          = is_array( $saved ) ? $saved : array();
-			$this->settings = wp_parse_args( $saved, $this->defaults() );
+			$saved    = get_option( self::OPTION_NAME, array() );
+			$saved    = is_array( $saved ) ? $saved : array();
+			$settings = wp_parse_args( $saved, $this->defaults() );
+
+			// wp_parse_args() only fills in missing keys; a 'colors' key
+			// that exists but is corrupted (not an array) must still be
+			// repaired here so every caller can trust get( 'colors' ) is
+			// always an array.
+			if ( ! is_array( $settings['colors'] ) ) {
+				$settings['colors'] = $this->defaults()['colors'];
+			}
+
+			$this->settings = $settings;
 		}
 
 		return $this->settings;
+	}
+
+	/**
+	 * The latest year 学校創立年 / 第1期卒業年 may be set to, recomputed
+	 * from the current date on every call rather than hardcoded.
+	 *
+	 * @return int
+	 */
+	public static function max_year() {
+		return (int) gmdate( 'Y' ) + self::YEAR_FUTURE_BUFFER;
 	}
 
 	/**
@@ -148,8 +183,8 @@ class Settings {
 		$sanitized = array(
 			'association_name'     => isset( $raw['association_name'] ) ? sanitize_text_field( wp_unslash( $raw['association_name'] ) ) : $defaults['association_name'],
 			'school_name'           => isset( $raw['school_name'] ) ? sanitize_text_field( wp_unslash( $raw['school_name'] ) ) : $defaults['school_name'],
-			'school_founded_year'   => isset( $raw['school_founded_year'] ) && '' !== $raw['school_founded_year'] ? absint( $raw['school_founded_year'] ) : '',
-			'first_graduation_year' => isset( $raw['first_graduation_year'] ) && '' !== $raw['first_graduation_year'] ? absint( $raw['first_graduation_year'] ) : '',
+			'school_founded_year'   => $this->sanitize_year( isset( $raw['school_founded_year'] ) ? $raw['school_founded_year'] : '' ),
+			'first_graduation_year' => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
 			'color_feature_enabled' => ! empty( $raw['color_feature_enabled'] ),
 			'color_cycle'           => isset( $raw['color_cycle'] ) ? min( self::MAX_COLOR_CYCLE, max( 1, absint( $raw['color_cycle'] ) ) ) : $defaults['color_cycle'],
 		);
@@ -166,5 +201,35 @@ class Settings {
 		$sanitized['colors'] = $colors;
 
 		return $sanitized;
+	}
+
+	/**
+	 * Validates a raw 学校創立年 / 第1期卒業年 submission as a plausible
+	 * calendar year, rather than relying on absint() (which silently
+	 * turns a negative input like "-1950" into a different, valid-looking
+	 * year, 1950, instead of rejecting it).
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return int|string A validated year, or '' when empty/invalid
+	 *                     (treated as "未設定" throughout the plugin).
+	 */
+	private function sanitize_year( $raw ) {
+		if ( '' === $raw || null === $raw || ! is_numeric( $raw ) ) {
+			return '';
+		}
+
+		// Reject non-integer numeric strings (e.g. "1950.5") up front;
+		// (int) casting them below would silently truncate instead.
+		if ( (string) (int) $raw !== (string) ( $raw + 0 ) ) {
+			return '';
+		}
+
+		$year = (int) $raw;
+
+		if ( $year < self::MIN_YEAR || $year > self::max_year() ) {
+			return '';
+		}
+
+		return $year;
 	}
 }

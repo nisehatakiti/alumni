@@ -7,6 +7,7 @@
 
 namespace AlumniCore\Admin\Pages;
 
+use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,7 +25,7 @@ class Dashboard_Page {
 	 * Renders the screen.
 	 */
 	public function render() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
 			return;
 		}
 
@@ -49,7 +50,13 @@ class Dashboard_Page {
 					</tr>
 					<tr>
 						<th scope="row"><?php esc_html_e( '第1期卒業年', 'alumni-core' ); ?></th>
-						<td><?php echo esc_html( $settings['first_graduation_year'] ? $settings['first_graduation_year'] : __( '未設定', 'alumni-core' ) ); ?></td>
+						<td>
+							<?php
+							// Explicit '' check, not a truthy check: a saved value of 0 must
+							// still display as 0, not be mistaken for "未設定" (unset).
+							echo esc_html( '' !== $settings['first_graduation_year'] ? $settings['first_graduation_year'] : __( '未設定', 'alumni-core' ) );
+							?>
+						</td>
 					</tr>
 					<tr>
 						<th scope="row"><?php esc_html_e( '卒業期カラー機能', 'alumni-core' ); ?></th>
