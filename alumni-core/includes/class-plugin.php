@@ -84,6 +84,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-settings-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-school-photos-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-meta-box.php';

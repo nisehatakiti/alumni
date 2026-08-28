@@ -9,6 +9,7 @@ namespace AlumniCore\Admin;
 
 use AlumniCore\Admin\Pages\Dashboard_Page;
 use AlumniCore\Admin\Pages\Settings_Page;
+use AlumniCore\Admin\Pages\School_Photos_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -48,15 +49,40 @@ class Admin {
 	private $settings_page;
 
 	/**
+	 * 学校写真 screen handler.
+	 *
+	 * @var School_Photos_Page
+	 */
+	private $school_photos_page;
+
+	/**
+	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
+	 * scope the media-library assets to just this screen.
+	 *
+	 * @var string
+	 */
+	private $settings_hook = '';
+
+	/**
+	 * Hook suffix for 学校写真, as returned by add_submenu_page(). Used to
+	 * scope the media-library assets to just this screen.
+	 *
+	 * @var string
+	 */
+	private $school_photos_hook = '';
+
+	/**
 	 * Registers WordPress hooks.
 	 */
 	public function run() {
-		$this->dashboard_page = new Dashboard_Page();
-		$this->settings_page  = new Settings_Page();
+		$this->dashboard_page     = new Dashboard_Page();
+		$this->settings_page      = new Settings_Page();
+		$this->school_photos_page = new School_Photos_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
 	}
 
 	/**
@@ -82,13 +108,22 @@ class Admin {
 			array( $this->dashboard_page, 'render' )
 		);
 
-		add_submenu_page(
+		$this->settings_hook = add_submenu_page(
 			self::MENU_SLUG,
 			__( '基本設定', 'alumni-core' ),
 			__( '基本設定', 'alumni-core' ),
 			self::CAPABILITY,
 			Settings_Page::SLUG,
 			array( $this->settings_page, 'render' )
+		);
+
+		$this->school_photos_hook = add_submenu_page(
+			self::MENU_SLUG,
+			__( '学校写真', 'alumni-core' ),
+			__( '学校写真', 'alumni-core' ),
+			self::CAPABILITY,
+			School_Photos_Page::SLUG,
+			array( $this->school_photos_page, 'render' )
 		);
 
 		/**
@@ -103,7 +138,9 @@ class Admin {
 	}
 
 	/**
-	 * Loads admin CSS/JS only on Alumni Core's own screens.
+	 * Loads admin CSS/JS only on Alumni Core's own screens, and the
+	 * heavier media-library assets only on the specific screens that
+	 * actually use them (not, e.g., the plain ダッシュボード).
 	 *
 	 * @param string $hook_suffix Current admin page hook suffix.
 	 */
@@ -126,5 +163,36 @@ class Admin {
 			ALUMNI_CORE_VERSION,
 			true
 		);
+
+		$is_settings_page      = $this->settings_hook === $hook_suffix;
+		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
+
+		if ( ! $is_settings_page && ! $is_school_photos_page ) {
+			return;
+		}
+
+		// wp.media() (校章／同窓会ロゴ／学校写真の各ピッカーが利用) is only
+		// registered when this is explicitly enqueued.
+		wp_enqueue_media();
+
+		if ( $is_settings_page ) {
+			wp_enqueue_script(
+				'alumni-core-media-picker',
+				ALUMNI_CORE_URL . 'admin/assets/js/media-picker.js',
+				array(),
+				ALUMNI_CORE_VERSION,
+				true
+			);
+		}
+
+		if ( $is_school_photos_page ) {
+			wp_enqueue_script(
+				'alumni-core-school-photos-admin',
+				ALUMNI_CORE_URL . 'admin/assets/js/school-photos-admin.js',
+				array(),
+				ALUMNI_CORE_VERSION,
+				true
+			);
+		}
 	}
 }
