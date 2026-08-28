@@ -9,6 +9,7 @@ namespace AlumniCore\Admin;
 
 use AlumniCore\Admin\Pages\Dashboard_Page;
 use AlumniCore\Admin\Pages\Settings_Page;
+use AlumniCore\Admin\Pages\School_Photos_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -48,15 +49,24 @@ class Admin {
 	private $settings_page;
 
 	/**
+	 * 学校写真 screen handler.
+	 *
+	 * @var School_Photos_Page
+	 */
+	private $school_photos_page;
+
+	/**
 	 * Registers WordPress hooks.
 	 */
 	public function run() {
-		$this->dashboard_page = new Dashboard_Page();
-		$this->settings_page  = new Settings_Page();
+		$this->dashboard_page     = new Dashboard_Page();
+		$this->settings_page      = new Settings_Page();
+		$this->school_photos_page = new School_Photos_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
 	}
 
 	/**
@@ -91,6 +101,15 @@ class Admin {
 			array( $this->settings_page, 'render' )
 		);
 
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '学校写真', 'alumni-core' ),
+			__( '学校写真', 'alumni-core' ),
+			self::CAPABILITY,
+			School_Photos_Page::SLUG,
+			array( $this->school_photos_page, 'render' )
+		);
+
 		/**
 		 * Fires after Alumni Core's own submenus are registered, so future
 		 * modules (名簿, メールマガジン, Voices, その他管理) can add their
@@ -122,6 +141,26 @@ class Admin {
 		wp_enqueue_script(
 			'alumni-core-admin',
 			ALUMNI_CORE_URL . 'admin/assets/js/admin.js',
+			array(),
+			ALUMNI_CORE_VERSION,
+			true
+		);
+
+		// wp.media() (校章／同窓会ロゴ／学校写真の各ピッカーが利用) is only
+		// registered when this is explicitly enqueued.
+		wp_enqueue_media();
+
+		wp_enqueue_script(
+			'alumni-core-media-picker',
+			ALUMNI_CORE_URL . 'admin/assets/js/media-picker.js',
+			array(),
+			ALUMNI_CORE_VERSION,
+			true
+		);
+
+		wp_enqueue_script(
+			'alumni-core-school-photos-admin',
+			ALUMNI_CORE_URL . 'admin/assets/js/school-photos-admin.js',
 			array(),
 			ALUMNI_CORE_VERSION,
 			true

@@ -96,6 +96,37 @@ class Settings_Page {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( '学校ブランディング', 'alumni-core' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( '学校の校章', 'alumni-core' ); ?></th>
+						<td>
+							<?php
+							$this->render_media_picker(
+								'school_emblem_id',
+								$settings['school_emblem_id'],
+								__( '校章を選択', 'alumni-core' ),
+								__( '校章を選択', 'alumni-core' )
+							);
+							?>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( '同窓会独自ロゴ', 'alumni-core' ); ?></th>
+						<td>
+							<?php
+							$this->render_media_picker(
+								'alumni_logo_id',
+								$settings['alumni_logo_id'],
+								__( '同窓会ロゴを選択', 'alumni-core' ),
+								__( 'ロゴを選択', 'alumni-core' )
+							);
+							?>
+							<p class="description"><?php esc_html_e( '学校の校章とは別に、同窓会独自のロゴを設定できます。どちらも任意です。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
 				<h2><?php esc_html_e( '卒業期カラー', 'alumni-core' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
@@ -156,6 +187,38 @@ class Settings_Page {
 				?>
 				<input type="color" name="colors[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $color ); ?>" />
 			</label>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Renders a single-image WordPress media library picker (used for
+	 * 校章 and 同窓会ロゴ): a preview, a hidden field holding the
+	 * attachment ID, and 選択/削除 buttons. The actual picker UI is wired
+	 * up by admin/assets/js/media-picker.js against the
+	 * .alumni-media-picker markup below.
+	 *
+	 * @param string $field_name    Form field name, also the Settings key.
+	 * @param int    $attachment_id Currently saved attachment ID, or 0.
+	 * @param string $dialog_title  Title shown in the media library modal.
+	 * @param string $button_text   Label for the 選択 button.
+	 */
+	private function render_media_picker( $field_name, $attachment_id, $dialog_title, $button_text ) {
+		$attachment_id = (int) $attachment_id;
+		?>
+		<div class="alumni-media-picker" data-title="<?php echo esc_attr( $dialog_title ); ?>" data-button-text="<?php echo esc_attr( $button_text ); ?>">
+			<div class="alumni-media-preview">
+				<?php if ( $attachment_id ) : ?>
+					<?php echo wp_get_attachment_image( $attachment_id, 'thumbnail' ); ?>
+				<?php endif; ?>
+			</div>
+			<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" class="alumni-media-picker-input" value="<?php echo esc_attr( $attachment_id ); ?>" />
+			<p>
+				<button type="button" class="button alumni-media-picker-select"><?php echo esc_html( $button_text ); ?></button>
+				<button type="button" class="button alumni-media-picker-clear"<?php echo $attachment_id ? '' : ' style="display:none;"'; ?>>
+					<?php esc_html_e( '削除', 'alumni-core' ); ?>
+				</button>
+			</p>
 		</div>
 		<?php
 	}

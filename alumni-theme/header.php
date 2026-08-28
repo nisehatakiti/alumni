@@ -27,16 +27,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php the_custom_logo(); ?>
 			<?php endif; ?>
 
-			<p class="site-title">
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home">
-					<?php echo esc_html( alumni_theme_get_association_name() ); ?>
-				</a>
-			</p>
+			<div class="alumni-brand-row">
+				<?php $alumni_theme_emblem_html = alumni_theme_get_school_emblem_html(); ?>
+				<?php if ( $alumni_theme_emblem_html ) : ?>
+					<span class="alumni-brand-emblem">
+						<?php echo $alumni_theme_emblem_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already-safe HTML from wp_get_attachment_image(). ?>
+					</span>
+				<?php endif; ?>
 
-			<?php $alumni_theme_school_name = alumni_theme_get_school_name(); ?>
-			<?php if ( $alumni_theme_school_name ) : ?>
-				<p class="site-description"><?php echo esc_html( $alumni_theme_school_name ); ?></p>
-			<?php endif; ?>
+				<div class="alumni-brand-text">
+					<p class="site-title">
+						<a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home">
+							<?php echo esc_html( alumni_theme_get_association_name() ); ?>
+						</a>
+					</p>
+
+					<?php $alumni_theme_school_name = alumni_theme_get_school_name(); ?>
+					<?php if ( $alumni_theme_school_name ) : ?>
+						<p class="site-description"><?php echo esc_html( $alumni_theme_school_name ); ?></p>
+					<?php endif; ?>
+				</div>
+
+				<?php $alumni_theme_logo_html = alumni_theme_get_alumni_logo_html(); ?>
+				<?php if ( $alumni_theme_logo_html ) : ?>
+					<span class="alumni-brand-logo">
+						<?php echo $alumni_theme_logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already-safe HTML from wp_get_attachment_image(). ?>
+					</span>
+				<?php endif; ?>
+			</div>
 		</div>
 
 		<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e( 'メインナビゲーション', 'alumni-theme' ); ?>">

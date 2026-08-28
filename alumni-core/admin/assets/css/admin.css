@@ -40,3 +40,62 @@
 .alumni-news-event-fields .alumni-event-date-field input[type="date"] {
 	min-width: 10em;
 }
+
+/* 校章／同窓会ロゴ の単一画像ピッカー */
+.alumni-media-preview {
+	margin-bottom: 0.5em;
+}
+
+.alumni-media-preview img {
+	display: block;
+	max-width: 150px;
+	max-height: 150px;
+	height: auto;
+	border: 1px solid #dcdcde;
+	padding: 4px;
+	background: #fff;
+}
+
+/* 学校写真 ギャラリー */
+.alumni-photo-gallery-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
+	margin: 1em 0;
+	padding: 0;
+	list-style: none;
+}
+
+.alumni-photo-gallery-item {
+	width: 160px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 0.5em;
+	background: #fff;
+	text-align: center;
+}
+
+.alumni-photo-gallery-thumb {
+	display: block;
+	width: 100%;
+	height: 100px;
+	margin-bottom: 0.5em;
+	background: #f0f0f1;
+	overflow: hidden;
+}
+
+.alumni-photo-gallery-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.alumni-photo-gallery-item .button {
+	margin: 0.15em;
+	padding: 0 0.5em;
+}
+
+.alumni-photo-mode-option {
+	margin-right: 1.5em;
+}

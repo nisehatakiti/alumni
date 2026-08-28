@@ -60,6 +60,14 @@ function alumni_theme_enqueue_assets() {
 		ALUMNI_THEME_VERSION,
 		true
 	);
+
+	wp_enqueue_script(
+		'alumni-theme-school-photos',
+		ALUMNI_THEME_URI . '/assets/js/school-photos.js',
+		array(),
+		ALUMNI_THEME_VERSION,
+		true
+	);
 }
 add_action( 'wp_enqueue_scripts', 'alumni_theme_enqueue_assets' );
 
@@ -107,6 +115,58 @@ function alumni_theme_get_school_name() {
 }
 
 /**
+ * Rendered `<img>` HTML for the 校章 (school emblem), or '' when Core is
+ * inactive or none is set — callers should simply omit the wrapper
+ * element entirely in that case, not leave an empty box.
+ *
+ * @return string Safe HTML from wp_get_attachment_image(), or ''.
+ */
+function alumni_theme_get_school_emblem_html() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	$id = alumni_core_get_school_emblem_id();
+
+	if ( ! $id ) {
+		return '';
+	}
+
+	return (string) wp_get_attachment_image(
+		$id,
+		array( 120, 60 ),
+		false,
+		array( 'class' => 'alumni-school-emblem' )
+	);
+}
+
+/**
+ * Rendered `<img>` HTML for the 同窓会独自ロゴ (alumni association's own
+ * logo, distinct from the school emblem), or '' when Core is inactive or
+ * none is set.
+ *
+ * @return string Safe HTML from wp_get_attachment_image(), or ''.
+ */
+function alumni_theme_get_alumni_logo_html() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	$id = alumni_core_get_alumni_logo_id();
+
+	if ( ! $id ) {
+		return '';
+	}
+
+	return (string) wp_get_attachment_image(
+		$id,
+		array( 120, 60 ),
+		false,
+		array( 'class' => 'alumni-logo' )
+	);
+}
+
+/**
  * Runs a WP_Query for the latest ニュース／イベント, or returns null when
  * Alumni Core isn't available — so templates never have to guard this
  * themselves.
@@ -120,6 +180,49 @@ function alumni_theme_get_news_events( $args = array() ) {
 	}
 
 	return alumni_core_get_news_events_query( $args );
+}
+
+/**
+ * 学校関連写真として登録された添付ファイルIDの一覧（表示順）、または
+ * Core無効時は空配列。
+ *
+ * @return int[]
+ */
+function alumni_theme_get_school_photo_ids() {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_school_photo_ids();
+}
+
+/**
+ * 学校関連写真の表示方式（'fixed' または 'slideshow'）。Core無効時は
+ * 'fixed' を返す（呼び出し側は写真が0件なら結局何も表示しないため、
+ * 実質的に無害なフォールバック）。
+ *
+ * @return string
+ */
+function alumni_theme_get_school_photo_display_mode() {
+	if ( ! alumni_theme_core_active() ) {
+		return 'fixed';
+	}
+
+	return alumni_core_get_school_photo_display_mode();
+}
+
+/**
+ * 固定表示で使う学校写真の添付ファイルID（未選択時のフォールバックを
+ * 含め、判断はCore側が担う）。
+ *
+ * @return int Attachment ID, or 0.
+ */
+function alumni_theme_get_featured_school_photo_id() {
+	if ( ! alumni_theme_core_active() ) {
+		return 0;
+	}
+
+	return alumni_core_get_featured_school_photo_id();
 }
 
 /**
