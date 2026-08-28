@@ -1,0 +1,185 @@
+<?php
+/**
+ * 同窓会 > 基本設定 screen.
+ *
+ * @package AlumniCore
+ */
+
+namespace AlumniCore\Admin\Pages;
+
+use AlumniCore\Includes\Settings;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Renders and saves the association's basic settings, including the
+ * variable-length 卒業期カラー cycle.
+ */
+class Settings_Page {
+
+	/**
+	 * Submenu slug.
+	 */
+	const SLUG = 'alumni-core-settings';
+
+	/**
+	 * Nonce action/name shared by the form and the save handler.
+	 */
+	const NONCE_ACTION = 'alumni_core_save_settings';
+
+	/**
+	 * Renders the screen.
+	 */
+	public function render() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$settings = Settings::instance()->get_all();
+		?>
+		<div class="wrap alumni-core-settings">
+			<h1><?php esc_html_e( '同窓会 基本設定', 'alumni-core' ); ?></h1>
+
+			<?php if ( isset( $_GET['updated'] ) && 'true' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag. ?>
+				<div class="notice notice-success is-dismissible">
+					<p><?php esc_html_e( '設定を保存しました。', 'alumni-core' ); ?></p>
+				</div>
+			<?php endif; ?>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-core-settings-form">
+				<input type="hidden" name="action" value="alumni_core_save_settings" />
+				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
+
+				<h2><?php esc_html_e( '基本情報', 'alumni-core' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_association_name"><?php esc_html_e( '同窓会名称', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="alumni_core_association_name" name="association_name" class="regular-text"
+								value="<?php echo esc_attr( $settings['association_name'] ); ?>" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_school_name"><?php esc_html_e( '学校名称', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="text" id="alumni_core_school_name" name="school_name" class="regular-text"
+								value="<?php echo esc_attr( $settings['school_name'] ); ?>" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_school_founded_year"><?php esc_html_e( '学校創立年（任意）', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" inputmode="numeric" id="alumni_core_school_founded_year" name="school_founded_year" class="small-text"
+								value="<?php echo esc_attr( $settings['school_founded_year'] ); ?>" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_first_graduation_year"><?php esc_html_e( '第1期卒業年', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" inputmode="numeric" id="alumni_core_first_graduation_year" name="first_graduation_year" class="small-text"
+								value="<?php echo esc_attr( $settings['first_graduation_year'] ); ?>" />
+							<p class="description"><?php esc_html_e( '例：1950 と設定すると、1950年卒業が第1期になります。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( '卒業期カラー', 'alumni-core' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( '卒業期カラー機能', 'alumni-core' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" id="alumni_core_color_feature_enabled" name="color_feature_enabled" value="1"
+									<?php checked( $settings['color_feature_enabled'] ); ?> />
+								<?php esc_html_e( 'ON にする', 'alumni-core' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_color_cycle"><?php esc_html_e( 'カラー周期数', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" min="1" max="<?php echo esc_attr( Settings::MAX_COLOR_CYCLE ); ?>" id="alumni_core_color_cycle" name="color_cycle" class="small-text"
+								value="<?php echo esc_attr( $settings['color_cycle'] ); ?>" />
+							<p class="description"><?php esc_html_e( '例：3 に設定すると、カラー1〜3が第1期〜第3期に割り当てられ、第4期は再びカラー1になります。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'カラー', 'alumni-core' ); ?></th>
+						<td>
+							<div id="alumni-core-colors" class="alumni-core-colors">
+								<?php foreach ( $settings['colors'] as $index => $color ) : ?>
+									<?php $this->render_color_row( (int) $index, $color ); ?>
+								<?php endforeach; ?>
+							</div>
+							<template id="alumni-core-color-row-template">
+								<?php $this->render_color_row( '__INDEX__', '#cccccc' ); ?>
+							</template>
+						</td>
+					</tr>
+				</table>
+
+				<?php submit_button( __( '設定を保存', 'alumni-core' ) ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Renders one 「第N期カラー」 field row.
+	 *
+	 * @param int|string $index 1-based cycle position, or the '__INDEX__'
+	 *                           placeholder used by the JS template.
+	 * @param string     $color Hex color value.
+	 */
+	private function render_color_row( $index, $color ) {
+		?>
+		<div class="alumni-core-color-row" data-index="<?php echo esc_attr( $index ); ?>">
+			<label>
+				<?php
+				/* translators: %s: cycle position, e.g. "1" */
+				echo esc_html( sprintf( __( '第%s カラー', 'alumni-core' ), $index ) );
+				?>
+				<input type="color" name="colors[<?php echo esc_attr( $index ); ?>]" value="<?php echo esc_attr( $color ); ?>" />
+			</label>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Handles the settings form submission (admin_post_alumni_core_save_settings).
+	 */
+	public function handle_save() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+
+		check_admin_referer( self::NONCE_ACTION );
+
+		// Nonce-verified above; Settings::save() unslashes each field itself.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		Settings::instance()->save( $_POST );
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => self::SLUG,
+					'updated' => 'true',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+}
