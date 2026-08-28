@@ -64,6 +64,7 @@ final class Plugin {
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
+		\AlumniCore\Includes\Modules\Content\Module::register();
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
@@ -78,6 +79,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-installer.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-settings.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-term-calculator.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-officers.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
 
@@ -85,6 +87,8 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-settings-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-school-photos-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officers-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-graduation-lookup-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-meta-box.php';
@@ -93,6 +97,15 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-module.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/news-events-functions.php';
+
+		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-meta-box.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-admin-columns.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-required-fields.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-module.php';
+
+		require_once ALUMNI_CORE_PATH . 'public/content-functions.php';
+		require_once ALUMNI_CORE_PATH . 'public/officers-functions.php';
 	}
 
 	/**

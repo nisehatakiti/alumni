@@ -10,6 +10,8 @@ namespace AlumniCore\Admin;
 use AlumniCore\Admin\Pages\Dashboard_Page;
 use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
+use AlumniCore\Admin\Pages\Officers_Page;
+use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -56,6 +58,20 @@ class Admin {
 	private $school_photos_page;
 
 	/**
+	 * 役員・理事紹介 screen handler.
+	 *
+	 * @var Officers_Page
+	 */
+	private $officers_page;
+
+	/**
+	 * 卒業期早見表 screen handler.
+	 *
+	 * @var Graduation_Lookup_Page
+	 */
+	private $graduation_lookup_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -72,17 +88,28 @@ class Admin {
 	private $school_photos_hook = '';
 
 	/**
+	 * Hook suffix for 役員・理事紹介, as returned by add_submenu_page().
+	 * Used to scope its admin JS to just this screen.
+	 *
+	 * @var string
+	 */
+	private $officers_hook = '';
+
+	/**
 	 * Registers WordPress hooks.
 	 */
 	public function run() {
-		$this->dashboard_page     = new Dashboard_Page();
-		$this->settings_page      = new Settings_Page();
-		$this->school_photos_page = new School_Photos_Page();
+		$this->dashboard_page         = new Dashboard_Page();
+		$this->settings_page          = new Settings_Page();
+		$this->school_photos_page     = new School_Photos_Page();
+		$this->officers_page          = new Officers_Page();
+		$this->graduation_lookup_page = new Graduation_Lookup_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_officers', array( $this->officers_page, 'handle_save' ) );
 	}
 
 	/**
@@ -126,6 +153,24 @@ class Admin {
 			array( $this->school_photos_page, 'render' )
 		);
 
+		$this->officers_hook = add_submenu_page(
+			self::MENU_SLUG,
+			__( '役員・理事紹介', 'alumni-core' ),
+			__( '役員・理事紹介', 'alumni-core' ),
+			self::CAPABILITY,
+			Officers_Page::SLUG,
+			array( $this->officers_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '卒業期早見表', 'alumni-core' ),
+			__( '卒業期早見表', 'alumni-core' ),
+			self::CAPABILITY,
+			Graduation_Lookup_Page::SLUG,
+			array( $this->graduation_lookup_page, 'render' )
+		);
+
 		/**
 		 * Fires after Alumni Core's own submenus are registered, so future
 		 * modules (名簿, メールマガジン, Voices, その他管理) can add their
@@ -166,6 +211,19 @@ class Admin {
 
 		$is_settings_page      = $this->settings_hook === $hook_suffix;
 		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
+		$is_officers_page      = $this->officers_hook === $hook_suffix;
+
+		if ( $is_officers_page ) {
+			// No wp.media() here: 役員・理事紹介 only has text/number/select
+			// fields (リンク先コンテンツ is a <select>, not an image picker).
+			wp_enqueue_script(
+				'alumni-core-officers-admin',
+				ALUMNI_CORE_URL . 'admin/assets/js/officers-admin.js',
+				array(),
+				ALUMNI_CORE_VERSION,
+				true
+			);
+		}
 
 		if ( ! $is_settings_page && ! $is_school_photos_page ) {
 			return;

@@ -272,3 +272,146 @@ function alumni_theme_get_news_event_date_display( $post = null ) {
 
 	return $date ? mysql2date( get_option( 'date_format' ), $date ) : '';
 }
+
+/**
+ * The functions below are thin, guarded wrappers around the new
+ * コンテンツ管理／役員紹介／卒業期早見表 Core API added alongside this
+ * function — intentionally minimal, matching this phase's scope (Core
+ * data foundation only). They exist so a later phase can start building
+ * actual page layouts against a stable alumni_theme_*() surface without
+ * ever calling alumni_core_*() directly, same as every function above.
+ */
+
+/**
+ * Runs a WP_Query for published コンテンツ, or null when Core is inactive.
+ *
+ * @param array $args Extra WP_Query args, merged over Core's defaults.
+ * @return WP_Query|null
+ */
+function alumni_theme_get_contents( $args = array() ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_contents_query( $args );
+}
+
+/**
+ * Runs a WP_Query for published 人物挨拶 コンテンツ only, or null when Core
+ * is inactive.
+ *
+ * @param array $args Extra WP_Query args, merged over Core's defaults.
+ * @return WP_Query|null
+ */
+function alumni_theme_get_person_greetings( $args = array() ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_person_greetings_query( $args );
+}
+
+/**
+ * A single published コンテンツ post, or null when Core is inactive or the
+ * ID doesn't resolve to one.
+ *
+ * @param int $id Post ID.
+ * @return WP_Post|null
+ */
+function alumni_theme_get_content( $id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_content( $id );
+}
+
+/**
+ * @param int $id Post ID.
+ * @return string Permalink, or '' when Core is inactive or the content
+ *                 isn't available.
+ */
+function alumni_theme_get_content_url( $id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_content_url( $id );
+}
+
+/**
+ * Every field needed to render a 人物挨拶 card/page (name, kana, title,
+ * term, photo ID, body, ...), or null when Core is inactive or $post
+ * isn't a 人物挨拶 コンテンツ post.
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return array|null
+ */
+function alumni_theme_get_person_greeting( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_person_greeting( $post );
+}
+
+/**
+ * Every saved 役員・理事 row, in display order, with stale リンク先
+ * already resolved to 0 by Core — or an empty array when Core is
+ * inactive.
+ *
+ * @return array[]
+ */
+function alumni_theme_get_officers() {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_officers();
+}
+
+/**
+ * @param array $officer One row from alumni_theme_get_officers().
+ * @return string URL, or '' when Core is inactive or the row has no
+ *                 (currently valid) link.
+ */
+function alumni_theme_get_officer_link_url( array $officer ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_officer_link_url( $officer );
+}
+
+/**
+ * A 卒業期早見表 (term/year/birth-range/color rows), or an empty array
+ * when Core is inactive.
+ *
+ * @param int $from_term First term to include (1-based).
+ * @param int $to_term   Last term to include (inclusive).
+ * @return array[]
+ */
+function alumni_theme_get_graduation_lookup_table( $from_term, $to_term ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_graduation_lookup_table( $from_term, $to_term );
+}
+
+/**
+ * Estimates the standard-progression graduation term (期) for a birth
+ * date (see Term_Calculator::GRADUATION_AGE_YEARS for the underlying
+ * assumption — not a guarantee for any one person), or null when Core is
+ * inactive or the estimate can't be resolved.
+ *
+ * @param string $birthdate 'Y-m-d'.
+ * @return int|null
+ */
+function alumni_theme_birthdate_to_term( $birthdate ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_birthdate_to_term( $birthdate );
+}

@@ -99,3 +99,45 @@
 .alumni-photo-mode-option {
 	margin-right: 1.5em;
 }
+
+/* コンテンツ（人物挨拶／自由コンテンツ）*/
+.alumni-content-fields textarea#alumni_content_body {
+	width: 100%;
+	max-width: 100%;
+}
+
+.alumni-content-fields .alumni-content-kind-option {
+	margin-right: 1.5em;
+}
+
+.alumni-person-greeting-fields {
+	margin: 1em 0;
+	padding: 1em;
+	border: 1px solid #dcdcde;
+	background: #f6f7f7;
+}
+
+/* 役員・理事紹介 一覧 */
+.alumni-officers-table input[type="text"],
+.alumni-officers-table select {
+	width: 100%;
+}
+
+.alumni-officers-table input[type="number"] {
+	width: 6em;
+}
+
+.alumni-officers-table .button {
+	margin: 0.15em;
+	padding: 0 0.5em;
+}
+
+/* 卒業期早見表 */
+.alumni-lookup-color-swatch {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	vertical-align: middle;
+	margin-right: 0.4em;
+	border: 1px solid #8c8f94;
+}

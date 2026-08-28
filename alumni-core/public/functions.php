@@ -164,6 +164,90 @@ if ( ! function_exists( 'alumni_core_get_featured_school_photo_id' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_birth_range_for_year' ) ) {
+	/**
+	 * The standard-progression 誕生日範囲 for a graduation year. See
+	 * Term_Calculator::GRADUATION_AGE_YEARS for the underlying assumption
+	 * (standard 6-3-3 progression; not a guarantee for any one person).
+	 *
+	 * @param int $graduation_year e.g. 2026.
+	 * @return array{start:string,end:string}|null
+	 */
+	function alumni_core_get_birth_range_for_year( $graduation_year ) {
+		return \AlumniCore\Includes\Term_Calculator::graduation_year_to_birth_range( $graduation_year );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_birth_range_for_term' ) ) {
+	/**
+	 * The standard-progression 誕生日範囲 for a graduation term (期), using
+	 * the association's configured first graduation year.
+	 *
+	 * @param int $term Graduation term (1-based).
+	 * @return array{start:string,end:string}|null
+	 */
+	function alumni_core_get_birth_range_for_term( $term ) {
+		$first_graduation_year = alumni_core_get_setting( 'first_graduation_year' );
+
+		return \AlumniCore\Includes\Term_Calculator::term_to_birth_range( $term, $first_graduation_year );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_birthdate_to_graduation_year' ) ) {
+	/**
+	 * Estimates the standard-progression graduation year for a birth date.
+	 * Does not depend on any 同窓会設定 (the April-2 cutoff rule alone
+	 * determines this).
+	 *
+	 * @param string $birthdate 'Y-m-d'.
+	 * @return int|null
+	 */
+	function alumni_core_birthdate_to_graduation_year( $birthdate ) {
+		return \AlumniCore\Includes\Term_Calculator::birthdate_to_graduation_year( $birthdate );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_birthdate_to_term' ) ) {
+	/**
+	 * Estimates the standard-progression graduation term (期) for a birth
+	 * date, using the association's configured first graduation year.
+	 *
+	 * @param string $birthdate 'Y-m-d'.
+	 * @return int|null
+	 */
+	function alumni_core_birthdate_to_term( $birthdate ) {
+		$first_graduation_year = alumni_core_get_setting( 'first_graduation_year' );
+
+		return \AlumniCore\Includes\Term_Calculator::birthdate_to_term( $birthdate, $first_graduation_year );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_graduation_lookup_table' ) ) {
+	/**
+	 * A 卒業期早見表: one row per term in [from_term, to_term], each with
+	 * its graduation year, standard-progression birth range, and (when
+	 * 卒業期カラー is enabled) its color — keeping this enrichment here
+	 * rather than in Term_Calculator, which stays free of WordPress option
+	 * lookups by design.
+	 *
+	 * @param int $from_term First term to include (1-based).
+	 * @param int $to_term   Last term to include (inclusive).
+	 * @return array[] Each row: array('term'=>int,'year'=>int,
+	 *                  'birth_range'=>array|null,'color'=>string|null).
+	 */
+	function alumni_core_get_graduation_lookup_table( $from_term, $to_term ) {
+		$first_graduation_year = alumni_core_get_setting( 'first_graduation_year' );
+		$rows                  = \AlumniCore\Includes\Term_Calculator::build_lookup_table( $first_graduation_year, $from_term, $to_term );
+
+		foreach ( $rows as &$row ) {
+			$row['color'] = alumni_core_term_to_color( $row['term'] );
+		}
+		unset( $row );
+
+		return $rows;
+	}
+}
+
 if ( ! function_exists( 'alumni_core_term_to_color' ) ) {
 	/**
 	 * Resolves the 卒業期カラー for a graduation term, honoring the

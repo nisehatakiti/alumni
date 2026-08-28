@@ -19,6 +19,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Term_Calculator {
 
 	/**
+	 * Years from a birth cohort's start (see graduation_year_to_birth_range())
+	 * to that cohort's high school graduation, under Japan's standard
+	 * 6-3-3 school system (6 elementary + 3 junior-high + 3 high-school
+	 * years) and the April-2 school-year cutoff: a child born between
+	 * April 2 of year N and April 1 of year N+1 enters 1st grade in April
+	 * of N+6, and finishes 12th grade (graduates) in March of N+6+12 =
+	 * N+18. This is a standard-progression estimate only — it does not,
+	 * and cannot, account for repeated years, transfers, or any other
+	 * non-standard history.
+	 */
+	const GRADUATION_AGE_YEARS = 18;
+
+	/**
+	 * Upper bound on how many rows build_lookup_table() will ever compute
+	 * in one call, so a pathological from/to range (e.g. a corrupted
+	 * request) can't turn one lookup into thousands of loop iterations.
+	 */
+	const MAX_LOOKUP_ROWS = 200;
+
+	/**
 	 * Converts a graduation year to a graduation term (期), based on the
 	 * association's first graduation year.
 	 *
@@ -107,5 +127,140 @@ class Term_Calculator {
 		}
 
 		return $colors[ $index ];
+	}
+
+	/**
+	 * The standard-progression 誕生日範囲 (birth-date range) for a
+	 * graduation year: children born from April 2 of (graduation_year -
+	 * GRADUATION_AGE_YEARS) through April 1 of the following year are the
+	 * standard cohort for that graduation year. See GRADUATION_AGE_YEARS
+	 * for the full reasoning, and the "重要" caveat there: this is an
+	 * estimate assuming standard progression, not a guarantee.
+	 *
+	 * @param int $graduation_year e.g. 2026.
+	 * @return array{start:string,end:string}|null 'Y-m-d' strings, or null
+	 *                                               when $graduation_year
+	 *                                               is missing/invalid.
+	 */
+	public static function graduation_year_to_birth_range( $graduation_year ) {
+		$graduation_year = (int) $graduation_year;
+
+		if ( $graduation_year <= 0 ) {
+			return null;
+		}
+
+		$cohort_start_year = $graduation_year - self::GRADUATION_AGE_YEARS;
+
+		return array(
+			'start' => sprintf( '%04d-04-02', $cohort_start_year ),
+			'end'   => sprintf( '%04d-04-01', $cohort_start_year + 1 ),
+		);
+	}
+
+	/**
+	 * The standard-progression 誕生日範囲 for a graduation term (期).
+	 *
+	 * @param int $term                  Graduation term (1-based).
+	 * @param int $first_graduation_year e.g. 1950.
+	 * @return array{start:string,end:string}|null
+	 */
+	public static function term_to_birth_range( $term, $first_graduation_year ) {
+		$year = self::term_to_year( $term, $first_graduation_year );
+
+		if ( null === $year ) {
+			return null;
+		}
+
+		return self::graduation_year_to_birth_range( $year );
+	}
+
+	/**
+	 * Estimates the standard-progression graduation year for a birth date,
+	 * using the same April-2 cutoff as graduation_year_to_birth_range().
+	 * This is an estimate, not a guarantee — see GRADUATION_AGE_YEARS.
+	 *
+	 * @param string $birthdate 'Y-m-d', e.g. '2008-05-10'.
+	 * @return int|null
+	 */
+	public static function birthdate_to_graduation_year( $birthdate ) {
+		if ( ! is_string( $birthdate ) || '' === $birthdate ) {
+			return null;
+		}
+
+		$date = \DateTime::createFromFormat( 'Y-m-d', $birthdate );
+
+		if ( ! $date || $date->format( 'Y-m-d' ) !== $birthdate ) {
+			return null;
+		}
+
+		$year  = (int) $date->format( 'Y' );
+		$month = (int) $date->format( 'n' );
+		$day   = (int) $date->format( 'j' );
+
+		// On/after April 2: this year's cohort. On/before April 1
+		// (January through March, or April 1st itself): last year's.
+		$cohort_start_year = ( $month > 4 || ( 4 === $month && $day >= 2 ) ) ? $year : $year - 1;
+
+		return $cohort_start_year + self::GRADUATION_AGE_YEARS;
+	}
+
+	/**
+	 * Estimates the standard-progression graduation term (期) for a birth
+	 * date. This is an estimate, not a guarantee — see GRADUATION_AGE_YEARS.
+	 *
+	 * @param string $birthdate            'Y-m-d'.
+	 * @param int    $first_graduation_year e.g. 1950.
+	 * @return int|null
+	 */
+	public static function birthdate_to_term( $birthdate, $first_graduation_year ) {
+		$year = self::birthdate_to_graduation_year( $birthdate );
+
+		if ( null === $year ) {
+			return null;
+		}
+
+		return self::year_to_term( $year, $first_graduation_year );
+	}
+
+	/**
+	 * Builds a 卒業期早見表: one row per term in [from_term, to_term],
+	 * each with its graduation year and standard-progression birth range.
+	 * Safe against a corrupted/invalid $first_graduation_year (returns an
+	 * empty array, since every row would fail to resolve a year) and
+	 * against a pathologically large range (silently capped at
+	 * MAX_LOOKUP_ROWS rows).
+	 *
+	 * @param int $first_graduation_year e.g. 1950.
+	 * @param int $from_term             First term to include (1-based).
+	 * @param int $to_term               Last term to include (inclusive).
+	 * @return array[] Each row: array('term'=>int,'year'=>int,'birth_range'=>array|null).
+	 */
+	public static function build_lookup_table( $first_graduation_year, $from_term, $to_term ) {
+		$from_term = (int) $from_term;
+		$to_term   = (int) $to_term;
+
+		if ( $from_term <= 0 || $to_term < $from_term ) {
+			return array();
+		}
+
+		$to_term = min( $to_term, $from_term + self::MAX_LOOKUP_ROWS - 1 );
+
+		$rows = array();
+
+		for ( $term = $from_term; $term <= $to_term; $term++ ) {
+			$year = self::term_to_year( $term, $first_graduation_year );
+
+			if ( null === $year ) {
+				continue;
+			}
+
+			$rows[] = array(
+				'term'        => $term,
+				'year'        => $year,
+				'birth_range' => self::graduation_year_to_birth_range( $year ),
+			);
+		}
+
+		return $rows;
 	}
 }
