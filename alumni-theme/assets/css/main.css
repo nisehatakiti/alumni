@@ -95,3 +95,76 @@
 		display: flex;
 	}
 }
+
+/* ニュース・イベント */
+.front-news-events {
+	margin-bottom: 2em;
+}
+
+.front-news-events-header {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5em;
+}
+
+.alumni-news-events-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1.5em;
+	margin: 1em 0;
+	padding: 0;
+	list-style: none;
+}
+
+.alumni-news-event-card {
+	border: 1px solid #e2e2e2;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.alumni-news-event-card-link {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	color: inherit;
+	text-decoration: none;
+}
+
+.alumni-news-event-card-thumb img {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+}
+
+.alumni-news-event-card-body {
+	padding: 1em;
+}
+
+.alumni-news-event-type {
+	display: inline-block;
+	font-size: 0.75em;
+	padding: 0.2em 0.6em;
+	border-radius: 999px;
+	background: #eef2f9;
+	color: #2c5aa0;
+	margin-bottom: 0.5em;
+}
+
+.alumni-news-event-card-title {
+	margin: 0 0 0.4em;
+	font-size: 1.05em;
+}
+
+.alumni-news-event-card-date,
+.alumni-news-event-date {
+	display: block;
+	color: #666;
+	font-size: 0.85em;
+}
+
+.news-event-single .alumni-news-event-type {
+	margin-bottom: 0.5em;
+}

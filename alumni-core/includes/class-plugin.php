@@ -63,6 +63,8 @@ final class Plugin {
 
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
+		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
+
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
 			( new \AlumniCore\Admin\Admin() )->run();
@@ -82,6 +84,14 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-settings-page.php';
+
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-meta-box.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-admin-columns.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-required-fields.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-module.php';
+
+		require_once ALUMNI_CORE_PATH . 'public/news-events-functions.php';
 	}
 
 	/**

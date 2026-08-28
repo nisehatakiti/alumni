@@ -12,6 +12,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 delete_option( 'alumni_core_settings' );
 delete_option( 'alumni_core_db_version' );
+delete_option( 'alumni_news_event_rewrite_flushed' );
 
 // No custom tables ship yet; future modules are expected to clean up their
 // own tables/options here (or via an alumni_core_uninstall action) once
