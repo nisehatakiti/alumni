@@ -90,7 +90,7 @@ class Settings_Page {
 						<td>
 							<input type="number" inputmode="numeric" id="alumni_core_first_graduation_year" name="first_graduation_year" class="small-text"
 								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
-								value="<?php echo esc_attr( $settings['first_graduation_year'] ); ?>" />
+								value="<?php echo esc_attr( self::first_graduation_year_display_value( $settings ) ); ?>" />
 							<p class="description"><?php esc_html_e( '例：1950 と設定すると、1950年卒業が第1期になります。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
@@ -168,6 +168,28 @@ class Settings_Page {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * The value to show in the 第1期卒業年 input. When 第1期卒業年 has never
+	 * been explicitly saved (i.e. is still '', the "未設定" sentinel — see
+	 * Settings::sanitize_year()), the input's initial value should track
+	 * 学校創立年 instead of a hardcoded "1950", so it follows 学校創立年
+	 * if that's changed before 第1期卒業年 is ever set.
+	 *
+	 * This only affects what's shown in the form; it never writes to the
+	 * database, so an already-saved 第1期卒業年 (including one explicitly
+	 * saved as empty) is never altered by this method.
+	 *
+	 * @param array $settings Current settings, as from Settings::get_all().
+	 * @return int|string
+	 */
+	private static function first_graduation_year_display_value( array $settings ) {
+		if ( '' !== $settings['first_graduation_year'] ) {
+			return $settings['first_graduation_year'];
+		}
+
+		return $settings['school_founded_year'];
 	}
 
 	/**
