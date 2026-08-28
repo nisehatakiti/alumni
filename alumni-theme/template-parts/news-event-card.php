@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $alumni_news_event_type      = alumni_theme_get_news_event_type_label();
 $alumni_news_event_date      = alumni_theme_get_news_event_date_display();
+$alumni_news_event_is_event  = alumni_theme_is_event();
 $alumni_news_event_has_thumb = has_post_thumbnail();
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class( 'alumni-news-event-card' . ( $alumni_news_event_has_thumb ? ' has-thumbnail' : '' ) ); ?>>
@@ -24,13 +25,17 @@ $alumni_news_event_has_thumb = has_post_thumbnail();
 		<?php endif; ?>
 
 		<div class="alumni-news-event-card-body">
+			<?php if ( $alumni_news_event_is_event && $alumni_news_event_date ) : ?>
+				<time class="alumni-news-event-card-date alumni-news-event-card-date-event"><?php echo esc_html( $alumni_news_event_date ); ?></time>
+			<?php endif; ?>
+
 			<?php if ( $alumni_news_event_type ) : ?>
 				<span class="alumni-news-event-type"><?php echo esc_html( $alumni_news_event_type ); ?></span>
 			<?php endif; ?>
 
 			<h3 class="alumni-news-event-card-title"><?php the_title(); ?></h3>
 
-			<?php if ( $alumni_news_event_date ) : ?>
+			<?php if ( ! $alumni_news_event_is_event && $alumni_news_event_date ) : ?>
 				<time class="alumni-news-event-card-date"><?php echo esc_html( $alumni_news_event_date ); ?></time>
 			<?php endif; ?>
 		</div>

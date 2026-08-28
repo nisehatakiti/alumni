@@ -18,19 +18,24 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 
-	$alumni_news_event_type = alumni_theme_get_news_event_type_label();
-	$alumni_news_event_date = alumni_theme_get_news_event_date_display();
+	$alumni_news_event_type     = alumni_theme_get_news_event_type_label();
+	$alumni_news_event_date     = alumni_theme_get_news_event_date_display();
+	$alumni_news_event_is_event = alumni_theme_is_event();
 	?>
 	<main id="primary" class="site-main news-event-single">
 		<article id="post-<?php the_ID(); ?>" <?php post_class( 'alumni-news-event' ); ?>>
 			<header class="entry-header">
+				<?php if ( $alumni_news_event_is_event && $alumni_news_event_date ) : ?>
+					<time class="alumni-news-event-date alumni-news-event-date-event"><?php echo esc_html( $alumni_news_event_date ); ?></time>
+				<?php endif; ?>
+
 				<?php if ( $alumni_news_event_type ) : ?>
 					<span class="alumni-news-event-type"><?php echo esc_html( $alumni_news_event_type ); ?></span>
 				<?php endif; ?>
 
 				<h1 class="entry-title"><?php the_title(); ?></h1>
 
-				<?php if ( $alumni_news_event_date ) : ?>
+				<?php if ( ! $alumni_news_event_is_event && $alumni_news_event_date ) : ?>
 					<time class="alumni-news-event-date"><?php echo esc_html( $alumni_news_event_date ); ?></time>
 				<?php endif; ?>
 			</header>

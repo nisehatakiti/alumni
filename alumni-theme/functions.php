@@ -123,6 +123,22 @@ function alumni_theme_get_news_events( $args = array() ) {
 }
 
 /**
+ * Whether a ニュース／イベント post is an event, so templates can adjust
+ * their layout (e.g. showing the date before the title) without calling
+ * into Core directly.
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return bool
+ */
+function alumni_theme_is_event( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return false;
+	}
+
+	return alumni_core_is_event( $post );
+}
+
+/**
  * Japanese label for a ニュース／イベント post's content type.
  *
  * @param int|WP_Post|null $post Post ID or object.
