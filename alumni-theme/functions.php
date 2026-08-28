@@ -105,3 +105,51 @@ function alumni_theme_get_school_name() {
 
 	return alumni_core_get_setting( 'school_name', '' );
 }
+
+/**
+ * Runs a WP_Query for the latest ニュース／イベント, or returns null when
+ * Alumni Core isn't available — so templates never have to guard this
+ * themselves.
+ *
+ * @param array $args Extra WP_Query args, merged over Core's defaults.
+ * @return WP_Query|null
+ */
+function alumni_theme_get_news_events( $args = array() ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_news_events_query( $args );
+}
+
+/**
+ * Japanese label for a ニュース／イベント post's content type.
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return string
+ */
+function alumni_theme_get_news_event_type_label( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_is_event( $post ) ? __( 'イベント', 'alumni-theme' ) : __( 'ニュース', 'alumni-theme' );
+}
+
+/**
+ * The date to show for a ニュース／イベント card: the event date for
+ * events, the published date for news (decided by Alumni Core), formatted
+ * with the site's date_format option.
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return string Formatted date, or '' when Core is inactive.
+ */
+function alumni_theme_get_news_event_date_display( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	$date = alumni_core_get_news_event_display_date( $post );
+
+	return $date ? mysql2date( get_option( 'date_format' ), $date ) : '';
+}
