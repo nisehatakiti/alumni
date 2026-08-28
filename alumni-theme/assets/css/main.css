@@ -1,0 +1,97 @@
+/* Header */
+.site-header {
+	border-bottom: 1px solid #e2e2e2;
+	padding: 1em 0;
+}
+
+.alumni-header-inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1em;
+}
+
+.site-branding .site-title {
+	margin: 0;
+	font-size: 1.4em;
+}
+
+.site-branding .site-title a {
+	text-decoration: none;
+	color: inherit;
+}
+
+.site-branding .site-description {
+	margin: 0.2em 0 0;
+	color: #666;
+	font-size: 0.9em;
+}
+
+/* Navigation */
+.main-navigation ul {
+	list-style: none;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5em;
+	margin: 0;
+	padding: 0;
+}
+
+.main-navigation a {
+	text-decoration: none;
+}
+
+.menu-toggle {
+	display: none;
+}
+
+/* Main content */
+.site-main {
+	padding: 2em 0;
+}
+
+.front-welcome {
+	margin-bottom: 2em;
+}
+
+.alumni-notice {
+	background: #fff7e6;
+	border: 1px solid #f0d9a8;
+	padding: 0.75em 1em;
+	border-radius: 4px;
+}
+
+.alumni-entry {
+	margin-bottom: 2em;
+}
+
+.entry-title {
+	margin-top: 0;
+}
+
+/* Footer */
+.site-footer {
+	border-top: 1px solid #e2e2e2;
+	padding: 1.5em 0;
+	color: #666;
+	font-size: 0.9em;
+}
+
+/* Small screens: collapsible nav */
+@media (max-width: 600px) {
+	.menu-toggle {
+		display: inline-block;
+	}
+
+	.main-navigation ul {
+		display: none;
+		flex-direction: column;
+		gap: 0.5em;
+		width: 100%;
+	}
+
+	.main-navigation.is-open ul {
+		display: flex;
+	}
+}
