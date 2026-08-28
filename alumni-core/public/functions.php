@@ -106,12 +106,19 @@ if ( ! function_exists( 'alumni_core_get_school_photo_ids' ) ) {
 	/**
 	 * 学校関連写真として登録された添付ファイルIDの一覧（表示順）。
 	 *
+	 * 保存時点では有効だったIDでも、その後メディアライブラリから削除
+	 * されている可能性があるため、ここで改めて実在する画像のみに絞り
+	 * 込む（Settings::filter_valid_image_attachments()）。呼び出し側
+	 * （テーマ側・固定表示のフォールバック判断）は常に「実在する画像
+	 * のID」だけを受け取れる。
+	 *
 	 * @return int[]
 	 */
 	function alumni_core_get_school_photo_ids() {
 		$ids = alumni_core_get_setting( 'school_photo_ids', array() );
+		$ids = is_array( $ids ) ? $ids : array();
 
-		return is_array( $ids ) ? $ids : array();
+		return \AlumniCore\Includes\Settings::filter_valid_image_attachments( $ids );
 	}
 }
 
@@ -129,13 +136,16 @@ if ( ! function_exists( 'alumni_core_get_school_photo_display_mode' ) ) {
 if ( ! function_exists( 'alumni_core_get_featured_school_photo_id' ) ) {
 	/**
 	 * 固定表示（表示方式が 'fixed' の場合）で使う写真の添付ファイルID。
-	 * 明示的に選択された写真が無効（未選択、または学校関連写真の一覧から
-	 * 外れている）な場合は、一覧の先頭の写真にフォールバックする — この
-	 * 判断はCore側の責務とし、テーマ側では単純に「返ってきたIDがあれば
-	 * それを1枚表示する」だけでよい。
+	 * 明示的に選択された写真が無効（未選択、学校関連写真の一覧から外れて
+	 * いる、またはメディアライブラリから削除済み）な場合は、一覧の先頭の
+	 * 写真にフォールバックする — alumni_core_get_school_photo_ids() が
+	 * 既に「実在する画像のみ」に絞り込んだ一覧を返すため、この関数は
+	 * その一覧に対して判断するだけでよい。この判断はCore側の責務とし、
+	 * テーマ側では単純に「返ってきたIDがあればそれを1枚表示する」だけ
+	 * でよい。
 	 *
 	 * @return int Attachment ID, or 0 when display mode isn't 'fixed', or
-	 *              no photos are registered at all.
+	 *              no valid photos are registered at all.
 	 */
 	function alumni_core_get_featured_school_photo_id() {
 		if ( \AlumniCore\Includes\Settings::PHOTO_MODE_FIXED !== alumni_core_get_school_photo_display_mode() ) {

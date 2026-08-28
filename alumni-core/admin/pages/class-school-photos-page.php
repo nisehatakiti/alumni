@@ -44,8 +44,14 @@ class School_Photos_Page {
 			return;
 		}
 
-		$settings     = Settings::instance()->get_all();
-		$photo_ids    = $settings['school_photo_ids'];
+		$settings = Settings::instance()->get_all();
+		// Filtered to still-existing image attachments: if one was deleted
+		// from the Media Library directly, it disappears from this screen
+		// (and from the 表示画像 dropdown) rather than showing a broken
+		// thumbnail — and saving the form afterwards naturally drops it
+		// from the stored list too, since the hidden inputs only reflect
+		// what's rendered here.
+		$photo_ids    = Settings::filter_valid_image_attachments( $settings['school_photo_ids'] );
 		$display_mode = $settings['school_photo_display_mode'];
 		$featured_id  = (int) $settings['school_photo_featured_id'];
 		?>

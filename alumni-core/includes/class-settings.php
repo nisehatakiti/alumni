@@ -242,8 +242,13 @@ class Settings {
 			'first_graduation_year' => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
 			'color_feature_enabled' => ! empty( $raw['color_feature_enabled'] ),
 			'color_cycle'           => isset( $raw['color_cycle'] ) ? min( self::MAX_COLOR_CYCLE, max( 1, absint( $raw['color_cycle'] ) ) ) : $fallback['color_cycle'],
-			'school_emblem_id'      => self::sanitize_attachment_id( isset( $raw['school_emblem_id'] ) ? $raw['school_emblem_id'] : 0 ),
-			'alumni_logo_id'        => self::sanitize_attachment_id( isset( $raw['alumni_logo_id'] ) ? $raw['alumni_logo_id'] : 0 ),
+			// array_key_exists() (not isset()) so a genuinely missing key
+			// preserves the current value, while a key present with an
+			// empty value (the media picker's "削除" button) still clears
+			// it to 0 — those are different submissions and must not be
+			// treated the same.
+			'school_emblem_id'      => array_key_exists( 'school_emblem_id', $raw ) ? self::sanitize_attachment_id( $raw['school_emblem_id'] ) : $fallback['school_emblem_id'],
+			'alumni_logo_id'        => array_key_exists( 'alumni_logo_id', $raw ) ? self::sanitize_attachment_id( $raw['alumni_logo_id'] ) : $fallback['alumni_logo_id'],
 			// Not part of the 基本設定 form — always carried over as-is.
 			'school_photo_ids'          => $fallback['school_photo_ids'],
 			'school_photo_display_mode' => $fallback['school_photo_display_mode'],
@@ -295,6 +300,22 @@ class Settings {
 	}
 
 	/**
+	 * Whether $id is a real, currently-existing WordPress media attachment
+	 * that is an image. This is the single source of truth for "usable
+	 * image ID", shared by save-time validation (sanitize_attachment_id())
+	 * and read-time filtering (filter_valid_image_attachments()) — an ID
+	 * that was valid when saved can go stale later if the attachment is
+	 * deleted from the Media Library, so both paths need to agree on what
+	 * still counts as valid "now", not just "at save time".
+	 *
+	 * @param int $id Attachment ID (already cast to a non-negative int).
+	 * @return bool
+	 */
+	public static function is_valid_image_attachment( $id ) {
+		return $id > 0 && wp_attachment_is_image( $id );
+	}
+
+	/**
 	 * Validates a single WordPress media attachment ID (校章 / 同窓会ロゴ /
 	 * 固定表示の写真). Confirms it's a real image attachment rather than
 	 * trusting an arbitrary submitted number, since a stale or invalid ID
@@ -306,11 +327,7 @@ class Settings {
 	public static function sanitize_attachment_id( $raw ) {
 		$id = absint( $raw );
 
-		if ( $id > 0 && ! wp_attachment_is_image( $id ) ) {
-			$id = 0;
-		}
-
-		return $id;
+		return self::is_valid_image_attachment( $id ) ? $id : 0;
 	}
 
 	/**
@@ -337,6 +354,32 @@ class Settings {
 		}
 
 		return $ids;
+	}
+
+	/**
+	 * Filters a list of previously-saved attachment IDs down to only
+	 * those that are still valid, currently-existing image attachments —
+	 * for read-time use (学校写真一覧取得 / featured photo取得), since a
+	 * save-time-valid ID can go stale if the attachment is deleted from
+	 * the Media Library afterwards. Order is preserved.
+	 *
+	 * @param array $ids Attachment IDs, as saved (already de-duplicated
+	 *                    and save-time-validated by sanitize_attachment_ids(),
+	 *                    but not necessarily still valid *now*).
+	 * @return int[] Only the still-valid ones, in the same order.
+	 */
+	public static function filter_valid_image_attachments( array $ids ) {
+		$valid = array();
+
+		foreach ( $ids as $id ) {
+			$id = absint( $id );
+
+			if ( self::is_valid_image_attachment( $id ) ) {
+				$valid[] = $id;
+			}
+		}
+
+		return $valid;
 	}
 
 	/**
