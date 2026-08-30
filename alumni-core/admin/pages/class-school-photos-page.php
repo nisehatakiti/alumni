@@ -54,6 +54,7 @@ class School_Photos_Page {
 		$photo_ids    = Settings::filter_valid_image_attachments( $settings['school_photo_ids'] );
 		$display_mode = $settings['school_photo_display_mode'];
 		$featured_id  = (int) $settings['school_photo_featured_id'];
+		$interval     = (int) $settings['school_photo_slideshow_interval'];
 		?>
 		<div class="wrap alumni-core-school-photos">
 			<h1><?php esc_html_e( '学校写真', 'alumni-core' ); ?></h1>
@@ -107,7 +108,7 @@ class School_Photos_Page {
 									<?php checked( Settings::PHOTO_MODE_SLIDESHOW, $display_mode ); ?> />
 								<?php esc_html_e( '自動切替', 'alumni-core' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( '自動切替は約5秒ごとに写真をフェード切り替えします。写真が1枚以下の場合は自動的に固定表示と同じになります。', 'alumni-core' ); ?></p>
+							<p class="description"><?php esc_html_e( '自動切替は、下の「写真の切替時間」ごとに写真をフェード切り替えします。写真が1枚以下の場合は自動的に固定表示と同じになります。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
 					<tr id="alumni-photo-featured-row" class="alumni-photo-featured-row">
@@ -124,6 +125,27 @@ class School_Photos_Page {
 								<?php endforeach; ?>
 							</select>
 							<p class="description"><?php esc_html_e( '登録済みの写真から、固定表示で使う1枚を選びます。未選択の場合は一覧の先頭の写真が使われます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr id="alumni-photo-interval-row" class="alumni-photo-interval-row">
+						<th scope="row">
+							<label for="alumni_core_school_photo_slideshow_interval"><?php esc_html_e( '写真の切替時間（秒）', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" inputmode="numeric" id="alumni_core_school_photo_slideshow_interval" name="school_photo_slideshow_interval" class="small-text"
+								min="<?php echo esc_attr( Settings::MIN_SLIDESHOW_INTERVAL ); ?>" max="<?php echo esc_attr( Settings::MAX_SLIDESHOW_INTERVAL ); ?>"
+								value="<?php echo esc_attr( $interval ); ?>" />
+							<p class="description">
+								<?php
+								printf(
+									/* translators: 1: minimum seconds, 2: maximum seconds, 3: default seconds */
+									esc_html__( '自動切替(スライドショー)の場合のみ使用します。固定表示では無視されます。%1$d〜%2$d秒の範囲で指定してください(既定値:%3$d秒)。', 'alumni-core' ),
+									(int) Settings::MIN_SLIDESHOW_INTERVAL,
+									(int) Settings::MAX_SLIDESHOW_INTERVAL,
+									(int) Settings::DEFAULT_SLIDESHOW_INTERVAL
+								);
+								?>
+							</p>
 						</td>
 					</tr>
 				</table>
@@ -187,12 +209,15 @@ class School_Photos_Page {
 		$raw_mode = isset( $_POST['school_photo_display_mode'] ) ? sanitize_key( wp_unslash( $_POST['school_photo_display_mode'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$raw_featured = isset( $_POST['school_photo_featured_id'] ) ? wp_unslash( $_POST['school_photo_featured_id'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$raw_interval = isset( $_POST['school_photo_slideshow_interval'] ) ? wp_unslash( $_POST['school_photo_slideshow_interval'] ) : '';
 
 		Settings::instance()->update_fields(
 			array(
-				'school_photo_ids'          => Settings::sanitize_attachment_ids( $raw_ids ),
-				'school_photo_display_mode' => Settings::sanitize_display_mode( $raw_mode ),
-				'school_photo_featured_id'  => Settings::sanitize_attachment_id( $raw_featured ),
+				'school_photo_ids'                => Settings::sanitize_attachment_ids( $raw_ids ),
+				'school_photo_display_mode'       => Settings::sanitize_display_mode( $raw_mode ),
+				'school_photo_featured_id'        => Settings::sanitize_attachment_id( $raw_featured ),
+				'school_photo_slideshow_interval' => Settings::sanitize_slideshow_interval( $raw_interval ),
 			)
 		);
 

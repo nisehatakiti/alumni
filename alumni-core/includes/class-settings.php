@@ -51,6 +51,14 @@ class Settings {
 	const PHOTO_MODE_SLIDESHOW = 'slideshow';
 
 	/**
+	 * 写真の切替時間（自動切替モード）の許容範囲（秒）と既定値。未設定、
+	 * または範囲外／不正な値は常にこの既定値にフォールバックする。
+	 */
+	const MIN_SLIDESHOW_INTERVAL     = 1;
+	const MAX_SLIDESHOW_INTERVAL     = 60;
+	const DEFAULT_SLIDESHOW_INTERVAL = 5;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Settings|null
@@ -111,6 +119,9 @@ class Settings {
 			'school_photo_ids'           => array(),
 			'school_photo_display_mode'  => self::PHOTO_MODE_FIXED,
 			'school_photo_featured_id'   => 0,
+			// 自動切替（スライドショー）モードでのみ使用され、固定表示では
+			// 無視される。
+			'school_photo_slideshow_interval' => self::DEFAULT_SLIDESHOW_INTERVAL,
 		);
 	}
 
@@ -255,9 +266,10 @@ class Settings {
 			'school_emblem_id'      => array_key_exists( 'school_emblem_id', $raw ) ? self::sanitize_attachment_id( $raw['school_emblem_id'] ) : $fallback['school_emblem_id'],
 			'alumni_logo_id'        => array_key_exists( 'alumni_logo_id', $raw ) ? self::sanitize_attachment_id( $raw['alumni_logo_id'] ) : $fallback['alumni_logo_id'],
 			// Not part of the 基本設定 form — always carried over as-is.
-			'school_photo_ids'          => $fallback['school_photo_ids'],
-			'school_photo_display_mode' => $fallback['school_photo_display_mode'],
-			'school_photo_featured_id'  => $fallback['school_photo_featured_id'],
+			'school_photo_ids'                => $fallback['school_photo_ids'],
+			'school_photo_display_mode'       => $fallback['school_photo_display_mode'],
+			'school_photo_featured_id'        => $fallback['school_photo_featured_id'],
+			'school_photo_slideshow_interval' => $fallback['school_photo_slideshow_interval'],
 		);
 
 		$cycle  = $sanitized['color_cycle'];
@@ -396,5 +408,34 @@ class Settings {
 	 */
 	public static function sanitize_display_mode( $raw ) {
 		return self::PHOTO_MODE_SLIDESHOW === $raw ? self::PHOTO_MODE_SLIDESHOW : self::PHOTO_MODE_FIXED;
+	}
+
+	/**
+	 * Validates a 写真の切替時間（秒）submission: integers only, clamped to
+	 * [MIN_SLIDESHOW_INTERVAL, MAX_SLIDESHOW_INTERVAL]. Anything empty,
+	 * non-numeric, or non-integer (e.g. "5.5") falls back to
+	 * self::DEFAULT_SLIDESHOW_INTERVAL rather than being silently truncated
+	 * or rejected outright — this setting is only ever cosmetic (a
+	 * slideshow timing), so a safe default is preferable to blocking save.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return int An integer within the allowed range.
+	 */
+	public static function sanitize_slideshow_interval( $raw ) {
+		if ( '' === $raw || null === $raw || ! is_numeric( $raw ) ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		if ( (string) (int) $raw !== (string) ( $raw + 0 ) ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		$seconds = (int) $raw;
+
+		if ( $seconds < self::MIN_SLIDESHOW_INTERVAL || $seconds > self::MAX_SLIDESHOW_INTERVAL ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		return $seconds;
 	}
 }

@@ -248,6 +248,24 @@ if ( ! function_exists( 'alumni_core_get_graduation_lookup_table' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_school_photo_slideshow_interval' ) ) {
+	/**
+	 * 学校関連写真の自動切替（スライドショー）の切替間隔（秒）。固定表示
+	 * では無視される設定だが、値そのものは常に返す（呼び出し側でモード
+	 * を判断する）。保存値が未設定・不正な場合でも常に有効な範囲の整数を
+	 * 返すよう、読み出し時にも Settings::sanitize_slideshow_interval() で
+	 * 再検証する — 過去バージョンで保存された値や、直接DBを編集された
+	 * ケースにも対応するため。
+	 *
+	 * @return int 1〜60 の整数。
+	 */
+	function alumni_core_get_school_photo_slideshow_interval() {
+		$raw = alumni_core_get_setting( 'school_photo_slideshow_interval', \AlumniCore\Includes\Settings::DEFAULT_SLIDESHOW_INTERVAL );
+
+		return \AlumniCore\Includes\Settings::sanitize_slideshow_interval( $raw );
+	}
+}
+
 if ( ! function_exists( 'alumni_core_term_to_color' ) ) {
 	/**
 	 * Resolves the 卒業期カラー for a graduation term, honoring the

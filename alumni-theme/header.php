@@ -47,13 +47,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<p class="site-description"><?php echo esc_html( $alumni_theme_school_name ); ?></p>
 					<?php endif; ?>
 				</div>
-
-				<?php $alumni_theme_logo_html = alumni_theme_get_alumni_logo_html(); ?>
-				<?php if ( $alumni_theme_logo_html ) : ?>
-					<span class="alumni-brand-logo">
-						<?php echo $alumni_theme_logo_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already-safe HTML from wp_get_attachment_image(). ?>
-					</span>
-				<?php endif; ?>
 			</div>
 		</div>
 

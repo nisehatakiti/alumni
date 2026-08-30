@@ -91,6 +91,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-graduation-lookup-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-rewrites.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-meta-box.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-admin-columns.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-required-fields.php';

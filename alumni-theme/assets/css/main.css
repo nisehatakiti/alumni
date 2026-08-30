@@ -38,17 +38,17 @@
 	min-width: 0;
 }
 
-/* 校章／同窓会ロゴ: fixed box so mismatched aspect ratios never distort
-   the image or push the layout around. */
-.alumni-brand-emblem,
-.alumni-brand-logo {
+/* 校章: fixed box so a mismatched aspect ratio never distorts the image
+   or pushes the header layout around. The 同窓会独自ロゴ is intentionally
+   NOT shown here — see .alumni-logo-feature below, a separate, larger
+   section dedicated to it on the front page. */
+.alumni-brand-emblem {
 	flex: 0 0 auto;
 	display: block;
 	height: 48px;
 }
 
-.alumni-brand-emblem img,
-.alumni-brand-logo img {
+.alumni-brand-emblem img {
 	display: block;
 	height: 100%;
 	width: auto;
@@ -124,6 +124,34 @@
 	}
 }
 
+/* 同窓会ブランドロゴ（トップページ専用の拡大表示エリア）。
+   固定サイズの箱の中に object-fit: contain で収めることで、画像の縦横比を
+   保ったまま全体を必ず表示し、どんなに大きい元画像でもレイアウトを
+   崩さない。 */
+.alumni-logo-feature {
+	margin-bottom: 2em;
+	text-align: center;
+}
+
+.alumni-logo-feature-image {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	max-width: 480px;
+	height: 280px;
+	margin: 0 auto;
+}
+
+.alumni-logo-feature-image img {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+}
+
 /* ニュース・イベント */
 .front-news-events {
 	margin-bottom: 2em;
@@ -135,6 +163,13 @@
 	justify-content: space-between;
 	flex-wrap: wrap;
 	gap: 0.5em;
+}
+
+.front-news-events-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
+	margin-top: 1em;
 }
 
 .alumni-news-events-grid {
