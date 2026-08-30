@@ -45,6 +45,17 @@ class Post_Type {
 	const KIND_PERSON_GREETING = 'person_greeting';
 
 	/**
+	 * Query var used only by the 「人物挨拶を追加」／「自由コンテンツを
+	 * 追加」 admin menu shortcuts (Admin::register_menu()) to pre-select
+	 * the intended kind on the 新規追加 screen — see
+	 * Content_Meta_Box::render(). Never read at save time: the actually
+	 * saved kind always comes from the submitted 'alumni_content_kind'
+	 * POST field (see Content_Meta_Box::save()), so this can't be used to
+	 * change an existing post's kind via a crafted URL.
+	 */
+	const QUERY_VAR_KIND = 'alumni_content_kind';
+
+	/**
 	 * Meta keys used only when META_KIND is KIND_PERSON_GREETING.
 	 */
 	const META_PERSON_NAME     = '_alumni_person_name';

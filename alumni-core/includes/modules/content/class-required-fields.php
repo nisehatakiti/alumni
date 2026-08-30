@@ -52,7 +52,7 @@ class Content_Required_Fields {
 			$missing[] = __( '本文', 'alumni-core' );
 		}
 
-		$kind = isset( $_POST['alumni_content_kind'] ) ? sanitize_key( wp_unslash( $_POST['alumni_content_kind'] ) ) : Post_Type::KIND_FREE;
+		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
 
 		if ( Post_Type::KIND_PERSON_GREETING === $kind ) {
 			$name  = isset( $_POST['alumni_person_name'] ) ? trim( wp_strip_all_tags( wp_unslash( $_POST['alumni_person_name'] ) ) ) : '';

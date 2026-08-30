@@ -87,7 +87,23 @@ class Content_Meta_Box {
 	public function render( $post ) {
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 
-		$kind      = Post_Type::get_kind( $post );
+		$kind = Post_Type::get_kind( $post );
+
+		// 「人物挨拶を追加」／「自由コンテンツを追加」 admin menu shortcuts
+		// (Admin::register_menu()) link to 新規追加 with the intended kind
+		// in the query string, so a brand-new (auto-draft, no postmeta yet)
+		// post shows the right fields immediately instead of always
+		// defaulting to 自由コンテンツ. Never trusted for an existing post
+		// (get_kind() above already reflects whatever was actually saved),
+		// and never used to decide what gets saved — see Post_Type::QUERY_VAR_KIND.
+		if ( 'auto-draft' === $post->post_status && isset( $_GET[ Post_Type::QUERY_VAR_KIND ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only affects which radio is pre-selected, never what gets saved.
+			$requested_kind = sanitize_key( wp_unslash( $_GET[ Post_Type::QUERY_VAR_KIND ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+			if ( Post_Type::KIND_PERSON_GREETING === $requested_kind ) {
+				$kind = Post_Type::KIND_PERSON_GREETING;
+			}
+		}
+
 		$name      = Post_Type::get_person_name( $post );
 		$kana      = Post_Type::get_person_kana( $post );
 		$title     = Post_Type::get_person_title( $post );
@@ -98,12 +114,12 @@ class Content_Meta_Box {
 			<p>
 				<strong><?php esc_html_e( 'コンテンツ種別', 'alumni-core' ); ?></strong><br />
 				<label class="alumni-content-kind-option">
-					<input type="radio" name="alumni_content_kind" value="<?php echo esc_attr( Post_Type::KIND_FREE ); ?>"
+					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_FREE ); ?>"
 						<?php checked( Post_Type::KIND_FREE, $kind ); ?> />
 					<?php esc_html_e( '自由コンテンツ', 'alumni-core' ); ?>
 				</label>
 				<label class="alumni-content-kind-option">
-					<input type="radio" name="alumni_content_kind" value="<?php echo esc_attr( Post_Type::KIND_PERSON_GREETING ); ?>"
+					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_PERSON_GREETING ); ?>"
 						<?php checked( Post_Type::KIND_PERSON_GREETING, $kind ); ?> />
 					<?php esc_html_e( '人物挨拶', 'alumni-core' ); ?>
 				</label>
@@ -188,7 +204,7 @@ class Content_Meta_Box {
 			return;
 		}
 
-		$kind = isset( $_POST['alumni_content_kind'] ) ? sanitize_key( wp_unslash( $_POST['alumni_content_kind'] ) ) : Post_Type::KIND_FREE;
+		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
 
 		if ( Post_Type::KIND_PERSON_GREETING !== $kind ) {
 			$kind = Post_Type::KIND_FREE;

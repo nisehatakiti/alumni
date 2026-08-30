@@ -12,6 +12,7 @@ use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
 use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
+use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -169,6 +170,31 @@ class Admin {
 			self::CAPABILITY,
 			Graduation_Lookup_Page::SLUG,
 			array( $this->graduation_lookup_page, 'render' )
+		);
+
+		// WordPress already adds a generic 「すべてのコンテンツ」/「新規追加」
+		// pair for the alumni_content CPT (via its show_in_menu => self::MENU_SLUG),
+		// but nothing there hints that this single CPT is how 校長挨拶・
+		// 会長挨拶 etc. (人物挨拶) or 沿革・お問い合わせ等 (自由コンテンツ)
+		// get created. These two shortcuts link straight to the 新規追加
+		// screen with the intended種別 pre-selected — see
+		// Content_Meta_Box::render()'s use of $_GET[Content_Post_Type::QUERY_VAR_KIND].
+		// No new post type or admin screen is introduced: both still save
+		// through the same alumni_content CPT + _alumni_content_kind meta.
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '人物挨拶を追加', 'alumni-core' ),
+			__( '　├ 人物挨拶を追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '自由コンテンツを追加', 'alumni-core' ),
+			__( '　└ 自由コンテンツを追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
 		);
 
 		/**

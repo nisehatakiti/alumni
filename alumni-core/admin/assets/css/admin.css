@@ -118,13 +118,45 @@
 }
 
 /* 役員・理事紹介 一覧 */
-.alumni-officers-table input[type="text"],
-.alumni-officers-table select {
-	width: 100%;
+/* 役員・理事紹介: 各列の幅を入力内容に合わせて配分する（卒業期は小さく、
+   人物紹介・挨拶ページのリンク先は選択肢の文字列が長くなりがちなので
+   大きく取る）。table-layout: fixed のもとでも、ヘッダーセルに指定した
+   幅がそのまま各列の幅として使われる。 */
+.alumni-officers-table-wrap {
+	overflow-x: auto;
 }
 
-.alumni-officers-table input[type="number"] {
-	width: 6em;
+.alumni-officers-col-term {
+	width: 8%;
+}
+
+.alumni-officers-col-title {
+	width: 14%;
+}
+
+.alumni-officers-col-committee {
+	width: 18%;
+}
+
+.alumni-officers-col-name {
+	width: 14%;
+}
+
+.alumni-officers-col-link {
+	width: 32%;
+}
+
+.alumni-officers-col-actions {
+	width: 14%;
+	white-space: nowrap;
+}
+
+.alumni-officers-table input[type="text"],
+.alumni-officers-table input[type="number"],
+.alumni-officers-table select {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.4em 0.5em;
 }
 
 .alumni-officers-table .button {

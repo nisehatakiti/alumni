@@ -58,26 +58,32 @@ class Officers_Page {
 				<input type="hidden" name="action" value="alumni_core_save_officers" />
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 
-				<table class="wp-list-table widefat fixed striped alumni-officers-table">
-					<thead>
-						<tr>
-							<th class="alumni-officers-col-term"><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
-							<th class="alumni-officers-col-title"><?php esc_html_e( '肩書', 'alumni-core' ); ?></th>
-							<th class="alumni-officers-col-committee"><?php esc_html_e( '委員会', 'alumni-core' ); ?></th>
-							<th class="alumni-officers-col-name"><?php esc_html_e( '氏名', 'alumni-core' ); ?></th>
-							<th class="alumni-officers-col-link"><?php esc_html_e( 'リンク先（人物挨拶）', 'alumni-core' ); ?></th>
-							<th class="alumni-officers-col-actions"><?php esc_html_e( '操作', 'alumni-core' ); ?></th>
-						</tr>
-					</thead>
-					<tbody id="alumni-officers-list">
-						<?php foreach ( $officers as $index => $officer ) : ?>
-							<?php $this->render_row( $index, $officer, $greeting_options ); ?>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
+				<div class="alumni-officers-table-wrap">
+					<table class="wp-list-table widefat fixed striped alumni-officers-table">
+						<thead>
+							<tr>
+								<th class="alumni-officers-col-term"><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
+								<th class="alumni-officers-col-title"><?php esc_html_e( '肩書', 'alumni-core' ); ?></th>
+								<th class="alumni-officers-col-committee"><?php esc_html_e( '委員会', 'alumni-core' ); ?></th>
+								<th class="alumni-officers-col-name"><?php esc_html_e( '氏名', 'alumni-core' ); ?></th>
+								<th class="alumni-officers-col-link"><?php esc_html_e( '人物紹介・挨拶ページ', 'alumni-core' ); ?></th>
+								<th class="alumni-officers-col-actions"><?php esc_html_e( '操作', 'alumni-core' ); ?></th>
+							</tr>
+						</thead>
+						<tbody id="alumni-officers-list">
+							<?php foreach ( $officers as $index => $officer ) : ?>
+								<?php $this->render_row( $index, $officer, $greeting_options ); ?>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
 				<template id="alumni-officers-row-template">
 					<table><tbody><?php $this->render_row( '__INDEX__', array(), $greeting_options ); ?></tbody></table>
 				</template>
+
+				<p class="description">
+					<?php esc_html_e( '「人物紹介・挨拶ページ」は、氏名をクリックした先に表示する人物挨拶コンテンツを選べる項目です。（リンクなし）を選ぶと、その役員の氏名にはリンクが付きません。選択肢は「コンテンツ名（氏名）」の形式で表示されます（例：会長挨拶（山田太郎））。', 'alumni-core' ); ?>
+				</p>
 
 				<p>
 					<button type="button" id="alumni-officers-add" class="button button-secondary">
@@ -112,32 +118,36 @@ class Officers_Page {
 		$linked_id = isset( $officer['linked_content_id'] ) ? (int) $officer['linked_content_id'] : 0;
 		?>
 		<tr class="alumni-officers-row" data-index="<?php echo esc_attr( $index ); ?>">
-			<td>
+			<td class="alumni-officers-col-term">
 				<input type="hidden" name="officers[<?php echo esc_attr( $index ); ?>][row_id]" class="alumni-officers-row-id" value="<?php echo esc_attr( $row_id ); ?>" />
-				<input type="number" inputmode="numeric" min="1" class="small-text" name="officers[<?php echo esc_attr( $index ); ?>][term]" value="<?php echo esc_attr( $term ); ?>" />
+				<input type="number" inputmode="numeric" min="1" name="officers[<?php echo esc_attr( $index ); ?>][term]"
+					value="<?php echo esc_attr( $term ); ?>" placeholder="<?php echo esc_attr__( '例：12', 'alumni-core' ); ?>" />
 			</td>
-			<td>
-				<input type="text" class="regular-text" name="officers[<?php echo esc_attr( $index ); ?>][title]" value="<?php echo esc_attr( $title ); ?>" />
+			<td class="alumni-officers-col-title">
+				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][title]"
+					value="<?php echo esc_attr( $title ); ?>" placeholder="<?php echo esc_attr__( '例：会長、副会長、理事', 'alumni-core' ); ?>" />
 			</td>
-			<td>
-				<input type="text" class="regular-text" name="officers[<?php echo esc_attr( $index ); ?>][committee]" value="<?php echo esc_attr( $committee ); ?>" />
+			<td class="alumni-officers-col-committee">
+				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][committee]"
+					value="<?php echo esc_attr( $committee ); ?>" placeholder="<?php echo esc_attr__( '例：広報委員会、事業委員会（なければ空欄）', 'alumni-core' ); ?>" />
 			</td>
-			<td>
-				<input type="text" class="regular-text" name="officers[<?php echo esc_attr( $index ); ?>][name]" value="<?php echo esc_attr( $name ); ?>" />
+			<td class="alumni-officers-col-name">
+				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][name]"
+					value="<?php echo esc_attr( $name ); ?>" placeholder="<?php echo esc_attr__( '例：山田 太郎', 'alumni-core' ); ?>" />
 			</td>
-			<td>
+			<td class="alumni-officers-col-link">
 				<select name="officers[<?php echo esc_attr( $index ); ?>][linked_content_id]">
-					<option value="0"><?php esc_html_e( 'リンクなし', 'alumni-core' ); ?></option>
-					<?php foreach ( $greeting_options as $content_id => $content_title ) : ?>
+					<option value="0"><?php esc_html_e( '（リンクなし）', 'alumni-core' ); ?></option>
+					<?php foreach ( $greeting_options as $content_id => $content_label ) : ?>
 						<option value="<?php echo esc_attr( $content_id ); ?>" <?php selected( $content_id, $linked_id ); ?>>
-							<?php echo esc_html( $content_title ); ?>
+							<?php echo esc_html( $content_label ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
 			</td>
-			<td>
-				<button type="button" class="button alumni-officers-move-up"><?php esc_html_e( '↑', 'alumni-core' ); ?></button>
-				<button type="button" class="button alumni-officers-move-down"><?php esc_html_e( '↓', 'alumni-core' ); ?></button>
+			<td class="alumni-officers-col-actions">
+				<button type="button" class="button alumni-officers-move-up" title="<?php echo esc_attr__( '上へ移動', 'alumni-core' ); ?>">↑</button>
+				<button type="button" class="button alumni-officers-move-down" title="<?php echo esc_attr__( '下へ移動', 'alumni-core' ); ?>">↓</button>
 				<button type="button" class="button alumni-officers-remove"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
 			</td>
 		</tr>
@@ -145,14 +155,18 @@ class Officers_Page {
 	}
 
 	/**
-	 * リンク先コンテンツ dropdown options: every 人物挨拶 content post,
+	 * 人物紹介・挨拶ページ dropdown options: every 人物挨拶 content post,
 	 * regardless of publish status (an admin linking an officer while both
 	 * are still drafts is a normal editing order, not an error) — the
 	 * public-facing link itself is still resolved/hidden safely at read
 	 * time by Officers::is_valid_linked_content() and the theme-facing
 	 * alumni_core_get_officer_link_url() API.
 	 *
-	 * @return array post_id => post_title.
+	 * Each label combines the コンテンツ名 (free-form, e.g. "会長挨拶")
+	 * with the 氏名 (e.g. "会長挨拶（山田太郎）") so an admin can tell
+	 * multiple similarly-named entries apart without opening each one.
+	 *
+	 * @return array post_id => display label.
 	 */
 	private static function person_greeting_options() {
 		$posts = get_posts(
@@ -170,7 +184,10 @@ class Officers_Page {
 		$options = array();
 
 		foreach ( $posts as $post ) {
-			$options[ $post->ID ] = $post->post_title ? $post->post_title : sprintf( '#%d', $post->ID );
+			$title = $post->post_title ? $post->post_title : sprintf( '#%d', $post->ID );
+			$name  = Content_Post_Type::get_person_name( $post );
+
+			$options[ $post->ID ] = $name ? sprintf( '%s（%s）', $title, $name ) : $title;
 		}
 
 		return $options;
