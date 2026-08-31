@@ -145,6 +145,26 @@ class Admin {
 			array( $this->settings_page, 'render' )
 		);
 
+		// 卒業期早見表 is placed right after 基本設定 (its actual data
+		// source — 学校創立年／第1期卒業年／卒業期カラー all live there),
+		// deliberately NOT adjacent to the コンテンツ / 人物挨拶 entries
+		// below. 卒業期早見表 has no relationship to 人物挨拶: it's an
+		// independent, always-available system page (see
+		// Graduation_Lookup_Shortcode), not "a kind of content" — this
+		// menu ordering, and the flat (non-indented) labels on the コンテ
+		// ンツ shortcuts further down, both exist so the admin screen
+		// doesn't visually suggest a parent/child relationship that
+		// doesn't exist in the data or the URL structure (/graduation-lookup/
+		// vs /contents/...  are completely independent).
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '卒業期早見表', 'alumni-core' ),
+			__( '卒業期早見表', 'alumni-core' ),
+			self::CAPABILITY,
+			Graduation_Lookup_Page::SLUG,
+			array( $this->graduation_lookup_page, 'render' )
+		);
+
 		$this->school_photos_hook = add_submenu_page(
 			self::MENU_SLUG,
 			__( '学校写真', 'alumni-core' ),
@@ -163,15 +183,6 @@ class Admin {
 			array( $this->officers_page, 'render' )
 		);
 
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '卒業期早見表', 'alumni-core' ),
-			__( '卒業期早見表', 'alumni-core' ),
-			self::CAPABILITY,
-			Graduation_Lookup_Page::SLUG,
-			array( $this->graduation_lookup_page, 'render' )
-		);
-
 		// WordPress already adds a generic 「すべてのコンテンツ」/「新規追加」
 		// pair for the alumni_content CPT (via its show_in_menu => self::MENU_SLUG),
 		// but nothing there hints that this single CPT is how 校長挨拶・
@@ -181,10 +192,12 @@ class Admin {
 		// Content_Meta_Box::render()'s use of $_GET[Content_Post_Type::QUERY_VAR_KIND].
 		// No new post type or admin screen is introduced: both still save
 		// through the same alumni_content CPT + _alumni_content_kind meta.
+		// Labels are flat siblings (no tree-drawing indentation) — they
+		// relate only to "すべてのコンテンツ" above them, not to 卒業期早見表.
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '人物挨拶を追加', 'alumni-core' ),
-			__( '　├ 人物挨拶を追加', 'alumni-core' ),
+			__( '＋ 人物挨拶を追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
 		);
@@ -192,7 +205,7 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '自由コンテンツを追加', 'alumni-core' ),
-			__( '　└ 自由コンテンツを追加', 'alumni-core' ),
+			__( '＋ 自由コンテンツを追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
 		);

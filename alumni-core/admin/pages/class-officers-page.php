@@ -121,22 +121,27 @@ class Officers_Page {
 			<td class="alumni-officers-col-term">
 				<input type="hidden" name="officers[<?php echo esc_attr( $index ); ?>][row_id]" class="alumni-officers-row-id" value="<?php echo esc_attr( $row_id ); ?>" />
 				<input type="number" inputmode="numeric" min="1" name="officers[<?php echo esc_attr( $index ); ?>][term]"
+					aria-label="<?php echo esc_attr__( '卒業期', 'alumni-core' ); ?>"
 					value="<?php echo esc_attr( $term ); ?>" placeholder="<?php echo esc_attr__( '例：12', 'alumni-core' ); ?>" />
 			</td>
 			<td class="alumni-officers-col-title">
 				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][title]"
+					aria-label="<?php echo esc_attr__( '肩書', 'alumni-core' ); ?>"
 					value="<?php echo esc_attr( $title ); ?>" placeholder="<?php echo esc_attr__( '例：会長、副会長、理事', 'alumni-core' ); ?>" />
 			</td>
 			<td class="alumni-officers-col-committee">
 				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][committee]"
+					aria-label="<?php echo esc_attr__( '委員会', 'alumni-core' ); ?>"
 					value="<?php echo esc_attr( $committee ); ?>" placeholder="<?php echo esc_attr__( '例：広報委員会、事業委員会（なければ空欄）', 'alumni-core' ); ?>" />
 			</td>
 			<td class="alumni-officers-col-name">
 				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][name]"
+					aria-label="<?php echo esc_attr__( '氏名', 'alumni-core' ); ?>"
 					value="<?php echo esc_attr( $name ); ?>" placeholder="<?php echo esc_attr__( '例：山田 太郎', 'alumni-core' ); ?>" />
 			</td>
 			<td class="alumni-officers-col-link">
-				<select name="officers[<?php echo esc_attr( $index ); ?>][linked_content_id]">
+				<select name="officers[<?php echo esc_attr( $index ); ?>][linked_content_id]"
+					aria-label="<?php echo esc_attr__( '人物紹介・挨拶ページ（氏名から表示先の人物挨拶コンテンツを選びます。未選択なら氏名にリンクは付きません）', 'alumni-core' ); ?>">
 					<option value="0"><?php esc_html_e( '（リンクなし）', 'alumni-core' ); ?></option>
 					<?php foreach ( $greeting_options as $content_id => $content_label ) : ?>
 						<option value="<?php echo esc_attr( $content_id ); ?>" <?php selected( $content_id, $linked_id ); ?>>
