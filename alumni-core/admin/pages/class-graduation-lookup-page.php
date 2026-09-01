@@ -65,19 +65,34 @@ class Graduation_Lookup_Page {
 		$colors       = $settings['colors'];
 		$color_active = $settings['color_feature_enabled'];
 
+		// 生年月日は「年」「月」「日」の3つの数値入力に分けて受け取る
+		// （<input type="date">は環境によってカレンダーUIの操作性が悪く、
+		// スマートフォンで数字キーボードが出ないことがあったため）。
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup, nothing is written.
-		$search_date   = isset( $_GET['birthdate'] ) ? sanitize_text_field( wp_unslash( $_GET['birthdate'] ) ) : '';
-		$search_result = null;
+		$search_year_input  = isset( $_GET['birth_year'] ) ? sanitize_text_field( wp_unslash( $_GET['birth_year'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$search_month_input = isset( $_GET['birth_month'] ) ? sanitize_text_field( wp_unslash( $_GET['birth_month'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$search_day_input   = isset( $_GET['birth_day'] ) ? sanitize_text_field( wp_unslash( $_GET['birth_day'] ) ) : '';
 
-		if ( '' !== $search_date ) {
-			$search_year = Term_Calculator::birthdate_to_graduation_year( $search_date );
-			$search_term = ( '' === $first_graduation_year ) ? null : Term_Calculator::birthdate_to_term( $search_date, $first_graduation_year );
+		$search_submitted = ( '' !== $search_year_input || '' !== $search_month_input || '' !== $search_day_input );
+		$search_result    = null;
 
-			$search_result = array(
-				'year'        => $search_year,
-				'term'        => $search_term,
-				'birth_range' => null === $search_year ? null : Term_Calculator::graduation_year_to_birth_range( $search_year ),
-			);
+		if ( $search_submitted ) {
+			$search_date = Term_Calculator::validate_date_parts( $search_year_input, $search_month_input, $search_day_input );
+
+			if ( null === $search_date ) {
+				$search_result = array( 'year' => null, 'term' => null, 'birth_range' => null );
+			} else {
+				$search_year = Term_Calculator::birthdate_to_graduation_year( $search_date );
+				$search_term = ( '' === $first_graduation_year ) ? null : Term_Calculator::birthdate_to_term( $search_date, $first_graduation_year );
+
+				$search_result = array(
+					'year'        => $search_year,
+					'term'        => $search_term,
+					'birth_range' => null === $search_year ? null : Term_Calculator::graduation_year_to_birth_range( $search_year ),
+				);
+			}
 		}
 		?>
 		<div class="wrap alumni-core-graduation-lookup">
@@ -97,21 +112,39 @@ class Graduation_Lookup_Page {
 				</div>
 			<?php endif; ?>
 
-			<h2><?php esc_html_e( '生年月日から調べる', 'alumni-core' ); ?></h2>
-			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+			<h2><?php esc_html_e( '卒業期を調べる', 'alumni-core' ); ?></h2>
+			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="alumni-lookup-date-form">
 				<input type="hidden" name="page" value="<?php echo esc_attr( self::SLUG ); ?>" />
 				<p>
-					<label for="alumni-lookup-birthdate"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label>
-					<input type="date" id="alumni-lookup-birthdate" name="birthdate" value="<?php echo esc_attr( $search_date ); ?>" />
-					<?php submit_button( __( '調べる', 'alumni-core' ), 'secondary', '', false ); ?>
+					<label for="alumni-lookup-birth-year"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label><br />
+					<input type="number" inputmode="numeric" id="alumni-lookup-birth-year" name="birth_year" class="small-text" min="1000" max="9999" placeholder="<?php echo esc_attr__( '年', 'alumni-core' ); ?>" value="<?php echo esc_attr( $search_year_input ); ?>" />
+					<?php esc_html_e( '年', 'alumni-core' ); ?>
+					<input type="number" inputmode="numeric" id="alumni-lookup-birth-month" name="birth_month" class="small-text" min="1" max="12" placeholder="<?php echo esc_attr__( '月', 'alumni-core' ); ?>" value="<?php echo esc_attr( $search_month_input ); ?>" />
+					<?php esc_html_e( '月', 'alumni-core' ); ?>
+					<input type="number" inputmode="numeric" id="alumni-lookup-birth-day" name="birth_day" class="small-text" min="1" max="31" placeholder="<?php echo esc_attr__( '日', 'alumni-core' ); ?>" value="<?php echo esc_attr( $search_day_input ); ?>" />
+					<?php esc_html_e( '日', 'alumni-core' ); ?>
+					<?php submit_button( __( '卒業期を調べる', 'alumni-core' ), 'secondary', '', false ); ?>
 				</p>
 			</form>
 
 			<?php if ( null !== $search_result ) : ?>
 				<div class="notice notice-info alumni-lookup-search-result">
 					<?php if ( null === $search_result['year'] ) : ?>
-						<p><?php esc_html_e( '生年月日を正しく入力してください（YYYY-MM-DD）。', 'alumni-core' ); ?></p>
+						<p><?php esc_html_e( '生年月日を正しく入力してください（実在する年月日ではありません）。', 'alumni-core' ); ?></p>
 					<?php else : ?>
+						<?php if ( null !== $search_result['term'] ) : ?>
+							<p class="alumni-lookup-result-term">
+								<?php
+								printf(
+									/* translators: %d: graduation term (期) */
+									esc_html__( 'あなたの卒業期：第%d期', 'alumni-core' ),
+									(int) $search_result['term']
+								);
+								?>
+							</p>
+						<?php else : ?>
+							<p><?php esc_html_e( '第1期卒業年が未設定のため、卒業期は算出できません。', 'alumni-core' ); ?></p>
+						<?php endif; ?>
 						<p>
 							<?php
 							printf(
@@ -123,35 +156,19 @@ class Graduation_Lookup_Page {
 							);
 							?>
 						</p>
-						<?php if ( null !== $search_result['term'] ) : ?>
-							<p>
-								<?php
-								printf(
-									/* translators: %d: graduation term (期) */
-									esc_html__( '対応する卒業期は 第%d期 です。', 'alumni-core' ),
-									(int) $search_result['term']
-								);
-								?>
-							</p>
-						<?php else : ?>
-							<p><?php esc_html_e( '第1期卒業年が未設定のため、卒業期は算出できません。', 'alumni-core' ); ?></p>
-						<?php endif; ?>
 						<p class="description"><?php esc_html_e( 'これは標準的な進級・卒業を前提とした推定です。留年・浪人・転校・編入などは考慮していません。実際にその方がその期を卒業したことを保証するものではありません。', 'alumni-core' ); ?></p>
 					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 
 			<?php if ( ! empty( $rows ) ) : ?>
-				<h2><?php esc_html_e( '早見表', 'alumni-core' ); ?></h2>
+				<h2><?php esc_html_e( '卒業期早見表', 'alumni-core' ); ?></h2>
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( '期', 'alumni-core' ); ?></th>
-							<th><?php esc_html_e( '卒業年', 'alumni-core' ); ?></th>
-							<th><?php esc_html_e( '誕生日範囲', 'alumni-core' ); ?></th>
-							<?php if ( $color_active ) : ?>
-								<th><?php esc_html_e( '卒業期カラー', 'alumni-core' ); ?></th>
-							<?php endif; ?>
+							<th><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
+							<th><?php esc_html_e( '卒業年度', 'alumni-core' ); ?></th>
+							<th><?php esc_html_e( '生年月日', 'alumni-core' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -160,11 +177,13 @@ class Graduation_Lookup_Page {
 							$color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null;
 
 							// 卒業期カラーは行全体の背景色として適用する（ヘッダー行には
-							// 適用しない）。色は管理者が自由に設定できる動的な値のため、
-							// 実際の色そのものはインラインstyleで指定するしかないが、
-							// 読みやすさを保つための白文字／黒文字の切り替えは
-							// admin.cssのクラスに委ねる（Term_Calculator::is_dark_color()
-							// が色の明度からどちらのクラスを使うかだけを判定する）。
+							// 適用しない）。色そのものを示す専用の列は置かない — 行の
+							// 背景色そのものが卒業期カラーを表す。色は管理者が自由に
+							// 設定できる動的な値のため、実際の色そのものはインライン
+							// styleで指定するしかないが、読みやすさを保つための
+							// 白文字／黒文字の切り替えはadmin.cssのクラスに委ねる
+							// （Term_Calculator::is_dark_color()が色の明度からどちらの
+							// クラスを使うかだけを判定する）。
 							$alumni_row_attrs = '';
 							if ( $color ) {
 								$text_class       = Term_Calculator::is_dark_color( $color ) ? 'alumni-lookup-row-text-light' : 'alumni-lookup-row-text-dark';
@@ -184,17 +203,6 @@ class Graduation_Lookup_Page {
 										<?php echo esc_html( $row['birth_range']['start'] . ' 〜 ' . $row['birth_range']['end'] ); ?>
 									<?php endif; ?>
 								</td>
-								<?php if ( $color_active ) : ?>
-									<td>
-										<?php
-										// The swatch square this column used to show is dropped now
-										// that the whole row carries the color as its background —
-										// a same-color square inside a same-color row would just be
-										// invisible. The hex value stays as plain reference text.
-										echo $color ? esc_html( $color ) : '';
-										?>
-									</td>
-								<?php endif; ?>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

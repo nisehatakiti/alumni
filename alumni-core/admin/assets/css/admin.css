@@ -122,8 +122,9 @@
    スタイルが列幅の指定と競合し、「画面には空白があるのに入力欄だけ狭い」
    状態を繰り返す原因になっていたため）。grid-template-columnsにfr単位を
    使うことで、画面の使える横幅をどのビューポートでも余すことなく各列に
-   配分する。列の比率は実際の入力内容の長さの目安
-   （卒業期=小、肩書・氏名=中、委員会・人物紹介ページ=大、操作=小）に
+   配分する。列は指定どおり 肩書・氏名・卒業期・委員会・備考・
+   人物紹介ページ・操作 の順、幅の比率は実際の入力内容の長さの目安
+   （肩書・卒業期・操作=小、氏名・委員会・備考=中、人物紹介ページ=大）に
    合わせた。 */
 .alumni-officers-grid-wrap {
 	overflow-x: auto;
@@ -132,11 +133,12 @@
 .alumni-officers-grid {
 	display: grid;
 	grid-template-columns:
+		minmax(120px, 0.9fr)
+		minmax(140px, 1.1fr)
 		minmax(90px, 0.7fr)
-		minmax(140px, 1.1fr)
-		minmax(190px, 1.6fr)
-		minmax(140px, 1.1fr)
-		minmax(230px, 1.8fr)
+		minmax(160px, 1.2fr)
+		minmax(160px, 1.2fr)
+		minmax(220px, 1.7fr)
 		minmax(130px, 0.9fr);
 	gap: 0.5em 1.25em;
 	align-items: start;

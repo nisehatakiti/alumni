@@ -92,6 +92,13 @@ get_header();
 						</a>
 					</li>
 				<?php endif; ?>
+				<?php if ( alumni_theme_get_terms_listing_url() ) : ?>
+					<li>
+						<a class="front-quick-links-link" href="<?php echo esc_url( alumni_theme_get_terms_listing_url() ); ?>">
+							<?php esc_html_e( '規約類を見る', 'alumni-theme' ); ?>
+						</a>
+					</li>
+				<?php endif; ?>
 			</ul>
 		</section>
 	<?php endif; ?>

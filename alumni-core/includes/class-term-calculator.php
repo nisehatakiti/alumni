@@ -223,6 +223,45 @@ class Term_Calculator {
 	}
 
 	/**
+	 * Validates and combines separately-submitted 生年／月／日 number
+	 * fields into a single 'Y-m-d' string, rejecting anything that isn't a
+	 * real calendar date (e.g. month 13, or February 31) via PHP's own
+	 * checkdate() rather than a hand-rolled range check — this is the
+	 * single source of truth both the admin screen's and the public
+	 * shortcode's 生年月日 search forms call, so the two never drift.
+	 *
+	 * @param mixed $year  Raw year input (e.g. from $_GET).
+	 * @param mixed $month Raw month input (1-12).
+	 * @param mixed $day   Raw day input (1-31).
+	 * @return string|null 'Y-m-d', or null when any part is missing, not a
+	 *                      plain integer, or doesn't form a real date.
+	 */
+	public static function validate_date_parts( $year, $month, $day ) {
+		foreach ( array( $year, $month, $day ) as $part ) {
+			if ( '' === $part || null === $part || ! is_numeric( $part ) ) {
+				return null;
+			}
+			if ( (string) (int) $part !== (string) ( $part + 0 ) ) {
+				return null; // Rejects non-integer numeric input (e.g. "5.5").
+			}
+		}
+
+		$year  = (int) $year;
+		$month = (int) $month;
+		$day   = (int) $day;
+
+		if ( $year < 1000 || $year > 9999 ) {
+			return null;
+		}
+
+		if ( ! checkdate( $month, $day, $year ) ) {
+			return null;
+		}
+
+		return sprintf( '%04d-%02d-%02d', $year, $month, $day );
+	}
+
+	/**
 	 * Builds a 卒業期早見表: one row per term in [from_term, to_term],
 	 * each with its graduation year and standard-progression birth range.
 	 * Safe against a corrupted/invalid $first_graduation_year (returns an

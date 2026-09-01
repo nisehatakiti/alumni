@@ -12,6 +12,7 @@ use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
 use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
+use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -73,6 +74,13 @@ class Admin {
 	private $graduation_lookup_page;
 
 	/**
+	 * 規約類 screen handler.
+	 *
+	 * @var Terms_Page
+	 */
+	private $terms_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -105,12 +113,15 @@ class Admin {
 		$this->school_photos_page     = new School_Photos_Page();
 		$this->officers_page          = new Officers_Page();
 		$this->graduation_lookup_page = new Graduation_Lookup_Page();
+		$this->terms_page             = new Terms_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
-		add_action( 'admin_post_alumni_core_save_officers', array( $this->officers_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
 	}
 
 	/**
@@ -208,6 +219,19 @@ class Admin {
 			__( '＋ 自由コンテンツを追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
+		);
+
+		// 規約類も同じ alumni_content CPT（kind=terms）だが、他のコンテンツ
+		// と混ざらない専用の一覧screen（Terms_Page）を独立した項目として
+		// 持つ — 同窓会規約・会則・個人情報保護方針などを他のコンテンツと
+		// 一緒くたにせず、まとめて見渡せるようにするため。
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '規約類', 'alumni-core' ),
+			__( '規約類', 'alumni-core' ),
+			self::CAPABILITY,
+			Terms_Page::SLUG,
+			array( $this->terms_page, 'render' )
 		);
 
 		/**

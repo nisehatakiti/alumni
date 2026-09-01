@@ -149,3 +149,70 @@ if ( ! function_exists( 'alumni_core_get_person_greeting' ) ) {
 		);
 	}
 }
+
+if ( ! function_exists( 'alumni_core_is_terms' ) ) {
+	/**
+	 * @param int|WP_Post|null $post Post ID or object.
+	 * @return bool
+	 */
+	function alumni_core_is_terms( $post = null ) {
+		return \AlumniCore\Includes\Modules\Content\Post_Type::is_terms( $post );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_terms_query' ) ) {
+	/**
+	 * Runs a WP_Query for published 規約類 コンテンツ only, ordered by
+	 * 表示順 (menu_order, ascending) — the order an admin sets in
+	 * Admin\Pages\Terms_Page / the 規約類 fields of Content_Meta_Box.
+	 *
+	 * @param array $args Extra/overriding WP_Query args.
+	 * @return WP_Query
+	 */
+	function alumni_core_get_terms_query( $args = array() ) {
+		$defaults = array(
+			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by kind is the entire purpose of this query.
+				array(
+					'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_KIND,
+					'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_TERMS,
+				),
+			),
+			'orderby'    => 'menu_order',
+			'order'      => 'ASC',
+		);
+
+		return alumni_core_get_contents_query( wp_parse_args( $args, $defaults ) );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_terms' ) ) {
+	/**
+	 * Every field a theme needs to render a 規約類 card/page, gathered
+	 * into one array.
+	 *
+	 * @param int|WP_Post|null $post Post ID or object.
+	 * @return array{
+	 *     id:int, content_name:string, display_title:string,
+	 *     effective_date:string, revised_date:string, body:string,
+	 *     status:string, menu_order:int
+	 * }|null Null when $post doesn't resolve to a 規約類 コンテンツ post.
+	 */
+	function alumni_core_get_terms( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post || alumni_core_content_post_type() !== $post->post_type || ! alumni_core_is_terms( $post ) ) {
+			return null;
+		}
+
+		return array(
+			'id'             => $post->ID,
+			'content_name'   => $post->post_title,
+			'display_title'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_display_title( $post ),
+			'effective_date' => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_effective_date( $post ),
+			'revised_date'   => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revised_date( $post ),
+			'body'           => $post->post_content,
+			'status'         => $post->post_status,
+			'menu_order'     => (int) $post->menu_order,
+		);
+	}
+}

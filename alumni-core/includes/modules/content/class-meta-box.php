@@ -101,14 +101,19 @@ class Content_Meta_Box {
 
 			if ( Post_Type::KIND_PERSON_GREETING === $requested_kind ) {
 				$kind = Post_Type::KIND_PERSON_GREETING;
+			} elseif ( Post_Type::KIND_TERMS === $requested_kind ) {
+				$kind = Post_Type::KIND_TERMS;
 			}
 		}
 
-		$name      = Post_Type::get_person_name( $post );
-		$kana      = Post_Type::get_person_kana( $post );
-		$title     = Post_Type::get_person_title( $post );
-		$term      = Post_Type::get_person_term( $post );
-		$photo_id  = (int) get_post_meta( $post->ID, Post_Type::META_PERSON_PHOTO_ID, true );
+		$name           = Post_Type::get_person_name( $post );
+		$kana           = Post_Type::get_person_kana( $post );
+		$title          = Post_Type::get_person_title( $post );
+		$term           = Post_Type::get_person_term( $post );
+		$photo_id       = (int) get_post_meta( $post->ID, Post_Type::META_PERSON_PHOTO_ID, true );
+		$display_title  = (string) get_post_meta( $post->ID, Post_Type::META_TERMS_DISPLAY_TITLE, true );
+		$effective_date = Post_Type::get_terms_effective_date( $post );
+		$revised_date   = Post_Type::get_terms_revised_date( $post );
 		?>
 		<div class="alumni-content-fields">
 			<p>
@@ -123,7 +128,12 @@ class Content_Meta_Box {
 						<?php checked( Post_Type::KIND_PERSON_GREETING, $kind ); ?> />
 					<?php esc_html_e( '人物挨拶', 'alumni-core' ); ?>
 				</label>
-				<p class="description"><?php esc_html_e( '「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。', 'alumni-core' ); ?></p>
+				<label class="alumni-content-kind-option">
+					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_TERMS ); ?>"
+						<?php checked( Post_Type::KIND_TERMS, $kind ); ?> />
+					<?php esc_html_e( '規約類', 'alumni-core' ); ?>
+				</label>
+				<p class="description"><?php esc_html_e( '「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。規約類の場合、「コンテンツ名」がそのまま規約名になります（例：同窓会規約、会則、個人情報保護方針）。', 'alumni-core' ); ?></p>
 			</p>
 
 			<div id="alumni-person-greeting-fields" class="alumni-person-greeting-fields">
@@ -149,6 +159,27 @@ class Content_Meta_Box {
 				<p>
 					<strong><?php esc_html_e( '顔写真（任意）', 'alumni-core' ); ?></strong><br />
 					<?php $this->render_photo_picker( $photo_id ); ?>
+				</p>
+			</div>
+
+			<div id="alumni-terms-fields" class="alumni-terms-fields">
+				<p>
+					<label for="alumni_terms_display_title"><strong><?php esc_html_e( '公開タイトル（任意）', 'alumni-core' ); ?></strong></label><br />
+					<input type="text" id="alumni_terms_display_title" name="alumni_terms_display_title" class="regular-text" value="<?php echo esc_attr( $display_title ); ?>" placeholder="<?php echo esc_attr__( '未入力の場合はコンテンツ名（規約名）をそのまま使用します', 'alumni-core' ); ?>" />
+					<p class="description"><?php esc_html_e( '公開ページの見出しをコンテンツ名（規約名）と別にしたい場合だけ入力してください。', 'alumni-core' ); ?></p>
+				</p>
+				<p>
+					<label for="alumni_terms_effective_date"><strong><?php esc_html_e( '施行日（任意）', 'alumni-core' ); ?></strong></label><br />
+					<input type="date" id="alumni_terms_effective_date" name="alumni_terms_effective_date" value="<?php echo esc_attr( $effective_date ); ?>" />
+				</p>
+				<p>
+					<label for="alumni_terms_revised_date"><strong><?php esc_html_e( '改定日（任意）', 'alumni-core' ); ?></strong></label><br />
+					<input type="date" id="alumni_terms_revised_date" name="alumni_terms_revised_date" value="<?php echo esc_attr( $revised_date ); ?>" />
+				</p>
+				<p>
+					<label for="alumni_terms_menu_order"><strong><?php esc_html_e( '表示順（任意）', 'alumni-core' ); ?></strong></label><br />
+					<input type="number" inputmode="numeric" id="alumni_terms_menu_order" name="alumni_terms_menu_order" class="small-text" value="<?php echo esc_attr( $post->menu_order ); ?>" />
+					<p class="description"><?php esc_html_e( '規約類一覧での並び順です。小さい数字ほど先に表示されます（同じ数字は登録順）。', 'alumni-core' ); ?></p>
 				</p>
 			</div>
 
@@ -209,7 +240,7 @@ class Content_Meta_Box {
 
 		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
 
-		if ( Post_Type::KIND_PERSON_GREETING !== $kind ) {
+		if ( ! in_array( $kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS ), true ) ) {
 			$kind = Post_Type::KIND_FREE;
 		}
 
@@ -237,23 +268,77 @@ class Content_Meta_Box {
 			} else {
 				delete_post_meta( $post_id, Post_Type::META_PERSON_PHOTO_ID );
 			}
+
+			self::clear_terms_meta( $post_id );
+		} elseif ( Post_Type::KIND_TERMS === $kind ) {
+			$display_title  = isset( $_POST['alumni_terms_display_title'] ) ? sanitize_text_field( wp_unslash( $_POST['alumni_terms_display_title'] ) ) : '';
+			$effective_date = isset( $_POST['alumni_terms_effective_date'] ) ? self::sanitize_date( wp_unslash( $_POST['alumni_terms_effective_date'] ) ) : '';
+			$revised_date   = isset( $_POST['alumni_terms_revised_date'] ) ? self::sanitize_date( wp_unslash( $_POST['alumni_terms_revised_date'] ) ) : '';
+
+			if ( '' === $display_title ) {
+				delete_post_meta( $post_id, Post_Type::META_TERMS_DISPLAY_TITLE );
+			} else {
+				update_post_meta( $post_id, Post_Type::META_TERMS_DISPLAY_TITLE, $display_title );
+			}
+
+			if ( '' === $effective_date ) {
+				delete_post_meta( $post_id, Post_Type::META_TERMS_EFFECTIVE_DATE );
+			} else {
+				update_post_meta( $post_id, Post_Type::META_TERMS_EFFECTIVE_DATE, $effective_date );
+			}
+
+			if ( '' === $revised_date ) {
+				delete_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE );
+			} else {
+				update_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE, $revised_date );
+			}
+
+			// Switched to 規約類 (or was already): the 人物挨拶専用 fields no
+			// longer apply.
+			self::clear_person_greeting_meta( $post_id );
 		} else {
-			// Switched back to 自由コンテンツ (or was already): the
-			// person-greeting-only fields no longer apply, so drop them
-			// rather than leaving stale data behind that no UI shows.
-			delete_post_meta( $post_id, Post_Type::META_PERSON_NAME );
-			delete_post_meta( $post_id, Post_Type::META_PERSON_KANA );
-			delete_post_meta( $post_id, Post_Type::META_PERSON_TITLE );
-			delete_post_meta( $post_id, Post_Type::META_PERSON_TERM );
-			delete_post_meta( $post_id, Post_Type::META_PERSON_PHOTO_ID );
+			// 自由コンテンツ: neither 人物挨拶 nor 規約類 fields apply.
+			self::clear_person_greeting_meta( $post_id );
+			self::clear_terms_meta( $post_id );
 		}
 	}
 
 	/**
-	 * Writes the 本文 textarea into post_content. Hooked to
-	 * wp_insert_post_data at a lower priority number than
-	 * Content_Required_Fields::enforce(), same reasoning as
-	 * NewsEvents\Meta_Box::inject_content().
+	 * Drops the 人物挨拶専用 postmeta — used whenever a post's kind is (or
+	 * becomes) something other than 人物挨拶, so switching kinds never
+	 * leaves stale data behind that no UI shows.
+	 *
+	 * @param int $post_id
+	 */
+	private static function clear_person_greeting_meta( $post_id ) {
+		delete_post_meta( $post_id, Post_Type::META_PERSON_NAME );
+		delete_post_meta( $post_id, Post_Type::META_PERSON_KANA );
+		delete_post_meta( $post_id, Post_Type::META_PERSON_TITLE );
+		delete_post_meta( $post_id, Post_Type::META_PERSON_TERM );
+		delete_post_meta( $post_id, Post_Type::META_PERSON_PHOTO_ID );
+	}
+
+	/**
+	 * Drops the 規約類専用 postmeta — used whenever a post's kind is (or
+	 * becomes) something other than 規約類.
+	 *
+	 * @param int $post_id
+	 */
+	private static function clear_terms_meta( $post_id ) {
+		delete_post_meta( $post_id, Post_Type::META_TERMS_DISPLAY_TITLE );
+		delete_post_meta( $post_id, Post_Type::META_TERMS_EFFECTIVE_DATE );
+		delete_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE );
+	}
+
+	/**
+	 * Writes the 本文 textarea into post_content, and (規約類のみ) 表示順
+	 * into menu_order. Hooked to wp_insert_post_data at a lower priority
+	 * number than Content_Required_Fields::enforce(), same reasoning as
+	 * NewsEvents\Meta_Box::inject_content(). menu_order is a native post
+	 * table column, not postmeta, so it must be injected here (via
+	 * wp_insert_post_data) rather than via update_post_meta() in save() —
+	 * setting it with wp_update_post() from inside save_post would
+	 * recursively re-trigger save_post instead.
 	 *
 	 * @param array $data    Slashed post data about to be saved.
 	 * @param array $postarr Raw $_POST-derived data.
@@ -271,6 +356,12 @@ class Content_Meta_Box {
 		$content = isset( $_POST['alumni_content_body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
 
 		$data['post_content'] = wp_slash( $content );
+
+		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
+
+		if ( Post_Type::KIND_TERMS === $kind && isset( $_POST['alumni_terms_menu_order'] ) ) {
+			$data['menu_order'] = (int) wp_unslash( $_POST['alumni_terms_menu_order'] );
+		}
 
 		return $data;
 	}
@@ -296,5 +387,32 @@ class Content_Meta_Box {
 		$term = (int) $raw;
 
 		return $term > 0 ? $term : '';
+	}
+
+	/**
+	 * Validates a 'Y-m-d' date submission (from an <input type="date">,
+	 * 施行日／改定日), rejecting anything that isn't a real calendar date
+	 * via checkdate() — same rule as
+	 * Term_Calculator::validate_date_parts(), duplicated rather than
+	 * cross-referenced since these fields are plain optional metadata,
+	 * not part of any calculation.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return string 'Y-m-d', or '' when empty/invalid.
+	 */
+	public static function sanitize_date( $raw ) {
+		if ( ! is_string( $raw ) || ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $matches ) ) {
+			return '';
+		}
+
+		$year  = (int) $matches[1];
+		$month = (int) $matches[2];
+		$day   = (int) $matches[3];
+
+		if ( ! checkdate( $month, $day, $year ) ) {
+			return '';
+		}
+
+		return $raw;
 	}
 }

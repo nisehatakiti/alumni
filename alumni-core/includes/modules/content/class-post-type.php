@@ -43,6 +43,7 @@ class Post_Type {
 	 */
 	const KIND_FREE            = 'free';
 	const KIND_PERSON_GREETING = 'person_greeting';
+	const KIND_TERMS           = 'terms';
 
 	/**
 	 * Query var used only by the 「人物挨拶を追加」／「自由コンテンツを
@@ -63,6 +64,15 @@ class Post_Type {
 	const META_PERSON_TITLE    = '_alumni_person_title';
 	const META_PERSON_TERM     = '_alumni_person_term';
 	const META_PERSON_PHOTO_ID = '_alumni_person_photo_id';
+
+	/**
+	 * Meta keys used only when META_KIND is KIND_TERMS (規約類). 表示順は
+	 * 専用のmeta keyを持たず、全投稿が既に持つ標準のmenu_orderカラムを
+	 * そのまま使う（他のkindは使わないので影響しない）。
+	 */
+	const META_TERMS_DISPLAY_TITLE  = '_alumni_terms_display_title';
+	const META_TERMS_EFFECTIVE_DATE = '_alumni_terms_effective_date';
+	const META_TERMS_REVISED_DATE   = '_alumni_terms_revised_date';
 
 	/**
 	 * Registers the post type. Hooked to 'init' so it runs on every
@@ -113,7 +123,8 @@ class Post_Type {
 	 *
 	 * @param int|\WP_Post|null $post Post ID or object. Defaults to the
 	 *                                 current global post.
-	 * @return string self::KIND_FREE or self::KIND_PERSON_GREETING.
+	 * @return string self::KIND_FREE, self::KIND_PERSON_GREETING, or
+	 *                 self::KIND_TERMS.
 	 */
 	public static function get_kind( $post = null ) {
 		$post = get_post( $post );
@@ -124,7 +135,15 @@ class Post_Type {
 
 		$kind = get_post_meta( $post->ID, self::META_KIND, true );
 
-		return self::KIND_PERSON_GREETING === $kind ? self::KIND_PERSON_GREETING : self::KIND_FREE;
+		if ( self::KIND_PERSON_GREETING === $kind ) {
+			return self::KIND_PERSON_GREETING;
+		}
+
+		if ( self::KIND_TERMS === $kind ) {
+			return self::KIND_TERMS;
+		}
+
+		return self::KIND_FREE;
 	}
 
 	/**
@@ -133,6 +152,14 @@ class Post_Type {
 	 */
 	public static function is_person_greeting( $post = null ) {
 		return self::KIND_PERSON_GREETING === self::get_kind( $post );
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return bool
+	 */
+	public static function is_terms( $post = null ) {
+		return self::KIND_TERMS === self::get_kind( $post );
 	}
 
 	/**
@@ -202,5 +229,46 @@ class Post_Type {
 		$id = absint( get_post_meta( $post->ID, self::META_PERSON_PHOTO_ID, true ) );
 
 		return \AlumniCore\Includes\Settings::is_valid_image_attachment( $id ) ? $id : 0;
+	}
+
+	/**
+	 * 公開タイトル（規約類）: 公開ページの見出しに使う任意の上書き値。
+	 * 未設定ならコンテンツ名（post_title、＝規約名）をそのまま使う —
+	 * ほとんどの規約は規約名と公開タイトルが同じ文字列で構わないため、
+	 * 上書きは必要な場合だけの任意項目にしている。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string
+	 */
+	public static function get_terms_display_title( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return '';
+		}
+
+		$override = (string) get_post_meta( $post->ID, self::META_TERMS_DISPLAY_TITLE, true );
+
+		return '' !== $override ? $override : $post->post_title;
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string 'Y-m-d'、または未設定なら ''。
+	 */
+	public static function get_terms_effective_date( $post = null ) {
+		$post = get_post( $post );
+
+		return $post ? (string) get_post_meta( $post->ID, self::META_TERMS_EFFECTIVE_DATE, true ) : '';
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string 'Y-m-d'、または未設定なら ''。
+	 */
+	public static function get_terms_revised_date( $post = null ) {
+		$post = get_post( $post );
+
+		return $post ? (string) get_post_meta( $post->ID, self::META_TERMS_REVISED_DATE, true ) : '';
 	}
 }

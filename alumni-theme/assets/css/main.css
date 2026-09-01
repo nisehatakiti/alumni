@@ -363,6 +363,59 @@
 	margin-bottom: 0.5em;
 }
 
+/* ニュース一覧（/news/）・イベント一覧（/events/）。
+   [alumni_news_list]/[alumni_events_list] ショートコード（Core）が出す
+   構造にあわせたスタイルのみをここで持つ — カード形式の
+   .alumni-news-event-card 系とは別の、単純な縦積みリスト表示。 */
+.alumni-news-events-listing-list {
+	list-style: none;
+	margin: 1.5em 0;
+	padding: 0;
+}
+
+.alumni-news-events-listing-item {
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.alumni-news-events-listing-link {
+	display: block;
+	padding: 1em 0;
+	color: inherit;
+	text-decoration: none;
+}
+
+.alumni-news-events-listing-link:hover .alumni-news-events-listing-title {
+	text-decoration: underline;
+}
+
+.alumni-news-events-listing-event-date {
+	display: block;
+	color: #2c5aa0;
+	font-weight: 600;
+	font-size: 0.95em;
+	margin-bottom: 0.2em;
+}
+
+.alumni-news-events-listing-date {
+	display: block;
+	color: #666;
+	font-size: 0.85em;
+	margin-bottom: 0.3em;
+}
+
+.alumni-news-events-listing-title {
+	display: block;
+	font-size: 1.1em;
+	font-weight: 600;
+	margin-bottom: 0.3em;
+}
+
+.alumni-news-events-listing-excerpt {
+	display: block;
+	color: #444;
+	font-size: 0.95em;
+}
+
 /* 学校関連写真 */
 .school-photos {
 	margin-bottom: 2em;
@@ -427,6 +480,34 @@
 	color: #555;
 }
 
+/* コンテンツ（規約類） */
+.alumni-terms-meta {
+	margin-bottom: 1.5em;
+	color: #666;
+	font-size: 0.9em;
+}
+
+.alumni-terms-effective-date,
+.alumni-terms-revised-date {
+	margin: 0 0 0.2em;
+}
+
+.alumni-terms-listing-list {
+	list-style: none;
+	margin: 1em 0;
+	padding: 0;
+}
+
+.alumni-terms-listing-list li {
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.alumni-terms-listing-link {
+	display: block;
+	padding: 0.75em 0;
+	font-size: 1.05em;
+}
+
 /* 卒業期早見表（[alumni_graduation_lookup] ショートコード）。
    行の背景色そのものはCore側がインラインstyleで出力する（管理者が自由に
    設定する卒業期カラーという動的な値のため、ビルド時に確定するTheme側の
@@ -443,6 +524,18 @@
 .alumni-lookup-row-text-dark,
 .alumni-lookup-row-text-dark td {
 	color: #222;
+}
+
+/* 生年月日の年／月／日入力（<input type="date">をやめ、3つの数値入力に
+   分けたことでスマートフォンでも数字キーボードが出やすくなる）。 */
+.alumni-graduation-lookup-date-fields input[type="number"] {
+	width: 4.5em;
+	margin-right: 0.2em;
+}
+
+.alumni-lookup-result-term {
+	font-size: 1.2em;
+	font-weight: 600;
 }
 
 .alumni-graduation-lookup-table {
@@ -488,4 +581,24 @@
 		overflow-x: auto;
 		white-space: nowrap;
 	}
+}
+
+/* 役員・理事紹介 インデックス（[alumni_officers] ショートコード）。
+   役員・理事の一覧は複数存在しうるため、このページはそれぞれの一覧への
+   リンク集にすぎない — 一覧そのものは各一覧専用のページ
+   （[alumni_officer_list]）が担う。 */
+.alumni-officers-index-list {
+	list-style: none;
+	margin: 1em 0;
+	padding: 0;
+}
+
+.alumni-officers-index-list li {
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.alumni-officers-index-link {
+	display: block;
+	padding: 0.75em 0;
+	font-size: 1.05em;
 }

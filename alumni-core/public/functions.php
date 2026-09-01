@@ -302,14 +302,29 @@ if ( ! function_exists( 'alumni_core_get_graduation_lookup_url' ) ) {
 
 if ( ! function_exists( 'alumni_core_get_officers_listing_url' ) ) {
 	/**
-	 * The public URL of the 役員・理事紹介 page (auto-created by
-	 * Officers_Shortcode). Themes use this for top-page/menu links rather
-	 * than hardcoding the slug.
+	 * The public URL of the 役員・理事紹介 インデックスページ (every 一覧
+	 * listed with a link to each — see officers-functions.php for the
+	 * per-一覧 API now that 役員・理事一覧 is no longer a single flat
+	 * list). Themes use this for top-page/menu links rather than
+	 * hardcoding the slug. Alias of alumni_core_get_officers_index_url().
 	 *
 	 * @return string
 	 */
 	function alumni_core_get_officers_listing_url() {
-		return \AlumniCore\Includes\Officers_Shortcode::get_url();
+		return \AlumniCore\Includes\Officers_Shortcode::get_index_url();
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_terms_listing_url' ) ) {
+	/**
+	 * The public URL of the 規約類 一覧ページ (auto-created by
+	 * Terms_Listing_Shortcode). Themes use this for top-page/menu links
+	 * rather than hardcoding the slug.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_terms_listing_url() {
+		return \AlumniCore\Includes\Terms_Listing_Shortcode::get_url();
 	}
 }
 
