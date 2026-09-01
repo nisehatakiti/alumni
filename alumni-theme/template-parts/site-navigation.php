@@ -6,12 +6,17 @@
  * 呼び出される。
  *
  * 固定項目（ホーム／ニュース／イベント／役員・理事紹介／卒業期早見表）に
- * 加えて、「同窓会情報」というドリルダウン（親子）メニューを1つ持つ。
- * その配下のうち会長挨拶・校長挨拶などは固定文字列としてハードコードせず、
- * 公開されている「人物挨拶」コンテンツから毎回動的に生成する — 管理者が
- * 人物挨拶コンテンツを新規作成するだけで、メニュー側の変更なしに
- * 自動的にここへ現れる。規約類は（一覧ページそのものはCoreが常に自動
- * 作成しているため）固定項目として同じ配下に置く。
+ * 加えて、Alumni Coreの「コンテンツ階層」（対象者×親子関係）から動的に
+ * ドリルダウンメニューを生成する — 特定のコンテンツ名をここに
+ * ハードコードすることはない。管理者がコンテンツを作成し、対象者・親を
+ * 設定するだけで、メニュー側の変更なしに自動的にここへ現れる
+ * （docs/top-page-slot-and-navigation-design.md 他）。
+ *
+ * 「共通」対象者のトップレベルコンテンツ（会長挨拶・校長挨拶などの人物
+ * 挨拶や、規約類、自由コンテンツで対象者を明示的に設定していないもの）は
+ * すべて「同窓会情報」というドリルダウンにまとまる。「卒業生向け」
+ * 「在校生向け」はそれぞれ専用のドリルダウンになり、どちらもトップレベル
+ * コンテンツが1件もない場合は表示されない。
  *
  * @package AlumniTheme
  */
@@ -45,34 +50,55 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</li>
 	<?php endif; ?>
 	<?php
-	$alumni_nav_greetings     = alumni_theme_get_person_greetings();
-	$alumni_nav_has_greetings = $alumni_nav_greetings && $alumni_nav_greetings->have_posts();
-	$alumni_nav_terms_url     = alumni_theme_get_terms_listing_url();
+	$alumni_nav_terms_url = alumni_theme_get_terms_listing_url();
 
-	if ( $alumni_nav_has_greetings || $alumni_nav_terms_url ) :
+	// 「共通」ドリルダウンは、規約類一覧への固定リンク（常に到達できる
+	// ようにする）に、「共通」対象者のトップレベルコンテンツ階層を続ける。
+	// 既存の人物挨拶・規約類コンテンツは対象者未設定=common・親未設定=
+	// トップレベルが既定値になるため、ここへ何もしなくても現れる
+	// （移行不要、既存の見え方を壊さない）。
+	$alumni_nav_common_items = '';
+	if ( $alumni_nav_terms_url ) {
+		$alumni_nav_common_items .= '<li><a href="' . esc_url( $alumni_nav_terms_url ) . '">' . esc_html__( '規約類', 'alumni-theme' ) . '</a></li>';
+	}
+	$alumni_nav_common_items .= alumni_theme_render_content_tree_items( alumni_theme_get_content_tree( 'common' ) );
+
+	if ( $alumni_nav_common_items ) :
 		?>
 		<li class="alumni-nav-item alumni-nav-item-has-children">
 			<a href="#" class="alumni-nav-drilldown-toggle" aria-haspopup="true" aria-expanded="false">
 				<?php esc_html_e( '同窓会情報', 'alumni-theme' ); ?>
 			</a>
 			<ul class="alumni-nav-submenu">
-				<?php if ( $alumni_nav_has_greetings ) : ?>
-					<?php
-					while ( $alumni_nav_greetings->have_posts() ) :
-						$alumni_nav_greetings->the_post();
-						?>
-						<li><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
-						<?php
-					endwhile;
-					wp_reset_postdata();
-					?>
-				<?php endif; ?>
-				<?php if ( $alumni_nav_terms_url ) : ?>
-					<li><a href="<?php echo esc_url( $alumni_nav_terms_url ); ?>"><?php esc_html_e( '規約類', 'alumni-theme' ); ?></a></li>
-				<?php endif; ?>
+				<?php echo $alumni_nav_common_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_content_tree_items() and above. ?>
 			</ul>
 		</li>
 		<?php
 	endif;
+
+	// 「卒業生向け」「在校生向け」は、それぞれのトップレベルコンテンツが
+	// 1件でもある場合だけドリルダウンとして表示する。
+	$alumni_nav_audience_groups = array(
+		'alumni'  => __( '卒業生向け', 'alumni-theme' ),
+		'student' => __( '在校生向け', 'alumni-theme' ),
+	);
+
+	foreach ( $alumni_nav_audience_groups as $alumni_nav_audience_key => $alumni_nav_audience_label ) :
+		$alumni_nav_audience_items = alumni_theme_render_content_tree_items( alumni_theme_get_content_tree( $alumni_nav_audience_key ) );
+
+		if ( ! $alumni_nav_audience_items ) :
+			continue;
+		endif;
+		?>
+		<li class="alumni-nav-item alumni-nav-item-has-children">
+			<a href="#" class="alumni-nav-drilldown-toggle" aria-haspopup="true" aria-expanded="false">
+				<?php echo esc_html( $alumni_nav_audience_label ); ?>
+			</a>
+			<ul class="alumni-nav-submenu">
+				<?php echo $alumni_nav_audience_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_content_tree_items(). ?>
+			</ul>
+		</li>
+		<?php
+	endforeach;
 	?>
 </ul>

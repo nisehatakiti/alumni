@@ -38,6 +38,7 @@ if ( $alumni_core_delete_user_data ) {
 	delete_option( 'alumni_core_news_listing_page_id' );
 	delete_option( 'alumni_core_events_listing_page_id' );
 	delete_option( 'alumni_core_terms_listing_page_id' );
+	delete_option( 'alumni_core_homepage_sections' );
 
 	// alumni_news_event / alumni_content posts (news, events, and every
 	// コンテンツ including 人物挨拶) are deliberately left alone even in

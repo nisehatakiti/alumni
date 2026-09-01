@@ -99,6 +99,15 @@ class Meta_Box {
 				<label for="alumni_event_date"><strong><?php esc_html_e( '開催日', 'alumni-core' ); ?></strong></label><br />
 				<input type="date" id="alumni_event_date" name="alumni_event_date" value="<?php echo esc_attr( $event_date ); ?>" />
 			</p>
+
+			<p>
+				<label for="alumni_news_event_audience"><strong><?php esc_html_e( '対象者', 'alumni-core' ); ?></strong></label><br />
+				<select id="alumni_news_event_audience" name="alumni_news_event_audience">
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_COMMON ); ?>" <?php selected( Post_Type::AUDIENCE_COMMON, Post_Type::get_audience( $post ) ); ?>><?php esc_html_e( '共通', 'alumni-core' ); ?></option>
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_ALUMNI ); ?>" <?php selected( Post_Type::AUDIENCE_ALUMNI, Post_Type::get_audience( $post ) ); ?>><?php esc_html_e( '卒業生向け', 'alumni-core' ); ?></option>
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_STUDENT ); ?>" <?php selected( Post_Type::AUDIENCE_STUDENT, Post_Type::get_audience( $post ) ); ?>><?php esc_html_e( '在校生向け', 'alumni-core' ); ?></option>
+				</select>
+			</p>
 		</div>
 		<?php
 	}
@@ -144,6 +153,14 @@ class Meta_Box {
 		} else {
 			delete_post_meta( $post_id, Post_Type::META_EVENT_DATE );
 		}
+
+		$audience = isset( $_POST['alumni_news_event_audience'] ) ? sanitize_key( wp_unslash( $_POST['alumni_news_event_audience'] ) ) : Post_Type::AUDIENCE_COMMON;
+
+		if ( ! in_array( $audience, array( Post_Type::AUDIENCE_ALUMNI, Post_Type::AUDIENCE_STUDENT ), true ) ) {
+			$audience = Post_Type::AUDIENCE_COMMON;
+		}
+
+		update_post_meta( $post_id, Post_Type::META_AUDIENCE, $audience );
 	}
 
 	/**

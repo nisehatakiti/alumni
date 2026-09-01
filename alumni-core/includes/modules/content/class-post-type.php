@@ -44,6 +44,31 @@ class Post_Type {
 	const KIND_FREE            = 'free';
 	const KIND_PERSON_GREETING = 'person_greeting';
 	const KIND_TERMS           = 'terms';
+	const KIND_FOLDER          = 'folder';
+
+	/**
+	 * Meta key storing a content post's 対象者（大カテゴリ）. Separate from
+	 * the コンテンツ階層（親子関係、META_PARENT_ID）— 対象者 answers "誰に
+	 * 向けた情報か", 階層 answers "どこに整理されているか". Every kind
+	 * (自由コンテンツ／人物挨拶／規約類／フォルダ) carries this field.
+	 */
+	const META_AUDIENCE = '_alumni_audience';
+
+	/**
+	 * 対象者の値。AUDIENCE_COMMON がすべての未設定値の既定（新しいフィール
+	 * ドなので、既存コンテンツは何もしなくても「共通」として扱われる）。
+	 */
+	const AUDIENCE_ALUMNI  = 'alumni';
+	const AUDIENCE_STUDENT = 'student';
+	const AUDIENCE_COMMON  = 'common';
+
+	/**
+	 * Meta key storing a content post's 親コンテンツ（コンテンツ階層）。
+	 * 値は別の alumni_content 投稿ID、または 0（最上位＝対象者の直下）。
+	 * 階層は固定の深さを持たず、Content_Hierarchy がループ検出込みで
+	 * 祖先／子孫を辿る。
+	 */
+	const META_PARENT_ID = '_alumni_parent_id';
 
 	/**
 	 * Query var used only by the 「人物挨拶を追加」／「自由コンテンツを
@@ -143,6 +168,10 @@ class Post_Type {
 			return self::KIND_TERMS;
 		}
 
+		if ( self::KIND_FOLDER === $kind ) {
+			return self::KIND_FOLDER;
+		}
+
 		return self::KIND_FREE;
 	}
 
@@ -160,6 +189,68 @@ class Post_Type {
 	 */
 	public static function is_terms( $post = null ) {
 		return self::KIND_TERMS === self::get_kind( $post );
+	}
+
+	/**
+	 * フォルダ（中身を持たない、階層をまとめるためだけのノード）かどうか。
+	 * 例：「同窓会情報」「同窓会組織図」「同窓会規約」— それ自体は本文を
+	 * 持たず、他のコンテンツ／役員一覧の親としてのみ使われる。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return bool
+	 */
+	public static function is_folder( $post = null ) {
+		return self::KIND_FOLDER === self::get_kind( $post );
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string self::AUDIENCE_ALUMNI/AUDIENCE_STUDENT/AUDIENCE_COMMON.
+	 *                 Defaults to AUDIENCE_COMMON for anything missing or
+	 *                 unrecognized — including every pre-existing post from
+	 *                 before this field existed, so no data migration is
+	 *                 needed for it.
+	 */
+	public static function get_audience( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return self::AUDIENCE_COMMON;
+		}
+
+		$audience = get_post_meta( $post->ID, self::META_AUDIENCE, true );
+
+		if ( self::AUDIENCE_ALUMNI === $audience || self::AUDIENCE_STUDENT === $audience ) {
+			return $audience;
+		}
+
+		return self::AUDIENCE_COMMON;
+	}
+
+	/**
+	 * The saved 親コンテンツ ID, revalidated at read time against the
+	 * current post state (same "revalidate on read" rule used throughout
+	 * this plugin — see get_person_photo_id()): a parent that was deleted,
+	 * trashed, or is no longer an alumni_content post reads back as "no
+	 * parent" (0) rather than a dangling reference.
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return int Parent post ID, or 0 when unset/invalid/top-level.
+	 */
+	public static function get_parent_id( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return 0;
+		}
+
+		$parent_id = absint( get_post_meta( $post->ID, self::META_PARENT_ID, true ) );
+
+		if ( ! $parent_id || $parent_id === (int) $post->ID ) {
+			return 0;
+		}
+
+		return self::SLUG === get_post_type( $parent_id ) ? $parent_id : 0;
 	}
 
 	/**

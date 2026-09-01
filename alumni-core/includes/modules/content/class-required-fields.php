@@ -48,11 +48,13 @@ class Content_Required_Fields {
 			$missing[] = __( 'コンテンツ名', 'alumni-core' );
 		}
 
-		if ( '' === trim( wp_strip_all_tags( $data['post_content'] ) ) ) {
+		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
+
+		// フォルダは階層をまとめるための見出しに過ぎず、本文は必須にしない
+		// （空のまま公開できる — メニュー・パンくず用の名前があれば十分）。
+		if ( Post_Type::KIND_FOLDER !== $kind && '' === trim( wp_strip_all_tags( $data['post_content'] ) ) ) {
 			$missing[] = __( '本文', 'alumni-core' );
 		}
-
-		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
 
 		if ( Post_Type::KIND_PERSON_GREETING === $kind ) {
 			$name  = isset( $_POST['alumni_person_name'] ) ? trim( wp_strip_all_tags( wp_unslash( $_POST['alumni_person_name'] ) ) ) : '';

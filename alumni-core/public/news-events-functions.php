@@ -83,6 +83,53 @@ if ( ! function_exists( 'alumni_core_get_events_listing_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_news_teaser' ) ) {
+	/**
+	 * A short, newest-first ニュース query for a homepage slot — same
+	 * shape as alumni_core_get_news_events_query() but pre-filtered to
+	 * ニュース only, so Theme code never needs to know the underlying
+	 * postmeta key used to distinguish ニュース from イベント.
+	 *
+	 * @param int $limit
+	 * @return WP_Query
+	 */
+	function alumni_core_get_news_teaser( $limit = 3 ) {
+		return alumni_core_get_news_events_query(
+			array(
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by content type is the entire purpose of this query.
+					array(
+						'key'   => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::META_CONTENT_TYPE,
+						'value' => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::TYPE_NEWS,
+					),
+				),
+				'posts_per_page' => max( 1, (int) $limit ),
+			)
+		);
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_events_teaser' ) ) {
+	/**
+	 * The イベント counterpart of alumni_core_get_news_teaser().
+	 *
+	 * @param int $limit
+	 * @return WP_Query
+	 */
+	function alumni_core_get_events_teaser( $limit = 3 ) {
+		return alumni_core_get_news_events_query(
+			array(
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by content type is the entire purpose of this query.
+					array(
+						'key'   => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::META_CONTENT_TYPE,
+						'value' => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::TYPE_EVENT,
+					),
+				),
+				'posts_per_page' => max( 1, (int) $limit ),
+			)
+		);
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_news_events_query' ) ) {
 	/**
 	 * Runs a WP_Query for published ニュース／イベント, newest first by

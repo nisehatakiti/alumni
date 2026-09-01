@@ -31,6 +31,15 @@ if ( ! function_exists( 'alumni_core_get_officer_lists' ) ) {
 	function alumni_core_get_officer_lists() {
 		$lists = \AlumniCore\Includes\Officer_Lists::instance()->get_all();
 
+		$lists = array_values(
+			array_filter(
+				$lists,
+				function ( $list ) {
+					return ! empty( $list['enabled'] );
+				}
+			)
+		);
+
 		return array_map(
 			function ( $list ) {
 				unset( $list['rows'] );
@@ -52,7 +61,7 @@ if ( ! function_exists( 'alumni_core_get_officer_list' ) ) {
 	function alumni_core_get_officer_list( $list_id ) {
 		$list = \AlumniCore\Includes\Officer_Lists::instance()->get_list( $list_id );
 
-		if ( null === $list ) {
+		if ( null === $list || empty( $list['enabled'] ) ) {
 			return null;
 		}
 
@@ -82,7 +91,7 @@ if ( ! function_exists( 'alumni_core_get_officers_for_list' ) ) {
 	function alumni_core_get_officers_for_list( $list_id ) {
 		$list = \AlumniCore\Includes\Officer_Lists::instance()->get_list( $list_id );
 
-		if ( null === $list ) {
+		if ( null === $list || empty( $list['enabled'] ) ) {
 			return array();
 		}
 

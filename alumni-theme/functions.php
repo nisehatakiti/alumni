@@ -217,6 +217,35 @@ function alumni_theme_get_news_events( $args = array() ) {
 }
 
 /**
+ * A short, newest-first ニュースのみ の query (トップページのスロット用)、
+ * またはCore無効時は null。
+ *
+ * @param int $limit
+ * @return WP_Query|null
+ */
+function alumni_theme_get_news_teaser( $limit = 3 ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_news_teaser( $limit );
+}
+
+/**
+ * alumni_theme_get_news_teaser() のイベント版。
+ *
+ * @param int $limit
+ * @return WP_Query|null
+ */
+function alumni_theme_get_events_teaser( $limit = 3 ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_events_teaser( $limit );
+}
+
+/**
  * 学校関連写真として登録された添付ファイルIDの一覧（表示順）、または
  * Core無効時は空配列。
  *
@@ -611,4 +640,138 @@ function alumni_theme_get_nav_layout() {
 	}
 
 	return alumni_core_get_nav_layout();
+}
+
+/**
+ * 対象者（大カテゴリ）の値 => 表示ラベルの一覧、またはCore無効時は空配列。
+ *
+ * @return array<string,string>
+ */
+function alumni_theme_get_audience_labels() {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_audience_labels();
+}
+
+/**
+ * 公開済みコンテンツ階層ツリー（1つの対象者、または全対象者）、または
+ * Core無効時は空配列。メニュー生成・トップページのコンテンツ選択候補など、
+ * 「今どんな階層が存在するか」が必要などこでも使える。
+ *
+ * @param string|null $audience alumni_core_get_audience_labels()のキーの
+ *                                いずれか、またはnullで全対象者。
+ * @return array[] 各要素: array('post'=>WP_Post,'children'=>同じ形の配列)。
+ */
+function alumni_theme_get_content_tree( $audience = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_content_tree( $audience );
+}
+
+/**
+ * $parent_idの直接の子コンテンツ（公開済みのみ）、またはCore無効時は
+ * 空配列。フォルダ（本文を持たないコンテンツ）の公開ページが、自分の
+ * 子コンテンツの一覧を表示するのに使う。
+ *
+ * @param int $parent_id
+ * @return WP_Post[]
+ */
+function alumni_theme_get_content_children( $parent_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_content_children( $parent_id );
+}
+
+/**
+ * $postの祖先（ルートが先頭）、またはCore無効時は空配列。パンくず表示用。
+ *
+ * @param int|WP_Post|null $post
+ * @return WP_Post[]
+ */
+function alumni_theme_get_content_ancestors( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_content_ancestors( $post );
+}
+
+/**
+ * alumni_theme_get_content_tree() が返すノード配列を、階層に沿った
+ * <li>...</li> のマークアップへ再帰的に変換する（呼び出し側で<ul>に
+ * まとめる）。子を持つ<li>には alumni-nav-item-has-children クラスを
+ * 付け、子は入れ子の<ul class="alumni-nav-submenu">として続ける — 既存の
+ * ドリルダウンサブメニューと同じマークアップ規則を、任意の深さの階層に
+ * 対して適用する。
+ *
+ * フォルダ（Modules\Content\Post_Type::KIND_FOLDER）も他のコンテンツと
+ * 同様にリンク付きの項目として描画される — フォルダ自身のページが
+ * その子コンテンツの一覧を表示するため（single-alumni_content.php）、
+ * メニューとページの階層が一致する。
+ *
+ * @param array[] $nodes alumni_theme_get_content_tree()と同じ形。
+ * @return string
+ */
+function alumni_theme_render_content_tree_items( array $nodes ) {
+	$html = '';
+
+	foreach ( $nodes as $node ) {
+		$post           = $node['post'];
+		$url            = alumni_theme_get_content_url( $post->ID );
+		$label          = $post->post_title ? $post->post_title : '';
+		$children_items = ! empty( $node['children'] ) ? alumni_theme_render_content_tree_items( $node['children'] ) : '';
+
+		$html .= '<li' . ( $children_items ? ' class="alumni-nav-item-has-children"' : '' ) . '>';
+		$html .= '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		if ( $children_items ) {
+			$html .= '<ul class="alumni-nav-submenu">' . $children_items . '</ul>';
+		}
+		$html .= '</li>';
+	}
+
+	return $html;
+}
+
+/**
+ * トップページの全セクション（表示順・見出し・段数・各段のスロット、
+ * すでに検証済み）、またはCore無効時は空配列。
+ *
+ * @return array[]
+ */
+function alumni_theme_get_homepage_sections() {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_homepage_sections();
+}
+
+/**
+ * @param string $system_key
+ * @return string Core無効時、または未知のキーの場合は ''。
+ */
+function alumni_theme_get_system_slot_label( $system_key ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_system_slot_label( $system_key );
+}
+
+/**
+ * @param string $system_key
+ * @return string Core無効時、または未知のキーの場合は ''。
+ */
+function alumni_theme_get_system_slot_url( $system_key ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_system_slot_url( $system_key );
 }

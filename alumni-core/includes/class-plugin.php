@@ -86,6 +86,8 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-terms-listing-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-content-hierarchy.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-homepage-sections.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
 
@@ -96,6 +98,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officers-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-graduation-lookup-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-terms-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-shortcode.php';
@@ -114,6 +117,8 @@ final class Plugin {
 
 		require_once ALUMNI_CORE_PATH . 'public/content-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/officers-functions.php';
+		require_once ALUMNI_CORE_PATH . 'public/hierarchy-functions.php';
+		require_once ALUMNI_CORE_PATH . 'public/homepage-functions.php';
 	}
 
 	/**

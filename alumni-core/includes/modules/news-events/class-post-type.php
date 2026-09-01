@@ -42,6 +42,20 @@ class Post_Type {
 	const TYPE_EVENT = 'event';
 
 	/**
+	 * Meta key storing the 対象者（大カテゴリ）— same three values and
+	 * semantics as Modules\Content\Post_Type::META_AUDIENCE, duplicated
+	 * here rather than shared: this CPT has no other dependency on the
+	 * Content module and a 3-value enum with no shared state doesn't
+	 * justify one (same reasoning documented on Officer_Lists's own
+	 * audience constants).
+	 */
+	const META_AUDIENCE = '_alumni_audience';
+
+	const AUDIENCE_ALUMNI  = 'alumni';
+	const AUDIENCE_STUDENT = 'student';
+	const AUDIENCE_COMMON  = 'common';
+
+	/**
 	 * Registers the post type. Hooked to 'init' so it runs on every
 	 * request (front-end and admin) — the archive/single URLs and the
 	 * admin submenu both depend on it.
@@ -114,6 +128,29 @@ class Post_Type {
 	 */
 	public static function is_event( $post = null ) {
 		return self::TYPE_EVENT === self::get_content_type( $post );
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string self::AUDIENCE_ALUMNI/AUDIENCE_STUDENT/AUDIENCE_COMMON.
+	 *                 Defaults to AUDIENCE_COMMON, including for every
+	 *                 pre-existing news/event post from before this field
+	 *                 existed — no data migration needed.
+	 */
+	public static function get_audience( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return self::AUDIENCE_COMMON;
+		}
+
+		$audience = get_post_meta( $post->ID, self::META_AUDIENCE, true );
+
+		if ( self::AUDIENCE_ALUMNI === $audience || self::AUDIENCE_STUDENT === $audience ) {
+			return $audience;
+		}
+
+		return self::AUDIENCE_COMMON;
 	}
 
 	/**
