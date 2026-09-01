@@ -344,3 +344,41 @@ if ( ! function_exists( 'alumni_core_get_nav_layout' ) ) {
 		return \AlumniCore\Includes\Settings::sanitize_nav_layout( alumni_core_get_setting( 'nav_layout', \AlumniCore\Includes\Settings::DEFAULT_NAV_LAYOUT ) );
 	}
 }
+
+if ( ! function_exists( 'alumni_core_get_updated_at' ) ) {
+	/**
+	 * 「いつ更新されたか」の生の日時文字列: WordPress投稿（自由コンテンツ／
+	 * 人物挨拶／規約類／フォルダ／ニュース／イベント、いずれも通常の
+	 * post_modifiedを持つ）については、独自の updated_at を新設せず
+	 * post_modified をそのまま利用する（要件どおり「不要な独自updated_atを
+	 * 作らない」）。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object. Defaults to the
+	 *                                 current global post.
+	 * @return string 'Y-m-d H:i:s'、または解決できない場合は ''。
+	 */
+	function alumni_core_get_updated_at( $post = null ) {
+		$post = get_post( $post );
+
+		return $post ? (string) $post->post_modified : '';
+	}
+}
+
+if ( ! function_exists( 'alumni_core_format_updated_at' ) ) {
+	/**
+	 * $raw_datetime を管理画面の「日付形式」設定に沿って整形する。空文字
+	 * ／不正な日時はそのまま空文字を返す（呼び出し側は「更新日：」等の
+	 * ラベルごと出さない判断に使える）。
+	 *
+	 * @param string $raw_datetime alumni_core_get_updated_at()等が返す
+	 *                               'Y-m-d H:i:s'形式の文字列。
+	 * @return string
+	 */
+	function alumni_core_format_updated_at( $raw_datetime ) {
+		if ( ! $raw_datetime ) {
+			return '';
+		}
+
+		return mysql2date( get_option( 'date_format' ), $raw_datetime );
+	}
+}

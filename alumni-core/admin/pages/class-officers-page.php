@@ -225,6 +225,20 @@ class Officers_Page {
 							</label>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( '任期', 'alumni-core' ); ?></th>
+						<td>
+							<label for="alumni-officer-list-term-start"><?php esc_html_e( '開始日', 'alumni-core' ); ?></label>
+							<input type="date" id="alumni-officer-list-term-start" name="list_term_start" value="<?php echo esc_attr( $list['term_start'] ); ?>" />
+							<label for="alumni-officer-list-term-end"><?php esc_html_e( '終了日', 'alumni-core' ); ?></label>
+							<input type="date" id="alumni-officer-list-term-end" name="list_term_end" value="<?php echo esc_attr( $list['term_end'] ); ?>" />
+							<p class="description">
+								<label for="alumni-officer-list-term-label"><?php esc_html_e( '表示用テキスト（任意）', 'alumni-core' ); ?></label><br />
+								<input type="text" id="alumni-officer-list-term-label" name="list_term_label" class="regular-text" value="<?php echo esc_attr( $list['term_label'] ); ?>" placeholder="<?php echo esc_attr__( '例：令和8年度～令和9年度（入力すると開始日・終了日より優先して表示されます）', 'alumni-core' ); ?>" />
+							</p>
+							<p class="description"><?php esc_html_e( 'この一覧全体に適用される任期です（個々の役員ごとではありません）。開始日・終了日どちらも空欄の場合、任期は表示されません。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
 				</table>
 
 				<?php
@@ -561,10 +575,17 @@ class Officers_Page {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$parent_id     = isset( $_POST['list_parent_id'] ) ? absint( wp_unslash( $_POST['list_parent_id'] ) ) : 0;
 		$enabled       = ! empty( $_POST['list_enabled'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- unchecked checkbox simply omits the key.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by save_list_term().
+		$term_start    = isset( $_POST['list_term_start'] ) ? wp_unslash( $_POST['list_term_start'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$term_end      = isset( $_POST['list_term_end'] ) ? wp_unslash( $_POST['list_term_end'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$term_label    = isset( $_POST['list_term_label'] ) ? wp_unslash( $_POST['list_term_label'] ) : '';
 
 		Officer_Lists::instance()->save_list_meta( $list_id, $list_name, $list_title, $title_heading );
 		Officer_Lists::instance()->save_list_rows( $list_id, $raw_rows );
 		Officer_Lists::instance()->save_list_structure( $list_id, $parent_id, $audience, $enabled );
+		Officer_Lists::instance()->save_list_term( $list_id, $term_start, $term_end, $term_label );
 
 		wp_safe_redirect(
 			add_query_arg(

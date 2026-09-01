@@ -14,6 +14,7 @@ use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
 use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Admin\Pages\Homepage_Page;
+use AlumniCore\Admin\Pages\Menu_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -89,6 +90,13 @@ class Admin {
 	private $homepage_page;
 
 	/**
+	 * メニュー構成 screen handler.
+	 *
+	 * @var Menu_Page
+	 */
+	private $menu_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -123,6 +131,7 @@ class Admin {
 		$this->graduation_lookup_page = new Graduation_Lookup_Page();
 		$this->terms_page             = new Terms_Page();
 		$this->homepage_page           = new Homepage_Page();
+		$this->menu_page                = new Menu_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -135,6 +144,13 @@ class Admin {
 		add_action( 'admin_post_alumni_core_delete_homepage_section', array( $this->homepage_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_move_homepage_section', array( $this->homepage_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_save_homepage_sections', array( $this->homepage_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_menu_folder', array( $this->menu_page, 'handle_create_folder' ) );
+		add_action( 'admin_post_alumni_core_create_menu_content', array( $this->menu_page, 'handle_create_content' ) );
+		add_action( 'admin_post_alumni_core_update_menu_item', array( $this->menu_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_menu_item', array( $this->menu_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_menu_item', array( $this->menu_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_indent_menu_item', array( $this->menu_page, 'handle_indent' ) );
+		add_action( 'admin_post_alumni_core_outdent_menu_item', array( $this->menu_page, 'handle_outdent' ) );
 	}
 
 	/**
@@ -254,6 +270,15 @@ class Admin {
 			self::CAPABILITY,
 			Homepage_Page::SLUG,
 			array( $this->homepage_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'メニュー構成', 'alumni-core' ),
+			__( 'メニュー構成', 'alumni-core' ),
+			self::CAPABILITY,
+			Menu_Page::SLUG,
+			array( $this->menu_page, 'render' )
 		);
 
 		/**

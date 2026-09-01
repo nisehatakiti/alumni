@@ -156,3 +156,27 @@ if ( ! function_exists( 'alumni_core_get_officer_list_url' ) ) {
 		return \AlumniCore\Includes\Officers_Shortcode::get_list_url( $list_id );
 	}
 }
+
+if ( ! function_exists( 'alumni_core_format_officer_list_term' ) ) {
+	/**
+	 * A human-readable 任期 string for a list (from alumni_core_get_officer_list()
+	 * / alumni_core_get_officer_lists()), or '' when no 任期 is set.
+	 *
+	 * @param array $list
+	 * @return string
+	 */
+	function alumni_core_format_officer_list_term( array $list ) {
+		return \AlumniCore\Includes\Officer_Lists::format_term( $list );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_officer_lists_updated_at' ) ) {
+	/**
+	 * When the 役員・理事一覧 data (any list, any field) was last saved.
+	 *
+	 * @return string 'Y-m-d H:i:s', or '' if never explicitly saved.
+	 */
+	function alumni_core_get_officer_lists_updated_at() {
+		return \AlumniCore\Includes\Officer_Lists::instance()->get_updated_at();
+	}
+}

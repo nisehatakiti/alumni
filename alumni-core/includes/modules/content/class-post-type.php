@@ -100,6 +100,27 @@ class Post_Type {
 	const META_TERMS_REVISED_DATE   = '_alumni_terms_revised_date';
 
 	/**
+	 * Meta key storing the 本文の文字サイズ（意味だけをCoreが持ち、実際の
+	 * ピクセル数はTheme側のCSSクラスが決定する — class docblock参照）.
+	 */
+	const META_TERMS_FONT_SIZE = '_alumni_terms_font_size';
+
+	const TERMS_FONT_SMALL  = 'small';
+	const TERMS_FONT_MEDIUM = 'medium';
+	const TERMS_FONT_LARGE  = 'large';
+
+	/**
+	 * Meta key storing the 改定履歴: 複数の 'Y-m-d' 日付を累積して持つ配列
+	 * （wp_options同様、WordPressのpostmetaは配列をそのままシリアライズ
+	 * できるため、専用テーブルを新設していない）。META_TERMS_REVISED_DATE
+	 * （単一の改定日、旧仕様）はこのフィールド導入後も読み取り専用の
+	 * フォールバックとして残しており、削除も上書きもしない — 既存サイトの
+	 * 単一改定日は、このフィールドが空の間は自動的に「1件だけの履歴」
+	 * として扱われる（get_terms_revision_dates()参照）。
+	 */
+	const META_TERMS_REVISION_DATES = '_alumni_terms_revision_dates';
+
+	/**
 	 * Registers the post type. Hooked to 'init' so it runs on every
 	 * request (front-end and admin).
 	 */
@@ -361,5 +382,67 @@ class Post_Type {
 		$post = get_post( $post );
 
 		return $post ? (string) get_post_meta( $post->ID, self::META_TERMS_REVISED_DATE, true ) : '';
+	}
+
+	/**
+	 * 本文の文字サイズの意味（small/medium/large）— 実際のピクセル数は
+	 * Theme側が決める（class docblock参照）。不正・未設定は
+	 * TERMS_FONT_MEDIUMにフォールバックする。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string
+	 */
+	public static function get_terms_font_size( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return self::TERMS_FONT_MEDIUM;
+		}
+
+		$size = get_post_meta( $post->ID, self::META_TERMS_FONT_SIZE, true );
+
+		return in_array( $size, array( self::TERMS_FONT_SMALL, self::TERMS_FONT_LARGE ), true ) ? $size : self::TERMS_FONT_MEDIUM;
+	}
+
+	/**
+	 * 改定履歴（累積、古い順）。META_TERMS_REVISION_DATESが未保存の
+	 * サイトでは、旧仕様の単一 META_TERMS_REVISED_DATE を「1件だけの
+	 * 履歴」として扱う（読み取り時のみのフォールバック、既存データは
+	 * 一切書き換えない）。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string[] 'Y-m-d'文字列の配列、古い順。
+	 */
+	public static function get_terms_revision_dates( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return array();
+		}
+
+		$dates = get_post_meta( $post->ID, self::META_TERMS_REVISION_DATES, true );
+
+		if ( is_array( $dates ) && ! empty( $dates ) ) {
+			$dates = array_values( array_filter( array_map( 'strval', $dates ) ) );
+			sort( $dates );
+			return $dates;
+		}
+
+		$legacy = self::get_terms_revised_date( $post );
+
+		return $legacy ? array( $legacy ) : array();
+	}
+
+	/**
+	 * The most recent 改定日 (最終改定日), or '' when no revision history
+	 * exists at all.
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string
+	 */
+	public static function get_terms_last_revised_date( $post = null ) {
+		$dates = self::get_terms_revision_dates( $post );
+
+		return empty( $dates ) ? '' : end( $dates );
 	}
 }

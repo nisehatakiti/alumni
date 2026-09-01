@@ -116,7 +116,8 @@ class Content_Meta_Box {
 		$photo_id       = (int) get_post_meta( $post->ID, Post_Type::META_PERSON_PHOTO_ID, true );
 		$display_title  = (string) get_post_meta( $post->ID, Post_Type::META_TERMS_DISPLAY_TITLE, true );
 		$effective_date = Post_Type::get_terms_effective_date( $post );
-		$revised_date   = Post_Type::get_terms_revised_date( $post );
+		$revision_dates = Post_Type::get_terms_revision_dates( $post );
+		$font_size      = Post_Type::get_terms_font_size( $post );
 		$audience       = Post_Type::get_audience( $post );
 		$parent_id      = Post_Type::get_parent_id( $post );
 		?>
@@ -202,8 +203,34 @@ class Content_Meta_Box {
 					<input type="date" id="alumni_terms_effective_date" name="alumni_terms_effective_date" value="<?php echo esc_attr( $effective_date ); ?>" />
 				</p>
 				<p>
-					<label for="alumni_terms_revised_date"><strong><?php esc_html_e( '改定日（任意）', 'alumni-core' ); ?></strong></label><br />
-					<input type="date" id="alumni_terms_revised_date" name="alumni_terms_revised_date" value="<?php echo esc_attr( $revised_date ); ?>" />
+					<strong><?php esc_html_e( '改定履歴（任意）', 'alumni-core' ); ?></strong><br />
+					<span class="description"><?php esc_html_e( '規約自体を改定した日を、必要な分だけ追加してください（制定日は上の「施行日」で管理します）。', 'alumni-core' ); ?></span>
+					<span id="alumni-terms-revision-dates" class="alumni-terms-revision-dates">
+						<?php foreach ( $revision_dates as $revision_date ) : ?>
+							<span class="alumni-terms-revision-date-row">
+								<input type="date" name="alumni_terms_revision_dates[]" value="<?php echo esc_attr( $revision_date ); ?>" />
+								<button type="button" class="button alumni-terms-revision-date-remove"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
+							</span>
+						<?php endforeach; ?>
+					</span>
+					<template id="alumni-terms-revision-date-row-template">
+						<span class="alumni-terms-revision-date-row">
+							<input type="date" name="alumni_terms_revision_dates[]" value="" />
+							<button type="button" class="button alumni-terms-revision-date-remove"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
+						</span>
+					</template>
+					<p>
+						<button type="button" id="alumni-terms-revision-date-add" class="button button-secondary"><?php esc_html_e( '＋ 改定履歴を追加', 'alumni-core' ); ?></button>
+					</p>
+				</p>
+				<p>
+					<label for="alumni_terms_font_size"><strong><?php esc_html_e( '本文の文字サイズ', 'alumni-core' ); ?></strong></label><br />
+					<select id="alumni_terms_font_size" name="alumni_terms_font_size">
+						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_SMALL ); ?>" <?php selected( Post_Type::TERMS_FONT_SMALL, $font_size ); ?>><?php esc_html_e( '小', 'alumni-core' ); ?></option>
+						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_MEDIUM ); ?>" <?php selected( Post_Type::TERMS_FONT_MEDIUM, $font_size ); ?>><?php esc_html_e( '中', 'alumni-core' ); ?></option>
+						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_LARGE ); ?>" <?php selected( Post_Type::TERMS_FONT_LARGE, $font_size ); ?>><?php esc_html_e( '大', 'alumni-core' ); ?></option>
+					</select>
+					<p class="description"><?php esc_html_e( '公開ページでの本文の文字サイズです。実際のサイズはテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
 				</p>
 				<p>
 					<label for="alumni_terms_menu_order"><strong><?php esc_html_e( '表示順（任意）', 'alumni-core' ); ?></strong></label><br />
@@ -400,7 +427,22 @@ class Content_Meta_Box {
 		} elseif ( Post_Type::KIND_TERMS === $kind ) {
 			$display_title  = isset( $_POST['alumni_terms_display_title'] ) ? sanitize_text_field( wp_unslash( $_POST['alumni_terms_display_title'] ) ) : '';
 			$effective_date = isset( $_POST['alumni_terms_effective_date'] ) ? self::sanitize_date( wp_unslash( $_POST['alumni_terms_effective_date'] ) ) : '';
-			$revised_date   = isset( $_POST['alumni_terms_revised_date'] ) ? self::sanitize_date( wp_unslash( $_POST['alumni_terms_revised_date'] ) ) : '';
+			$font_size      = isset( $_POST['alumni_terms_font_size'] ) ? sanitize_key( wp_unslash( $_POST['alumni_terms_font_size'] ) ) : Post_Type::TERMS_FONT_MEDIUM;
+
+			if ( ! in_array( $font_size, array( Post_Type::TERMS_FONT_SMALL, Post_Type::TERMS_FONT_LARGE ), true ) ) {
+				$font_size = Post_Type::TERMS_FONT_MEDIUM;
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above (self::NONCE_NAME); each entry is validated by sanitize_date() below.
+			$raw_revision_dates = isset( $_POST['alumni_terms_revision_dates'] ) && is_array( $_POST['alumni_terms_revision_dates'] ) ? wp_unslash( $_POST['alumni_terms_revision_dates'] ) : array();
+			$revision_dates     = array();
+			foreach ( $raw_revision_dates as $raw_revision_date ) {
+				$validated = self::sanitize_date( $raw_revision_date );
+				if ( $validated && ! in_array( $validated, $revision_dates, true ) ) {
+					$revision_dates[] = $validated;
+				}
+			}
+			sort( $revision_dates );
 
 			if ( '' === $display_title ) {
 				delete_post_meta( $post_id, Post_Type::META_TERMS_DISPLAY_TITLE );
@@ -414,11 +456,18 @@ class Content_Meta_Box {
 				update_post_meta( $post_id, Post_Type::META_TERMS_EFFECTIVE_DATE, $effective_date );
 			}
 
-			if ( '' === $revised_date ) {
-				delete_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE );
+			// META_TERMS_REVISED_DATE（旧・単一の改定日）はもう保存しない —
+			// 新しい改定履歴（配列）が唯一の書き込み先になる。既存サイトの
+			// 旧フィールドの値はここでは一切読み書き・削除しない
+			// （Post_Type::get_terms_revision_dates()が読み取り専用の
+			// フォールバックとして扱う）。
+			if ( empty( $revision_dates ) ) {
+				delete_post_meta( $post_id, Post_Type::META_TERMS_REVISION_DATES );
 			} else {
-				update_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE, $revised_date );
+				update_post_meta( $post_id, Post_Type::META_TERMS_REVISION_DATES, $revision_dates );
 			}
+
+			update_post_meta( $post_id, Post_Type::META_TERMS_FONT_SIZE, $font_size );
 
 			// Switched to 規約類 (or was already): the 人物挨拶専用 fields no
 			// longer apply.
@@ -455,6 +504,8 @@ class Content_Meta_Box {
 		delete_post_meta( $post_id, Post_Type::META_TERMS_DISPLAY_TITLE );
 		delete_post_meta( $post_id, Post_Type::META_TERMS_EFFECTIVE_DATE );
 		delete_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE );
+		delete_post_meta( $post_id, Post_Type::META_TERMS_REVISION_DATES );
+		delete_post_meta( $post_id, Post_Type::META_TERMS_FONT_SIZE );
 	}
 
 	/**

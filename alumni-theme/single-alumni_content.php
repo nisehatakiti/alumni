@@ -46,10 +46,22 @@ while ( have_posts() ) :
 		<article id="post-<?php the_ID(); ?>" <?php post_class( 'alumni-content-entry' ); ?>>
 			<header class="entry-header">
 				<h1 class="entry-title"><?php echo esc_html( $alumni_terms ? $alumni_terms['display_title'] : get_the_title() ); ?></h1>
+				<?php $alumni_updated_at = alumni_theme_get_updated_at(); ?>
+				<?php if ( $alumni_updated_at ) : ?>
+					<p class="alumni-updated-at">
+						<?php
+						printf(
+							/* translators: %s: formatted update date, e.g. "2026年9月1日" */
+							esc_html__( '更新日：%s', 'alumni-theme' ),
+							esc_html( $alumni_updated_at )
+						);
+						?>
+					</p>
+				<?php endif; ?>
 			</header>
 
 			<?php if ( $alumni_terms ) : ?>
-				<?php if ( $alumni_terms['effective_date'] || $alumni_terms['revised_date'] ) : ?>
+				<?php if ( $alumni_terms['effective_date'] || ! empty( $alumni_terms['revision_dates'] ) ) : ?>
 					<div class="alumni-terms-meta">
 						<?php if ( $alumni_terms['effective_date'] ) : ?>
 							<p class="alumni-terms-effective-date">
@@ -62,16 +74,24 @@ while ( have_posts() ) :
 								?>
 							</p>
 						<?php endif; ?>
-						<?php if ( $alumni_terms['revised_date'] ) : ?>
-							<p class="alumni-terms-revised-date">
+						<?php if ( ! empty( $alumni_terms['revision_dates'] ) ) : ?>
+							<p class="alumni-terms-last-revised-date">
 								<?php
 								printf(
-									/* translators: %s: revised date, Y-m-d */
-									esc_html__( '改定日：%s', 'alumni-theme' ),
-									esc_html( $alumni_terms['revised_date'] )
+									/* translators: %s: most recent revision date, Y-m-d */
+									esc_html__( '最終改定日：%s', 'alumni-theme' ),
+									esc_html( $alumni_terms['last_revised_date'] )
 								);
 								?>
 							</p>
+							<div class="alumni-terms-revision-history">
+								<p class="alumni-terms-revision-history-label"><?php esc_html_e( '改定履歴：', 'alumni-theme' ); ?></p>
+								<ul class="alumni-terms-revision-history-list">
+									<?php foreach ( $alumni_terms['revision_dates'] as $alumni_revision_date ) : ?>
+										<li><?php echo esc_html( $alumni_revision_date ); ?></li>
+									<?php endforeach; ?>
+								</ul>
+							</div>
 						<?php endif; ?>
 					</div>
 				<?php endif; ?>
@@ -110,7 +130,16 @@ while ( have_posts() ) :
 				</div>
 			<?php endif; ?>
 
-			<div class="entry-content">
+			<?php
+			// 規約類の本文文字サイズはCoreが「小／中／大」という意味だけを
+			// 持ち、実際のピクセル数はこのクラス名に対応するTheme側のCSS
+			// （terms-font-small/medium/large、main.css）が決定する。
+			$alumni_entry_content_class = 'entry-content';
+			if ( $alumni_terms ) {
+				$alumni_entry_content_class .= ' terms-font-' . $alumni_terms['font_size'];
+			}
+			?>
+			<div class="<?php echo esc_attr( $alumni_entry_content_class ); ?>">
 				<?php the_content(); ?>
 			</div>
 
