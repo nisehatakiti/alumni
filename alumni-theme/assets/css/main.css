@@ -274,3 +274,35 @@
 	height: 100%;
 	object-fit: cover;
 }
+
+/* コンテンツ（人物挨拶） */
+.alumni-person-greeting-meta {
+	margin-bottom: 1.5em;
+}
+
+.alumni-person-photo img {
+	display: block;
+	width: 160px;
+	height: 160px;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-bottom: 0.75em;
+}
+
+.alumni-person-name {
+	font-size: 1.2em;
+	font-weight: 600;
+	margin: 0 0 0.2em;
+}
+
+.alumni-person-kana {
+	font-size: 0.7em;
+	font-weight: 400;
+	color: #666;
+}
+
+.alumni-person-title,
+.alumni-person-term {
+	margin: 0 0 0.2em;
+	color: #555;
+}
