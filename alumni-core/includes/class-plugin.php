@@ -66,6 +66,7 @@ final class Plugin {
 		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
 		\AlumniCore\Includes\Modules\Content\Module::register();
 		\AlumniCore\Includes\Graduation_Lookup_Shortcode::register();
+		\AlumniCore\Includes\Officers_Shortcode::register();
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
@@ -82,6 +83,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-term-calculator.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
 

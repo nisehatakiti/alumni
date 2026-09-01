@@ -83,6 +83,22 @@ function alumni_theme_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'alumni_theme_enqueue_assets' );
 
 /**
+ * Adds a body class reflecting the admin-selected ナビゲーション配置
+ * ('alumni-nav-layout-top' or 'alumni-nav-layout-side'), so main.css can
+ * switch the whole page shell (header.php/footer.php) between the two
+ * layouts without any template-level branching beyond this one class.
+ *
+ * @param string[] $classes Existing body classes.
+ * @return string[]
+ */
+function alumni_theme_body_class_nav_layout( $classes ) {
+	$classes[] = 'alumni-nav-layout-' . alumni_theme_get_nav_layout();
+
+	return $classes;
+}
+add_filter( 'body_class', 'alumni_theme_body_class_nav_layout' );
+
+/**
  * Whether Alumni Core is active and its data can be used. Every call into
  * Core elsewhere in the theme must be guarded by this, so the theme keeps
  * working normally when the plugin is inactive.
@@ -487,4 +503,49 @@ function alumni_theme_get_events_listing_url() {
 	}
 
 	return alumni_core_get_events_listing_url();
+}
+
+/**
+ * 卒業期早見表ページ（[alumni_graduation_lookup] ショートコードが自動的に
+ * 配置される固定ページ）のURL、またはCore無効時は ''。トップページや
+ * メニューはこの関数でリンクし、スラッグを直接ハードコードしない。
+ *
+ * @return string
+ */
+function alumni_theme_get_graduation_lookup_url() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_graduation_lookup_url();
+}
+
+/**
+ * 役員・理事紹介ページ（[alumni_officers] ショートコードが自動的に配置
+ * される固定ページ）のURL、またはCore無効時は ''。トップページやメニュー
+ * はこの関数でリンクし、スラッグを直接ハードコードしない。
+ *
+ * @return string
+ */
+function alumni_theme_get_officers_listing_url() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_officers_listing_url();
+}
+
+/**
+ * 上部メニュー('top')か左サイドメニュー('side')かの現在の管理者設定。
+ * Core無効時も安全な既定値（'top'）を返すので、Themeはこの値が常に有効
+ * な2値のどちらかであることを前提にしてよい。
+ *
+ * @return string 'top' または 'side'。
+ */
+function alumni_theme_get_nav_layout() {
+	if ( ! alumni_theme_core_active() ) {
+		return 'top';
+	}
+
+	return alumni_core_get_nav_layout();
 }

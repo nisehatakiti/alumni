@@ -59,6 +59,14 @@ class Settings {
 	const DEFAULT_SLIDESHOW_INTERVAL = 5;
 
 	/**
+	 * ナビゲーションのレイアウト種別。将来レイアウトが増えても、既定値と
+	 * 検証ロジックがここ一箇所で揃うようにする。
+	 */
+	const NAV_LAYOUT_TOP     = 'top';
+	const NAV_LAYOUT_SIDE    = 'side';
+	const DEFAULT_NAV_LAYOUT = self::NAV_LAYOUT_TOP;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Settings|null
@@ -122,6 +130,9 @@ class Settings {
 			// 自動切替（スライドショー）モードでのみ使用され、固定表示では
 			// 無視される。
 			'school_photo_slideshow_interval' => self::DEFAULT_SLIDESHOW_INTERVAL,
+			// 上部メニュー／左サイドメニューの切替。将来、メニュー管理機能が
+			// 拡張されてもこの1フィールドの意味は変わらない設計にしている。
+			'nav_layout'                       => self::DEFAULT_NAV_LAYOUT,
 		);
 	}
 
@@ -270,6 +281,7 @@ class Settings {
 			'school_photo_display_mode'       => $fallback['school_photo_display_mode'],
 			'school_photo_featured_id'        => $fallback['school_photo_featured_id'],
 			'school_photo_slideshow_interval' => $fallback['school_photo_slideshow_interval'],
+			'nav_layout'            => isset( $raw['nav_layout'] ) ? self::sanitize_nav_layout( $raw['nav_layout'] ) : $fallback['nav_layout'],
 		);
 
 		$cycle  = $sanitized['color_cycle'];
@@ -437,5 +449,19 @@ class Settings {
 		}
 
 		return $seconds;
+	}
+
+	/**
+	 * Validates a nav_layout submission, defaulting to
+	 * self::DEFAULT_NAV_LAYOUT for anything unrecognized (including a
+	 * value from a future/older version of this setting) — this only ever
+	 * controls a cosmetic layout choice, so a safe default is preferable
+	 * to blocking save.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return string self::NAV_LAYOUT_TOP or self::NAV_LAYOUT_SIDE.
+	 */
+	public static function sanitize_nav_layout( $raw ) {
+		return self::NAV_LAYOUT_SIDE === $raw ? self::NAV_LAYOUT_SIDE : self::NAV_LAYOUT_TOP;
 	}
 }

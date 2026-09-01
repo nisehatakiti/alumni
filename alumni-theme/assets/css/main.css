@@ -74,6 +74,92 @@
 	display: none;
 }
 
+/* ドリルダウン（親子）メニュー: 「同窓会情報」のように、配下の項目を
+   人物挨拶コンテンツから動的に生成する親メニュー用。既定では閉じており、
+   navigation.js が .alumni-nav-item-has-children に .is-open を付け外し
+   することでクリック開閉する（ホバーだけに頼らずタッチ操作でも確実に
+   開けるようにするため）。
+   セレクタの詳細度は上の .main-navigation ul（display: flex を強制する
+   汎用ルール）に必ず勝つよう、常に .main-navigation を前置している。 */
+.alumni-nav-item-has-children {
+	position: relative;
+}
+
+.alumni-nav-drilldown-toggle::after {
+	content: ' \25BE';
+	font-size: 0.8em;
+}
+
+.main-navigation .alumni-nav-submenu {
+	display: none;
+	list-style: none;
+	margin: 0.4em 0 0;
+	padding: 0;
+}
+
+.alumni-nav-item-has-children.is-open .alumni-nav-submenu {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4em;
+}
+
+/* 上部メニュー: サブメニューをドロップダウンとして重ねて表示する。 */
+.alumni-nav-layout-top .alumni-nav-item-has-children .alumni-nav-submenu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	margin-top: 0;
+	background: #fff;
+	border: 1px solid #e2e2e2;
+	border-radius: 4px;
+	padding: 0.6em 1em;
+	min-width: 10em;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	z-index: 20;
+}
+
+/* 左サイドメニュー: サブメニューはインデントされたまま同じ縦列に続く。 */
+.alumni-nav-layout-side .alumni-nav-item-has-children .alumni-nav-submenu {
+	padding-left: 1em;
+}
+
+/* ページ全体のシェル（header.php/footer.php）。上部メニュー時はただの
+   ブロックコンテナで見た目に影響しない。左サイドメニュー時のみ、
+   #site-navigation と #content を横に並べるフレックスコンテナになる —
+   nav.php自体はheaderの外に出ているため、これがそのための土台になる。 */
+.alumni-page-shell {
+	display: block;
+}
+
+.alumni-nav-layout-side .alumni-page-shell {
+	display: flex;
+	align-items: flex-start;
+	gap: 2em;
+}
+
+.alumni-nav-layout-side .alumni-page-shell .alumni-container {
+	width: 100%;
+}
+
+.alumni-nav-layout-side .main-navigation-side {
+	flex: 0 0 220px;
+	max-width: 220px;
+	padding: 1.5em 1em;
+	border-right: 1px solid #e2e2e2;
+	box-sizing: border-box;
+}
+
+.alumni-nav-layout-side .main-navigation-side .alumni-nav-menu {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.75em;
+}
+
+.alumni-nav-layout-side #content {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
 /* Main content */
 .site-main {
 	padding: 2em 0;
@@ -121,6 +207,19 @@
 
 	.main-navigation.is-open ul {
 		display: flex;
+	}
+
+	/* 左サイドメニューも、狭い画面では上部メニューと同じ折りたたみ挙動に
+	   揃える — 横並びフレックスのままだと、220pxのサイドバーが画面幅の
+	   大半を圧迫してしまうため。 */
+	.alumni-nav-layout-side .alumni-page-shell {
+		display: block;
+	}
+
+	.alumni-nav-layout-side .main-navigation-side {
+		max-width: none;
+		border-right: none;
+		border-bottom: 1px solid #e2e2e2;
 	}
 }
 
@@ -170,6 +269,27 @@
 	flex-wrap: wrap;
 	gap: 1em;
 	margin-top: 1em;
+}
+
+/* トップページの「同窓会情報」導線（卒業期早見表／役員・理事紹介への
+   リンク）。単純な<ul>のリンク一覧に留めているのは、将来これをメニュー
+   （site-navigation.php の「同窓会情報」ドリルダウン等）へ移す際に、
+   マークアップの前提を作り込みすぎないようにするため。 */
+.front-quick-links {
+	margin-bottom: 2em;
+}
+
+.front-quick-links-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
+	margin: 1em 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.front-quick-links-link {
+	display: inline-block;
 }
 
 .alumni-news-events-grid {
@@ -340,6 +460,30 @@
 
 @media (max-width: 600px) {
 	.alumni-graduation-lookup-table {
+		display: block;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+}
+
+/* 役員・理事紹介（[alumni_officers] ショートコード）の公開一覧テーブル。
+   卒業期早見表のテーブルと同じ最低限の罫線・余白・スマートフォン対応の
+   考え方を踏襲する。 */
+.alumni-officers-listing-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 1em 0;
+}
+
+.alumni-officers-listing-table th,
+.alumni-officers-listing-table td {
+	padding: 0.5em 0.75em;
+	border: 1px solid #e2e2e2;
+	text-align: left;
+}
+
+@media (max-width: 600px) {
+	.alumni-officers-listing-table {
 		display: block;
 		overflow-x: auto;
 		white-space: nowrap;

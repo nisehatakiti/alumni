@@ -286,3 +286,46 @@ if ( ! function_exists( 'alumni_core_term_to_color' ) ) {
 		return \AlumniCore\Includes\Term_Calculator::term_to_color( $term, $cycle, $colors );
 	}
 }
+
+if ( ! function_exists( 'alumni_core_get_graduation_lookup_url' ) ) {
+	/**
+	 * The public URL of the 卒業期早見表 page (auto-created by
+	 * Graduation_Lookup_Shortcode). Themes use this for top-page/menu
+	 * links rather than hardcoding the slug.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_graduation_lookup_url() {
+		return \AlumniCore\Includes\Graduation_Lookup_Shortcode::get_url();
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_officers_listing_url' ) ) {
+	/**
+	 * The public URL of the 役員・理事紹介 page (auto-created by
+	 * Officers_Shortcode). Themes use this for top-page/menu links rather
+	 * than hardcoding the slug.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_officers_listing_url() {
+		return \AlumniCore\Includes\Officers_Shortcode::get_url();
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_nav_layout' ) ) {
+	/**
+	 * The admin-selected ナビゲーション配置: 'top'（上部メニュー）または
+	 * 'side'（左サイドメニュー）. Always one of
+	 * \AlumniCore\Includes\Settings::NAV_LAYOUT_TOP /
+	 * \AlumniCore\Includes\Settings::NAV_LAYOUT_SIDE, never an arbitrary
+	 * string — the setting is re-validated on read via
+	 * Settings::sanitize_nav_layout(), the same "revalidate on read"
+	 * pattern used elsewhere in this file.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_nav_layout() {
+		return \AlumniCore\Includes\Settings::sanitize_nav_layout( alumni_core_get_setting( 'nav_layout', \AlumniCore\Includes\Settings::DEFAULT_NAV_LAYOUT ) );
+	}
+}

@@ -117,51 +117,100 @@
 	background: #f6f7f7;
 }
 
-/* 役員・理事紹介 一覧 */
-/* 役員・理事紹介: 各列の幅を入力内容に合わせて配分する（卒業期は小さく、
-   人物紹介・挨拶ページのリンク先は選択肢の文字列が長くなりがちなので
-   大きく取る）。table-layout: fixed のもとでも、ヘッダーセルに指定した
-   幅がそのまま各列の幅として使われる。 */
-.alumni-officers-table-wrap {
+/* 役員・理事紹介 一覧: <table>/wp-list-table ではなく CSS Grid の<div>で
+   組む（理由は class-officers-page.php のコメント参照 — core標準の表組み
+   スタイルが列幅の指定と競合し、「画面には空白があるのに入力欄だけ狭い」
+   状態を繰り返す原因になっていたため）。grid-template-columnsにfr単位を
+   使うことで、画面の使える横幅をどのビューポートでも余すことなく各列に
+   配分する。列の比率は実際の入力内容の長さの目安
+   （卒業期=小、肩書・氏名=中、委員会・人物紹介ページ=大、操作=小）に
+   合わせた。 */
+.alumni-officers-grid-wrap {
 	overflow-x: auto;
 }
 
-.alumni-officers-col-term {
-	width: 8%;
+.alumni-officers-grid {
+	display: grid;
+	grid-template-columns:
+		minmax(90px, 0.7fr)
+		minmax(140px, 1.1fr)
+		minmax(190px, 1.6fr)
+		minmax(140px, 1.1fr)
+		minmax(230px, 1.8fr)
+		minmax(130px, 0.9fr);
+	gap: 0.5em 1.25em;
+	align-items: start;
+	padding: 1em;
+	background: #fff;
+	border: 1px solid #dcdcde;
 }
 
-.alumni-officers-col-title {
-	width: 14%;
+/* 行そのものは見た目のボックスを持たず（display: contents）、中の各セル
+   だけを親 .alumni-officers-grid の直接のグリッドアイテムにする —
+   これにより行をまたいでも各列が縦に揃う。行の追加・削除・並び替えは
+   officers-admin.js が .alumni-officers-row をひとつのノードとして
+   移動/削除するだけなので、この見た目上の変更に影響されない。 */
+.alumni-officers-row {
+	display: contents;
 }
 
-.alumni-officers-col-committee {
-	width: 18%;
+.alumni-officers-grid-cell {
+	padding: 0.5em 0;
+	border-bottom: 1px solid #f0f0f1;
 }
 
-.alumni-officers-col-name {
-	width: 14%;
+.alumni-officers-field-label {
+	display: block;
 }
 
-.alumni-officers-col-link {
-	width: 32%;
+.alumni-officers-field-label-text {
+	display: block;
+	margin-bottom: 0.3em;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.alumni-officers-field-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.5em 0.6em;
 }
 
 .alumni-officers-col-actions {
-	width: 14%;
-	white-space: nowrap;
+	display: flex;
+	flex-direction: column;
 }
 
-.alumni-officers-table input[type="text"],
-.alumni-officers-table input[type="number"],
-.alumni-officers-table select {
-	box-sizing: border-box;
-	width: 100%;
-	padding: 0.4em 0.5em;
+.alumni-officers-actions-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3em;
 }
 
-.alumni-officers-table .button {
-	margin: 0.15em;
-	padding: 0 0.5em;
+.alumni-officers-actions-buttons .button {
+	padding: 0 0.6em;
+}
+
+/* 画面が狭いとき（WP管理画面自体の折りたたみ基準782pxを踏まえて900pxに
+   設定）は1列に積み上げ、各役員の行を罫線で区切って見分けやすくする。 */
+@media (max-width: 900px) {
+	.alumni-officers-grid {
+		display: block;
+	}
+
+	.alumni-officers-row {
+		display: block;
+		padding: 1em 0;
+		border-bottom: 2px solid #dcdcde;
+	}
+
+	.alumni-officers-row:first-child {
+		padding-top: 0;
+	}
+
+	.alumni-officers-grid-cell {
+		border-bottom: none;
+	}
 }
 
 /* 卒業期早見表: 卒業期カラーを行の背景色として適用する。実際の色の値は

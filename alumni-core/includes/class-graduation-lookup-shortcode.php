@@ -104,6 +104,24 @@ class Graduation_Lookup_Shortcode {
 	}
 
 	/**
+	 * The public URL of the 卒業期早見表 page, for Theme navigation/links.
+	 * Falls back to the plain slug URL when the tracked page id is stale
+	 * (e.g. this runs before maybe_create_page() has ever executed) —
+	 * still correct once the page exists, and harmless if it doesn't yet.
+	 *
+	 * @return string
+	 */
+	public static function get_url() {
+		$page_id = (int) get_option( self::OPTION_PAGE_ID, 0 );
+
+		if ( $page_id && 'page' === get_post_type( $page_id ) ) {
+			return (string) get_permalink( $page_id );
+		}
+
+		return home_url( '/' . self::PAGE_SLUG . '/' );
+	}
+
+	/**
 	 * Renders the [alumni_graduation_lookup] shortcode: a 生年月日→卒業期
 	 * 検索フォーム、卒業期→誕生日目安 検索フォーム、and the 早見表 itself
 	 * — everything a visitor needs even when the active theme has no
