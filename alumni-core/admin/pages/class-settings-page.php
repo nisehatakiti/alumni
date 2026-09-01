@@ -175,6 +175,30 @@ class Settings_Page {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'サイトナビゲーション', 'alumni-core' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'メニューの配置', 'alumni-core' ); ?></th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( 'メニューの配置', 'alumni-core' ); ?></legend>
+								<label>
+									<input type="radio" name="nav_layout" value="<?php echo esc_attr( Settings::NAV_LAYOUT_TOP ); ?>"
+										<?php checked( $settings['nav_layout'], Settings::NAV_LAYOUT_TOP ); ?> />
+									<?php esc_html_e( '上部メニュー', 'alumni-core' ); ?>
+								</label>
+								<br />
+								<label>
+									<input type="radio" name="nav_layout" value="<?php echo esc_attr( Settings::NAV_LAYOUT_SIDE ); ?>"
+										<?php checked( $settings['nav_layout'], Settings::NAV_LAYOUT_SIDE ); ?> />
+									<?php esc_html_e( '左サイドメニュー', 'alumni-core' ); ?>
+								</label>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'サイト全体のナビゲーションを、画面上部の横並びメニューにするか、画面左の縦並びメニューにするかを選べます。将来メニュー項目が増えても、この配置設定はそのまま使えます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
 				<?php submit_button( __( '設定を保存', 'alumni-core' ) ); ?>
 			</form>
 		</div>

@@ -3,12 +3,22 @@
  * The header for the theme: doctype, <head>, and the opening site markup
  * (branding + primary navigation).
  *
+ * ナビゲーションの配置（上部／左サイド）は同じ template-parts/site-navigation.php
+ * を使い回し、DOM上の位置だけを admin の nav_layout 設定で切り替える:
+ * 上部メニューでは従来どおり <header> の内側に、左サイドメニューでは
+ * <header> の外、#page-shell 内の最初の子要素として配置する（そのすぐ下の
+ * #content と横に並ぶフレックスの兄弟要素にするため）。見た目の実際の
+ * 切替は body_class() が付与する alumni-nav-layout-top / -side クラスと
+ * main.css が担い、このファイルはDOM構造の違いだけを用意する。
+ *
  * @package Alumni_Theme
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$alumni_theme_nav_layout = alumni_theme_get_nav_layout();
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -50,24 +60,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</div>
 		</div>
 
-		<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e( 'メインナビゲーション', 'alumni-theme' ); ?>">
+		<?php if ( 'side' !== $alumni_theme_nav_layout ) : ?>
+			<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e( 'メインナビゲーション', 'alumni-theme' ); ?>">
+				<button class="menu-toggle" aria-controls="primary-menu" aria-expanded="false">
+					<?php esc_html_e( 'メニュー', 'alumni-theme' ); ?>
+				</button>
+
+				<?php get_template_part( 'template-parts/site-navigation' ); ?>
+			</nav>
+		<?php endif; ?>
+	</div>
+</header>
+
+<div id="page-shell" class="alumni-page-shell">
+	<?php if ( 'side' === $alumni_theme_nav_layout ) : ?>
+		<nav id="site-navigation" class="main-navigation main-navigation-side" aria-label="<?php esc_attr_e( 'メインナビゲーション', 'alumni-theme' ); ?>">
 			<button class="menu-toggle" aria-controls="primary-menu" aria-expanded="false">
 				<?php esc_html_e( 'メニュー', 'alumni-theme' ); ?>
 			</button>
 
-			<?php
-			wp_nav_menu(
-				array(
-					'theme_location' => 'primary',
-					'menu_id'        => 'primary-menu',
-					'container'      => false,
-					'fallback_cb'    => false,
-				)
-			);
-			?>
+			<?php get_template_part( 'template-parts/site-navigation' ); ?>
 		</nav>
-	</div>
-</header>
+	<?php endif; ?>
 
-<div id="content" class="site-content">
-	<div class="alumni-container">
+	<div id="content" class="site-content">
+		<div class="alumni-container">

@@ -29,16 +29,18 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-module.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 
 		Installer::install();
 		Settings::instance()->set_defaults();
 
-		// Creates the 卒業期早見表 固定ページ immediately on activation
-		// (rather than waiting for the next wp-admin page load to trigger
-		// Graduation_Lookup_Shortcode::register()'s admin_init hook), and
-		// only if one doesn't already exist — see that method's docblock
-		// for the "don't duplicate" logic.
+		// Creates the 卒業期早見表／役員・理事紹介 固定ページ immediately on
+		// activation (rather than waiting for the next wp-admin page load
+		// to trigger each class's register()'s admin_init hook), and only
+		// if one doesn't already exist — see each method's docblock for
+		// the "don't duplicate" logic.
 		Graduation_Lookup_Shortcode::maybe_create_page();
+		Officers_Shortcode::maybe_create_page();
 
 		// register_activation_hook() fires before 'init' on this request,
 		// so the post types and rewrite rules must be registered explicitly

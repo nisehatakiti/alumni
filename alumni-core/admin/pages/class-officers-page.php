@@ -58,27 +58,35 @@ class Officers_Page {
 				<input type="hidden" name="action" value="alumni_core_save_officers" />
 				<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 
-				<div class="alumni-officers-table-wrap">
-					<table class="wp-list-table widefat fixed striped alumni-officers-table">
-						<thead>
-							<tr>
-								<th class="alumni-officers-col-term"><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
-								<th class="alumni-officers-col-title"><?php esc_html_e( '肩書', 'alumni-core' ); ?></th>
-								<th class="alumni-officers-col-committee"><?php esc_html_e( '委員会', 'alumni-core' ); ?></th>
-								<th class="alumni-officers-col-name"><?php esc_html_e( '氏名', 'alumni-core' ); ?></th>
-								<th class="alumni-officers-col-link"><?php esc_html_e( '人物紹介・挨拶ページ', 'alumni-core' ); ?></th>
-								<th class="alumni-officers-col-actions"><?php esc_html_e( '操作', 'alumni-core' ); ?></th>
-							</tr>
-						</thead>
-						<tbody id="alumni-officers-list">
-							<?php foreach ( $officers as $index => $officer ) : ?>
-								<?php $this->render_row( $index, $officer, $greeting_options ); ?>
-							<?php endforeach; ?>
-						</tbody>
-					</table>
+				<?php
+				/*
+				 * table / wp-list-table を使わず、CSS Grid の<div>で組む。
+				 * wp-list-table・widefat・fixed・striped はWordPress core側の
+				 * 表組みスタイルを伴うため、各列に指定した幅がそれらと競合し、
+				 * 「画面には空白があるのに入力欄だけ狭い」状態を繰り返す原因に
+				 * なっていた。CSS Gridなら各列の幅はこのCSSだけで完結して決まり、
+				 * fr単位で余白まで含めて画面の使える横幅いっぱいに配分される
+				 * （admin.cssの.alumni-officers-grid参照）。
+				 *
+				 * 行（.alumni-officers-row）は display: contents にして、
+				 * 見た目上のボックスを持たせずに中の各セルだけを親の
+				 * .alumni-officers-grid（実際のgridコンテナ）の直接の
+				 * グリッドアイテムにする — こうすることで、行をまたいでも
+				 * 各列がずれずに揃う。行の追加・削除・並び替え自体は
+				 * officers-admin.js が .alumni-officers-row をひとつの
+				 * ノードとして操作するだけなので、テーブル行からdivへの
+				 * 変更後もJS側の変更は不要。
+				 */
+				?>
+				<div class="alumni-officers-grid-wrap">
+					<div class="alumni-officers-grid" id="alumni-officers-list">
+						<?php foreach ( $officers as $index => $officer ) : ?>
+							<?php $this->render_row( $index, $officer, $greeting_options ); ?>
+						<?php endforeach; ?>
+					</div>
 				</div>
 				<template id="alumni-officers-row-template">
-					<table><tbody><?php $this->render_row( '__INDEX__', array(), $greeting_options ); ?></tbody></table>
+					<?php $this->render_row( '__INDEX__', array(), $greeting_options ); ?>
 				</template>
 
 				<p class="description">
@@ -98,8 +106,15 @@ class Officers_Page {
 	}
 
 	/**
-	 * Renders one officer `<tr>`. Also used (with an empty $officer array)
-	 * as the JS `<template>` for newly-added rows.
+	 * Renders one officer row as a set of CSS Grid cells (see the render()
+	 * docblock comment for why this is <div> markup, not a <table> row).
+	 * Also used (with an empty $officer array) as the JS `<template>` for
+	 * newly-added rows.
+	 *
+	 * Every field carries its own always-visible label (not just
+	 * aria-label) directly above the input, so which box is for what is
+	 * clear at a glance without relying on a header row that can scroll
+	 * out of view once the list is long.
 	 *
 	 * @param int|string $index            0-based row position, or the
 	 *                                       '__INDEX__' placeholder used by
@@ -117,45 +132,64 @@ class Officers_Page {
 		$name      = isset( $officer['name'] ) ? $officer['name'] : '';
 		$linked_id = isset( $officer['linked_content_id'] ) ? (int) $officer['linked_content_id'] : 0;
 		?>
-		<tr class="alumni-officers-row" data-index="<?php echo esc_attr( $index ); ?>">
-			<td class="alumni-officers-col-term">
-				<input type="hidden" name="officers[<?php echo esc_attr( $index ); ?>][row_id]" class="alumni-officers-row-id" value="<?php echo esc_attr( $row_id ); ?>" />
-				<input type="number" inputmode="numeric" min="1" name="officers[<?php echo esc_attr( $index ); ?>][term]"
-					aria-label="<?php echo esc_attr__( '卒業期', 'alumni-core' ); ?>"
-					value="<?php echo esc_attr( $term ); ?>" placeholder="<?php echo esc_attr__( '例：12', 'alumni-core' ); ?>" />
-			</td>
-			<td class="alumni-officers-col-title">
-				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][title]"
-					aria-label="<?php echo esc_attr__( '肩書', 'alumni-core' ); ?>"
-					value="<?php echo esc_attr( $title ); ?>" placeholder="<?php echo esc_attr__( '例：会長、副会長、理事', 'alumni-core' ); ?>" />
-			</td>
-			<td class="alumni-officers-col-committee">
-				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][committee]"
-					aria-label="<?php echo esc_attr__( '委員会', 'alumni-core' ); ?>"
-					value="<?php echo esc_attr( $committee ); ?>" placeholder="<?php echo esc_attr__( '例：広報委員会、事業委員会（なければ空欄）', 'alumni-core' ); ?>" />
-			</td>
-			<td class="alumni-officers-col-name">
-				<input type="text" name="officers[<?php echo esc_attr( $index ); ?>][name]"
-					aria-label="<?php echo esc_attr__( '氏名', 'alumni-core' ); ?>"
-					value="<?php echo esc_attr( $name ); ?>" placeholder="<?php echo esc_attr__( '例：山田 太郎', 'alumni-core' ); ?>" />
-			</td>
-			<td class="alumni-officers-col-link">
-				<select name="officers[<?php echo esc_attr( $index ); ?>][linked_content_id]"
-					aria-label="<?php echo esc_attr__( '人物紹介・挨拶ページ（氏名から表示先の人物挨拶コンテンツを選びます。未選択なら氏名にリンクは付きません）', 'alumni-core' ); ?>">
-					<option value="0"><?php esc_html_e( '（リンクなし）', 'alumni-core' ); ?></option>
-					<?php foreach ( $greeting_options as $content_id => $content_label ) : ?>
-						<option value="<?php echo esc_attr( $content_id ); ?>" <?php selected( $content_id, $linked_id ); ?>>
-							<?php echo esc_html( $content_label ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
-			</td>
-			<td class="alumni-officers-col-actions">
-				<button type="button" class="button alumni-officers-move-up" title="<?php echo esc_attr__( '上へ移動', 'alumni-core' ); ?>">↑</button>
-				<button type="button" class="button alumni-officers-move-down" title="<?php echo esc_attr__( '下へ移動', 'alumni-core' ); ?>">↓</button>
-				<button type="button" class="button alumni-officers-remove"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
-			</td>
-		</tr>
+		<div class="alumni-officers-row" data-index="<?php echo esc_attr( $index ); ?>">
+			<input type="hidden" name="officers[<?php echo esc_attr( $index ); ?>][row_id]" class="alumni-officers-row-id" value="<?php echo esc_attr( $row_id ); ?>" />
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-term">
+				<label class="alumni-officers-field-label">
+					<span class="alumni-officers-field-label-text"><?php esc_html_e( '卒業期', 'alumni-core' ); ?></span>
+					<input type="number" inputmode="numeric" min="1" class="alumni-officers-field-input" name="officers[<?php echo esc_attr( $index ); ?>][term]"
+						value="<?php echo esc_attr( $term ); ?>" placeholder="<?php echo esc_attr__( '例：12', 'alumni-core' ); ?>" />
+				</label>
+			</div>
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-title">
+				<label class="alumni-officers-field-label">
+					<span class="alumni-officers-field-label-text"><?php esc_html_e( '肩書', 'alumni-core' ); ?></span>
+					<input type="text" class="alumni-officers-field-input" name="officers[<?php echo esc_attr( $index ); ?>][title]"
+						value="<?php echo esc_attr( $title ); ?>" placeholder="<?php echo esc_attr__( '例：会長', 'alumni-core' ); ?>" />
+				</label>
+			</div>
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-committee">
+				<label class="alumni-officers-field-label">
+					<span class="alumni-officers-field-label-text"><?php esc_html_e( '委員会', 'alumni-core' ); ?></span>
+					<input type="text" class="alumni-officers-field-input" name="officers[<?php echo esc_attr( $index ); ?>][committee]"
+						value="<?php echo esc_attr( $committee ); ?>" placeholder="<?php echo esc_attr__( '例：総務委員会（なければ空欄）', 'alumni-core' ); ?>" />
+				</label>
+			</div>
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-name">
+				<label class="alumni-officers-field-label">
+					<span class="alumni-officers-field-label-text"><?php esc_html_e( '氏名', 'alumni-core' ); ?></span>
+					<input type="text" class="alumni-officers-field-input" name="officers[<?php echo esc_attr( $index ); ?>][name]"
+						value="<?php echo esc_attr( $name ); ?>" placeholder="<?php echo esc_attr__( '例：山田 太郎', 'alumni-core' ); ?>" />
+				</label>
+			</div>
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-link">
+				<label class="alumni-officers-field-label">
+					<span class="alumni-officers-field-label-text"><?php esc_html_e( '人物紹介ページ', 'alumni-core' ); ?></span>
+					<select class="alumni-officers-field-input" name="officers[<?php echo esc_attr( $index ); ?>][linked_content_id]">
+						<option value="0"><?php esc_html_e( '（リンクなし）', 'alumni-core' ); ?></option>
+						<?php foreach ( $greeting_options as $content_id => $content_label ) : ?>
+							<option value="<?php echo esc_attr( $content_id ); ?>" <?php selected( $content_id, $linked_id ); ?>>
+								<?php echo esc_html( $content_label ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+			</div>
+
+			<div class="alumni-officers-grid-cell alumni-officers-col-actions">
+				<span class="alumni-officers-field-label-text"><?php esc_html_e( '操作', 'alumni-core' ); ?></span>
+				<div class="alumni-officers-actions-buttons">
+					<button type="button" class="button alumni-officers-move-up" title="<?php echo esc_attr__( '上へ移動', 'alumni-core' ); ?>">↑</button>
+					<button type="button" class="button alumni-officers-move-down" title="<?php echo esc_attr__( '下へ移動', 'alumni-core' ); ?>">↓</button>
+					<button type="button" class="button alumni-officers-remove"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
+				</div>
+			</div>
+		</div>
 		<?php
 	}
 

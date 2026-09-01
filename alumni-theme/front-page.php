@@ -74,6 +74,28 @@ get_header();
 		</section>
 	<?php endif; ?>
 
+	<?php if ( alumni_theme_core_active() ) : ?>
+		<section class="front-quick-links">
+			<h2><?php esc_html_e( '同窓会情報', 'alumni-theme' ); ?></h2>
+			<ul class="front-quick-links-list">
+				<?php if ( alumni_theme_get_officers_listing_url() ) : ?>
+					<li>
+						<a class="front-quick-links-link" href="<?php echo esc_url( alumni_theme_get_officers_listing_url() ); ?>">
+							<?php esc_html_e( '役員・理事紹介を見る', 'alumni-theme' ); ?>
+						</a>
+					</li>
+				<?php endif; ?>
+				<?php if ( alumni_theme_get_graduation_lookup_url() ) : ?>
+					<li>
+						<a class="front-quick-links-link" href="<?php echo esc_url( alumni_theme_get_graduation_lookup_url() ); ?>">
+							<?php esc_html_e( '卒業期早見表を見る', 'alumni-theme' ); ?>
+						</a>
+					</li>
+				<?php endif; ?>
+			</ul>
+		</section>
+	<?php endif; ?>
+
 	<section class="front-posts">
 		<?php if ( have_posts() ) : ?>
 			<?php
