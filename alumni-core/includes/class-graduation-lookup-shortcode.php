@@ -229,8 +229,22 @@ class Graduation_Lookup_Shortcode {
 							</thead>
 							<tbody>
 								<?php foreach ( $rows as $row ) : ?>
-									<?php $color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null; ?>
-									<tr>
+									<?php
+									$color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null;
+
+									// 卒業期カラーは行全体の背景色として適用する（ヘッダー行には
+									// 適用しない）。色そのものは管理者が自由に設定する動的な値
+									// なのでインラインstyleで指定するしかないが、読みやすさを保つ
+									// ための白文字／黒文字の切り替えはTheme側のCSSクラスに委ねる
+									// （main.cssの.alumni-lookup-row-text-light/-dark）— Coreは
+									// 明度判定の結果（どちらのクラスを使うか）だけを渡す。
+									$alumni_row_attrs = '';
+									if ( $color ) {
+										$text_class       = Term_Calculator::is_dark_color( $color ) ? 'alumni-lookup-row-text-light' : 'alumni-lookup-row-text-dark';
+										$alumni_row_attrs = sprintf( ' class="%s" style="background-color: %s;"', esc_attr( $text_class ), esc_attr( $color ) );
+									}
+									?>
+									<tr<?php echo $alumni_row_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_attr() above. ?>>
 										<td>
 											<?php
 											/* translators: %d: graduation term (期) */
@@ -245,9 +259,12 @@ class Graduation_Lookup_Shortcode {
 										</td>
 										<?php if ( $color_active ) : ?>
 											<td>
-												<?php if ( $color ) : ?>
-													<span class="alumni-lookup-color-swatch" style="background-color: <?php echo esc_attr( $color ); ?>;"></span>
-												<?php endif; ?>
+												<?php
+												// スウォッチ用の四角は、行自体が同じ色の背景になった今では
+												// 見えなくなってしまうため廃止し、色コードのテキストだけを
+												// 残す（管理画面側の早見表と同じ扱いに揃えている）。
+												echo $color ? esc_html( $color ) : '';
+												?>
 											</td>
 										<?php endif; ?>
 									</tr>

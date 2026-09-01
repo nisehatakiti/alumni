@@ -263,4 +263,35 @@ class Term_Calculator {
 
 		return $rows;
 	}
+
+	/**
+	 * Whether a hex color is "dark" enough that white text reads better on
+	 * it than black — used by 卒業期早見表 to pick a readable text color
+	 * when a 卒業期カラー is applied as a row's background rather than
+	 * shown as a small swatch. Uses the standard YIQ perceived-brightness
+	 * formula (a simple, widely-used luminance heuristic — not full WCAG
+	 * contrast-ratio math, which needs a specific text color to compare
+	 * against and would be overkill for a binary black/white choice).
+	 *
+	 * @param string $hex A '#rrggbb' color, as stored in 卒業期カラー
+	 *                     settings (see Settings::sanitize() /
+	 *                     sanitize_hex_color()).
+	 * @return bool True if white text is more readable than black on this
+	 *              color; false (including for anything not a valid
+	 *              '#rrggbb' string) defaults to black text, the safer
+	 *              fallback against the common case of light/pastel colors.
+	 */
+	public static function is_dark_color( $hex ) {
+		if ( ! is_string( $hex ) || ! preg_match( '/^#([0-9a-fA-F]{6})$/', $hex, $matches ) ) {
+			return false;
+		}
+
+		$r = hexdec( substr( $matches[1], 0, 2 ) );
+		$g = hexdec( substr( $matches[1], 2, 2 ) );
+		$b = hexdec( substr( $matches[1], 4, 2 ) );
+
+		$yiq = ( ( $r * 299 ) + ( $g * 587 ) + ( $b * 114 ) ) / 1000;
+
+		return $yiq < 128;
+	}
 }
