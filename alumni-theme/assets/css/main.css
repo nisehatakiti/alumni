@@ -306,3 +306,42 @@
 	margin: 0 0 0.2em;
 	color: #555;
 }
+
+/* 卒業期早見表（[alumni_graduation_lookup] ショートコード）。
+   行の背景色そのものはCore側がインラインstyleで出力する（管理者が自由に
+   設定する卒業期カラーという動的な値のため、ビルド時に確定するTheme側の
+   CSSファイルでは持てない）。ここで持つのは、その背景の上で文字を
+   読みやすく保つための白文字／黒文字の切り替えと、テーブル自体の
+   最低限の見た目・スマートフォン対応だけ。既存の他のレスポンシブ
+   ルール（.main-navigation の @media (max-width: 600px) 等）には
+   触れていない。 */
+.alumni-lookup-row-text-light,
+.alumni-lookup-row-text-light td {
+	color: #ffffff;
+}
+
+.alumni-lookup-row-text-dark,
+.alumni-lookup-row-text-dark td {
+	color: #222;
+}
+
+.alumni-graduation-lookup-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 1em 0;
+}
+
+.alumni-graduation-lookup-table th,
+.alumni-graduation-lookup-table td {
+	padding: 0.5em 0.75em;
+	border: 1px solid #e2e2e2;
+	text-align: left;
+}
+
+@media (max-width: 600px) {
+	.alumni-graduation-lookup-table {
+		display: block;
+		overflow-x: auto;
+		white-space: nowrap;
+	}
+}

@@ -156,8 +156,22 @@ class Graduation_Lookup_Page {
 					</thead>
 					<tbody>
 						<?php foreach ( $rows as $row ) : ?>
-							<?php $color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null; ?>
-							<tr>
+							<?php
+							$color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null;
+
+							// 卒業期カラーは行全体の背景色として適用する（ヘッダー行には
+							// 適用しない）。色は管理者が自由に設定できる動的な値のため、
+							// 実際の色そのものはインラインstyleで指定するしかないが、
+							// 読みやすさを保つための白文字／黒文字の切り替えは
+							// admin.cssのクラスに委ねる（Term_Calculator::is_dark_color()
+							// が色の明度からどちらのクラスを使うかだけを判定する）。
+							$alumni_row_attrs = '';
+							if ( $color ) {
+								$text_class       = Term_Calculator::is_dark_color( $color ) ? 'alumni-lookup-row-text-light' : 'alumni-lookup-row-text-dark';
+								$alumni_row_attrs = sprintf( ' class="%s" style="background-color: %s;"', esc_attr( $text_class ), esc_attr( $color ) );
+							}
+							?>
+							<tr<?php echo $alumni_row_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_attr() above. ?>>
 								<td>
 									<?php
 									/* translators: %d: graduation term (期) */
@@ -172,10 +186,13 @@ class Graduation_Lookup_Page {
 								</td>
 								<?php if ( $color_active ) : ?>
 									<td>
-										<?php if ( $color ) : ?>
-											<span class="alumni-lookup-color-swatch" style="background-color: <?php echo esc_attr( $color ); ?>;"></span>
-											<?php echo esc_html( $color ); ?>
-										<?php endif; ?>
+										<?php
+										// The swatch square this column used to show is dropped now
+										// that the whole row carries the color as its background —
+										// a same-color square inside a same-color row would just be
+										// invisible. The hex value stays as plain reference text.
+										echo $color ? esc_html( $color ) : '';
+										?>
 									</td>
 								<?php endif; ?>
 							</tr>

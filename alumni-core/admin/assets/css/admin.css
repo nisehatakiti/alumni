@@ -164,12 +164,18 @@
 	padding: 0 0.5em;
 }
 
-/* 卒業期早見表 */
-.alumni-lookup-color-swatch {
-	display: inline-block;
-	width: 1em;
-	height: 1em;
-	vertical-align: middle;
-	margin-right: 0.4em;
-	border: 1px solid #8c8f94;
+/* 卒業期早見表: 卒業期カラーを行の背景色として適用する。実際の色の値は
+   PHP側でインラインstyleとして出力される（管理者が自由に設定する動的な
+   値のため）。ここで用意するのは、その背景の明るさに応じて読みやすい
+   文字色に切り替えるための2クラスのみ — Term_Calculator::is_dark_color()
+   がどちらのクラスを使うか判定する。ヘッダー行にはどちらのクラスも
+   付与されないため、影響しない。 */
+.alumni-lookup-row-text-light,
+.alumni-lookup-row-text-light a {
+	color: #ffffff;
+}
+
+.alumni-lookup-row-text-dark,
+.alumni-lookup-row-text-dark a {
+	color: #1d2327;
 }
