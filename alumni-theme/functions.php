@@ -690,6 +690,10 @@ function alumni_theme_get_content_children( $parent_id ) {
 
 /**
  * $postの祖先（ルートが先頭）、またはCore無効時は空配列。パンくず表示用。
+ * コンテンツ自身の階層（Content_Hierarchy）を基準にする — 以下の
+ * alumni_theme_get_menu_ancestors_for_content() のフォールバックとして
+ * 使う（メニュー構成にまだ配置されていないコンテンツでもパンくずが
+ * 出せるように）。
  *
  * @param int|WP_Post|null $post
  * @return WP_Post[]
@@ -700,6 +704,25 @@ function alumni_theme_get_content_ancestors( $post = null ) {
 	}
 
 	return alumni_core_get_content_ancestors( $post );
+}
+
+/**
+ * $content_idを参照する最初のメニュー項目の祖先（ルートが先頭、
+ * label/url解決済み）、またはCore無効時／どのメニュー項目からも参照
+ * されていない場合は空配列。パンくずは「できるだけメニュー構造を基準に
+ * する」ため、single-alumni_content.phpはこちらを優先し、空の場合だけ
+ * alumni_theme_get_content_ancestors()（コンテンツ自身の階層）へ
+ * フォールバックする。
+ *
+ * @param int $content_id
+ * @return array[] 各要素: array('label'=>string,'url'=>string,...)。
+ */
+function alumni_theme_get_menu_ancestors_for_content( $content_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_menu_ancestors_for_content( $content_id );
 }
 
 /**
@@ -732,6 +755,78 @@ function alumni_theme_render_content_tree_items( array $nodes ) {
 		if ( $children_items ) {
 			$html .= '<ul class="alumni-nav-submenu">' . $children_items . '</ul>';
 		}
+		$html .= '</li>';
+	}
+
+	return $html;
+}
+
+/**
+ * メニュー構成の公開ツリー（対象者1つ、または全対象者）、またはCore無効時
+ * は空配列。各ノードは既にlabel/urlが解決済み — Theme側はフォルダか
+ * コンテンツかシステムページか役員一覧かを一切気にする必要がない
+ * （Menu_Structure::resolve_item()参照）。
+ *
+ * @param string|null $audience \AlumniCore\Includes\Menu_Structure::AUDIENCE_*、
+ *                                またはnullで全対象者。
+ * @return array[] 各要素: array('item_id'=>string,'type'=>'folder'|'content',
+ *                   'label'=>string,'url'=>string,'children'=>同じ形の配列)。
+ */
+function alumni_theme_get_menu_tree( $audience = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_menu_tree( $audience );
+}
+
+/**
+ * alumni_theme_get_menu_tree() が返すノード配列を、階層に沿った
+ * <li>...</li> のマークアップへ再帰的に変換する（呼び出し側で<ul>に
+ * まとめる）— alumni_theme_render_content_tree_items() と同じマークアップ
+ * 規則。フォルダはリンク先を持たない（href="#"、クリックで開閉する
+ * だけ）— site-navigation.phpのJS（navigation.js）が
+ * .alumni-nav-drilldown-toggle をどの深さでも汎用的に開閉できるため、
+ * フォルダ自身の公開ページを別途用意する必要がない
+ * （「フォルダは必ずしもコンテンツではない」）。
+ *
+ * @param array[] $nodes alumni_theme_get_menu_tree()と同じ形。
+ * @return string
+ */
+function alumni_theme_render_menu_items( array $nodes ) {
+	$html = '';
+
+	foreach ( $nodes as $node ) {
+		$children_items = ! empty( $node['children'] ) ? alumni_theme_render_menu_items( $node['children'] ) : '';
+		$is_folder      = ( 'folder' === $node['type'] );
+		$has_children    = (bool) $children_items;
+
+		$html .= '<li' . ( $has_children ? ' class="alumni-nav-item-has-children"' : '' ) . '>';
+
+		if ( $is_folder ) {
+			// フォルダは自分自身の公開ページを持たない。子がある場合は
+			// クリックで開閉するトグルにし、子が1件もない（空の）フォルダは
+			// 押しても何も起きないリンクにしないよう、ただのテキストとして
+			// 出す。
+			if ( $has_children ) {
+				$html .= '<a href="#" class="alumni-nav-drilldown-toggle" aria-haspopup="true" aria-expanded="false">' . esc_html( $node['label'] ) . '</a>';
+			} else {
+				$html .= '<span class="alumni-nav-empty-folder">' . esc_html( $node['label'] ) . '</span>';
+			}
+		} else {
+			// コンテンツへのリンク項目に子がある場合（同一コンテンツの
+			// 複数配置等で稀に起こり得る構成）でも、リンク自体は常に
+			// 参照先へ遷移する — 開閉トグルは別に用意する。
+			$html .= '<a href="' . esc_url( $node['url'] ) . '">' . esc_html( $node['label'] ) . '</a>';
+			if ( $has_children ) {
+				$html .= '<button type="button" class="alumni-nav-drilldown-toggle alumni-nav-drilldown-caret" aria-haspopup="true" aria-expanded="false" aria-label="' . esc_attr__( 'サブメニューを開く', 'alumni-theme' ) . '">▾</button>';
+			}
+		}
+
+		if ( $has_children ) {
+			$html .= '<ul class="alumni-nav-submenu">' . $children_items . '</ul>';
+		}
+
 		$html .= '</li>';
 	}
 
@@ -774,4 +869,50 @@ function alumni_theme_get_system_slot_url( $system_key ) {
 	}
 
 	return alumni_core_get_system_slot_url( $system_key );
+}
+
+/**
+ * 「更新日：2026年9月1日」のような、表示用に整形済みの更新日時文字列、
+ * またはCore無効時／未解決の場合は ''。WordPress投稿（自由コンテンツ・
+ * 人物挨拶・規約類・フォルダ・ニュース・イベント、いずれも）は
+ * post_modifiedをそのまま使う。
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return string
+ */
+function alumni_theme_get_updated_at( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_format_updated_at( alumni_core_get_updated_at( $post ) );
+}
+
+/**
+ * 役員・理事一覧データ（対象のリストに限らず、全体）が最後に保存された
+ * 日時の表示用文字列、またはCore無効時／未保存の場合は ''。
+ *
+ * @return string
+ */
+function alumni_theme_get_officer_lists_updated_at() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_format_updated_at( alumni_core_get_officer_lists_updated_at() );
+}
+
+/**
+ * 役員・理事一覧の任期を表す表示用文字列（alumni_theme_get_officer_list()
+ * 等が返す一覧データを渡す）、またはCore無効時／任期未設定の場合は ''。
+ *
+ * @param array $list
+ * @return string
+ */
+function alumni_theme_format_officer_list_term( array $list ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_format_officer_list_term( $list );
 }

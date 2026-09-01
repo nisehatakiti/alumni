@@ -205,14 +205,17 @@ if ( ! function_exists( 'alumni_core_get_terms' ) ) {
 		}
 
 		return array(
-			'id'             => $post->ID,
-			'content_name'   => $post->post_title,
-			'display_title'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_display_title( $post ),
-			'effective_date' => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_effective_date( $post ),
-			'revised_date'   => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revised_date( $post ),
-			'body'           => $post->post_content,
-			'status'         => $post->post_status,
-			'menu_order'     => (int) $post->menu_order,
+			'id'              => $post->ID,
+			'content_name'    => $post->post_title,
+			'display_title'   => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_display_title( $post ),
+			'effective_date'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_effective_date( $post ),
+			'revised_date'    => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revised_date( $post ),
+			'revision_dates'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revision_dates( $post ),
+			'last_revised_date' => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_last_revised_date( $post ),
+			'font_size'       => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_font_size( $post ),
+			'body'            => $post->post_content,
+			'status'          => $post->post_status,
+			'menu_order'      => (int) $post->menu_order,
 		);
 	}
 }

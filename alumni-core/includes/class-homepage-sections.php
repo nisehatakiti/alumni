@@ -115,6 +115,32 @@ class Homepage_Sections {
 	}
 
 	/**
+	 * The public URL a system key resolves to. Shared by both トップページ
+	 * のシステムスロット (public/homepage-functions.php) and メニュー構成
+	 * のシステム参照項目 (Menu_Structure) — a single source of truth for
+	 * "system key -> URL" so the two don't drift.
+	 *
+	 * @param string $system_key
+	 * @return string Empty string for an unrecognized key.
+	 */
+	public static function resolve_system_url( $system_key ) {
+		switch ( $system_key ) {
+			case self::SYSTEM_NEWS:
+				return alumni_core_get_news_listing_url();
+			case self::SYSTEM_EVENTS:
+				return alumni_core_get_events_listing_url();
+			case self::SYSTEM_OFFICERS_INDEX:
+				return alumni_core_get_officers_listing_url();
+			case self::SYSTEM_TERMS_INDEX:
+				return alumni_core_get_terms_listing_url();
+			case self::SYSTEM_GRADUATION_LOOKUP:
+				return alumni_core_get_graduation_lookup_url();
+			default:
+				return '';
+		}
+	}
+
+	/**
 	 * Every section, sorted by 表示順, with every slot normalized/
 	 * revalidated (see class docblock). Triggers a one-time default-seed on
 	 * the very first call, so a fresh install starts with a homepage that

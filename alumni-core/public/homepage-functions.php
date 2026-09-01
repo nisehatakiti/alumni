@@ -65,19 +65,6 @@ if ( ! function_exists( 'alumni_core_get_system_slot_url' ) ) {
 	 * @return string Empty string for an unrecognized key.
 	 */
 	function alumni_core_get_system_slot_url( $system_key ) {
-		switch ( $system_key ) {
-			case \AlumniCore\Includes\Homepage_Sections::SYSTEM_NEWS:
-				return alumni_core_get_news_listing_url();
-			case \AlumniCore\Includes\Homepage_Sections::SYSTEM_EVENTS:
-				return alumni_core_get_events_listing_url();
-			case \AlumniCore\Includes\Homepage_Sections::SYSTEM_OFFICERS_INDEX:
-				return alumni_core_get_officers_listing_url();
-			case \AlumniCore\Includes\Homepage_Sections::SYSTEM_TERMS_INDEX:
-				return alumni_core_get_terms_listing_url();
-			case \AlumniCore\Includes\Homepage_Sections::SYSTEM_GRADUATION_LOOKUP:
-				return alumni_core_get_graduation_lookup_url();
-			default:
-				return '';
-		}
+		return \AlumniCore\Includes\Homepage_Sections::resolve_system_url( $system_key );
 	}
 }

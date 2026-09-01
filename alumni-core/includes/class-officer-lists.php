@@ -42,6 +42,18 @@ class Officer_Lists {
 	const LEGACY_OPTION_NAME = 'alumni_core_officers';
 
 	/**
+	 * Separate sibling option storing when the officer-lists data was last
+	 * saved (mysql datetime string). Kept as its own option rather than
+	 * nesting it inside OPTION_NAME's array — OPTION_NAME's shape (a plain
+	 * list of 一覧) is already relied upon elsewhere and existing sites'
+	 * stored data is exactly that shape; wrapping it in an
+	 * {lists:[...],updated_at:...} envelope would need its own migration.
+	 * A sibling option achieves the same "when was this last touched"
+	 * need without touching the existing option's shape at all.
+	 */
+	const UPDATED_AT_OPTION = 'alumni_core_officer_lists_updated_at';
+
+	/**
 	 * Default 肩書見出し when a list doesn't override it.
 	 */
 	const DEFAULT_TITLE_HEADING = '肩書';
@@ -139,8 +151,63 @@ class Officer_Lists {
 		if ( ! isset( $list['enabled'] ) ) {
 			$list['enabled'] = true;
 		}
+		if ( ! isset( $list['term_start'] ) ) {
+			$list['term_start'] = '';
+		}
+		if ( ! isset( $list['term_end'] ) ) {
+			$list['term_end'] = '';
+		}
+		if ( ! isset( $list['term_label'] ) ) {
+			$list['term_label'] = '';
+		}
 
 		return $list;
+	}
+
+	/**
+	 * A human-readable 任期 string for one list: the free-text override
+	 * when set (e.g. "令和8年度～令和9年度", for associations that don't
+	 * track this as a calendar date range), otherwise a formatted
+	 * start/end date range, otherwise ''. Pure formatting, no I/O — safe to
+	 * call from Theme code repeatedly.
+	 *
+	 * @param array $list A list from get_all()/get_list() (already
+	 *                      normalized).
+	 * @return string
+	 */
+	public static function format_term( array $list ) {
+		if ( ! empty( $list['term_label'] ) ) {
+			return $list['term_label'];
+		}
+
+		if ( empty( $list['term_start'] ) && empty( $list['term_end'] ) ) {
+			return '';
+		}
+
+		$start = ! empty( $list['term_start'] ) ? self::format_term_date( $list['term_start'] ) : '';
+		$end   = ! empty( $list['term_end'] ) ? self::format_term_date( $list['term_end'] ) : '';
+
+		if ( $start && $end ) {
+			return $start . ' ～ ' . $end;
+		}
+
+		return $start ? $start . ' ～' : '～ ' . $end;
+	}
+
+	/**
+	 * @param string $y_m_d 'Y-m-d'.
+	 * @return string 'Y年n月j日', or the raw input if it isn't a valid
+	 *                 'Y-m-d' string (defensive — format_term() is pure
+	 *                 formatting and must never fatal on stored data).
+	 */
+	private static function format_term_date( $y_m_d ) {
+		$parts = explode( '-', $y_m_d );
+
+		if ( 3 !== count( $parts ) ) {
+			return $y_m_d;
+		}
+
+		return sprintf( '%d年%d月%d日', (int) $parts[0], (int) $parts[1], (int) $parts[2] );
 	}
 
 	/**
@@ -225,10 +292,22 @@ class Officer_Lists {
 	 */
 	private function save_lists( array $lists ) {
 		update_option( self::OPTION_NAME, $lists );
+		update_option( self::UPDATED_AT_OPTION, current_time( 'mysql' ) );
 
 		$this->lists = $lists;
 
 		return $lists;
+	}
+
+	/**
+	 * When the officer-lists data (any list, any field) was last saved, or
+	 * '' if it has never been explicitly saved yet (e.g. a fresh install
+	 * that only ever auto-migrated legacy data without any further edits).
+	 *
+	 * @return string 'Y-m-d H:i:s', or ''.
+	 */
+	public function get_updated_at() {
+		return (string) get_option( self::UPDATED_AT_OPTION, '' );
 	}
 
 	/**
@@ -259,6 +338,9 @@ class Officer_Lists {
 			'parent_id'     => 0,
 			'audience'      => self::AUDIENCE_COMMON,
 			'enabled'       => true,
+			'term_start'    => '',
+			'term_end'      => '',
+			'term_label'    => '',
 			'rows'          => array(),
 		);
 
@@ -375,6 +457,67 @@ class Officer_Lists {
 		$this->save_lists( $lists );
 
 		return $found;
+	}
+
+	/**
+	 * Updates a list's 任期 (tenure) — applies to the list as a whole, not
+	 * to individual officer rows (see class docblock's 任期 example: "その
+	 * 役員一覧全体に適用する").
+	 *
+	 * @param string $list_id
+	 * @param mixed  $term_start Raw 'Y-m-d' input, or ''/invalid for unset.
+	 * @param mixed  $term_end   Raw 'Y-m-d' input, or ''/invalid for unset.
+	 * @param mixed  $term_label Raw free-text override (e.g. "令和8年度～
+	 *                            令和9年度"), sanitized here.
+	 * @return array|null The updated list, or null if $list_id doesn't exist.
+	 */
+	public function save_list_term( $list_id, $term_start, $term_end, $term_label ) {
+		$lists = $this->get_all();
+		$found = null;
+
+		$term_start = self::sanitize_date( $term_start );
+		$term_end   = self::sanitize_date( $term_end );
+		$term_label = sanitize_text_field( $term_label );
+
+		foreach ( $lists as &$list ) {
+			if ( $list['list_id'] !== $list_id ) {
+				continue;
+			}
+
+			$list['term_start'] = $term_start;
+			$list['term_end']   = $term_end;
+			$list['term_label'] = $term_label;
+
+			$found = $list;
+		}
+		unset( $list );
+
+		$this->save_lists( $lists );
+
+		return $found;
+	}
+
+	/**
+	 * Validates a 'Y-m-d' date submission, rejecting anything that isn't a
+	 * real calendar date via checkdate() — same rule as
+	 * Modules\Content\Content_Meta_Box::sanitize_date() /
+	 * Modules\NewsEvents\Meta_Box::sanitize_date(), duplicated rather than
+	 * cross-referenced for the same reasoning documented on this class's
+	 * other sanitize_*() helpers.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return string 'Y-m-d', or '' when empty/invalid.
+	 */
+	private static function sanitize_date( $raw ) {
+		if ( ! is_string( $raw ) || ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $raw, $matches ) ) {
+			return '';
+		}
+
+		if ( ! checkdate( (int) $matches[2], (int) $matches[3], (int) $matches[1] ) ) {
+			return '';
+		}
+
+		return $raw;
 	}
 
 	/**

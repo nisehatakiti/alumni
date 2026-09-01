@@ -256,3 +256,48 @@
 	gap: 0.5em;
 	margin: -1em 0 1.5em;
 }
+
+/* メニュー構成: 階層インデント付きの項目一覧。 */
+.alumni-menu-tree-audience {
+	margin-bottom: 2em;
+}
+
+.alumni-menu-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5em;
+	padding: 0.4em 0.5em;
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.alumni-menu-row-type {
+	color: #666;
+	font-size: 0.85em;
+}
+
+.alumni-menu-row-label {
+	font-weight: bold;
+}
+
+.alumni-menu-row-disabled {
+	color: #b32d2e;
+	font-size: 0.85em;
+}
+
+.alumni-menu-row-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.25em;
+	margin-left: auto;
+}
+
+.alumni-menu-action-form {
+	display: inline-block;
+	margin: 0;
+}
+
+.alumni-menu-create-form {
+	max-width: 480px;
+	margin-bottom: 2em;
+}

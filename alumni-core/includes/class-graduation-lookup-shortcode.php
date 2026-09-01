@@ -165,6 +165,18 @@ class Graduation_Lookup_Shortcode {
 
 		$current_url = home_url( add_query_arg( null, null ) );
 
+		// 検索フォームのaction先は、現在のURL（$current_url、既存の検索
+		// パラメータを含み得る）ではなく、常にこのページ自体のクリーンな
+		// URL（クエリ文字列なし）を使う。GET method="get"のフォームは、
+		// 送信時にブラウザがaction属性のクエリ文字列を丸ごとフォーム自身の
+		// 値で置き換える仕様のため機能上は同じ結果になるはずだが、
+		// action自体に累積したクエリ文字列（前回検索やページネーションの
+		// from_term等）を含めておくのは事故のもと — 例えば一部の環境・
+		// キャッシュ設定・古いブラウザでの差異を避けるため、常にクリーンな
+		// URLを使うのが最も安全（早見表の「前へ／次へ」ページネーション
+		// リンクは、引き続き$current_urlを使って検索条件を維持する）。
+		$search_form_action_url = self::get_url();
+
 		ob_start();
 		?>
 		<div class="alumni-graduation-lookup">
@@ -176,7 +188,7 @@ class Graduation_Lookup_Shortcode {
 
 				<section class="alumni-graduation-lookup-section">
 					<h2><?php esc_html_e( '卒業期を調べる', 'alumni-core' ); ?></h2>
-					<form method="get" action="<?php echo esc_url( $current_url ); ?>" class="alumni-graduation-lookup-form alumni-graduation-lookup-date-form">
+					<form method="get" action="<?php echo esc_url( $search_form_action_url ); ?>" class="alumni-graduation-lookup-form alumni-graduation-lookup-date-form">
 						<label for="alumni-lookup-birth-year"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label>
 						<span class="alumni-graduation-lookup-date-fields">
 							<input type="number" inputmode="numeric" id="alumni-lookup-birth-year" name="<?php echo esc_attr( self::QUERY_VAR_BIRTH_YEAR ); ?>" min="1000" max="9999" placeholder="<?php echo esc_attr__( '年', 'alumni-core' ); ?>" value="<?php echo esc_attr( $birth_year_input ); ?>" /><?php esc_html_e( '年', 'alumni-core' ); ?>

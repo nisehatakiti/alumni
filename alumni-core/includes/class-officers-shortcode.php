@@ -238,6 +238,30 @@ class Officers_Shortcode {
 					<?php esc_html_e( 'この役員・理事一覧は見つかりませんでした。', 'alumni-core' ); ?>
 				</p>
 			<?php else : ?>
+				<?php $term_text = Officer_Lists::format_term( $list ); ?>
+				<?php if ( $term_text ) : ?>
+					<p class="alumni-officers-listing-term">
+						<?php
+						printf(
+							/* translators: %s: term/tenure range, e.g. "2026年4月1日 ～ 2028年3月31日" */
+							esc_html__( '任期：%s', 'alumni-core' ),
+							esc_html( $term_text )
+						);
+						?>
+					</p>
+				<?php endif; ?>
+				<?php $updated_at = Officer_Lists::instance()->get_updated_at(); ?>
+				<?php if ( $updated_at ) : ?>
+					<p class="alumni-officers-listing-updated-at">
+						<?php
+						printf(
+							/* translators: %s: formatted update date, e.g. "2026年9月1日" */
+							esc_html__( '更新日：%s', 'alumni-core' ),
+							esc_html( mysql2date( get_option( 'date_format' ), $updated_at ) )
+						);
+						?>
+					</p>
+				<?php endif; ?>
 				<?php $officers = alumni_core_get_officers_for_list( $atts['id'] ); ?>
 				<?php if ( empty( $officers ) ) : ?>
 					<p class="alumni-notice">

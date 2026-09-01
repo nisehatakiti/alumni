@@ -6,17 +6,18 @@
  * 呼び出される。
  *
  * 固定項目（ホーム／ニュース／イベント／役員・理事紹介／卒業期早見表）に
- * 加えて、Alumni Coreの「コンテンツ階層」（対象者×親子関係）から動的に
+ * 加えて、Alumni Coreの「メニュー構成」（Menu_Structure）から動的に
  * ドリルダウンメニューを生成する — 特定のコンテンツ名をここに
- * ハードコードすることはない。管理者がコンテンツを作成し、対象者・親を
- * 設定するだけで、メニュー側の変更なしに自動的にここへ現れる
- * （docs/top-page-slot-and-navigation-design.md 他）。
+ * ハードコードすることはない。管理者が「同窓会 > メニュー構成」画面で
+ * フォルダ・コンテンツへのリンクを配置するだけで、メニュー側のコード
+ * 変更なしに自動的にここへ現れる（docs/top-page-slot-and-navigation-design.md
+ * 他）。メニュー構成は、以前のコンテンツ階層（Content_Hierarchy）ベースの
+ * 構造から初回アクセス時に自動的に移行されるため、アップグレード直後の
+ * 見た目は変わらない（Menu_Structure::migrate_from_content_hierarchy()参照）。
  *
- * 「共通」対象者のトップレベルコンテンツ（会長挨拶・校長挨拶などの人物
- * 挨拶や、規約類、自由コンテンツで対象者を明示的に設定していないもの）は
- * すべて「同窓会情報」というドリルダウンにまとまる。「卒業生向け」
- * 「在校生向け」はそれぞれ専用のドリルダウンになり、どちらもトップレベル
- * コンテンツが1件もない場合は表示されない。
+ * 「共通」対象者はすべて「同窓会情報」というドリルダウンにまとまる。
+ * 「卒業生向け」「在校生向け」はそれぞれ専用のドリルダウンになり、
+ * どちらもトップレベル項目が1件もない場合は表示されない。
  *
  * @package AlumniTheme
  */
@@ -50,18 +51,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</li>
 	<?php endif; ?>
 	<?php
-	$alumni_nav_terms_url = alumni_theme_get_terms_listing_url();
-
 	// 「共通」ドリルダウンは、規約類一覧への固定リンク（常に到達できる
-	// ようにする）に、「共通」対象者のトップレベルコンテンツ階層を続ける。
-	// 既存の人物挨拶・規約類コンテンツは対象者未設定=common・親未設定=
-	// トップレベルが既定値になるため、ここへ何もしなくても現れる
-	// （移行不要、既存の見え方を壊さない）。
+	// ようにする）に、メニュー構成の「共通」対象者のトップレベル項目を
+	// 続ける。
+	$alumni_nav_terms_url    = alumni_theme_get_terms_listing_url();
 	$alumni_nav_common_items = '';
 	if ( $alumni_nav_terms_url ) {
 		$alumni_nav_common_items .= '<li><a href="' . esc_url( $alumni_nav_terms_url ) . '">' . esc_html__( '規約類', 'alumni-theme' ) . '</a></li>';
 	}
-	$alumni_nav_common_items .= alumni_theme_render_content_tree_items( alumni_theme_get_content_tree( 'common' ) );
+	$alumni_nav_common_items .= alumni_theme_render_menu_items( alumni_theme_get_menu_tree( 'common' ) );
 
 	if ( $alumni_nav_common_items ) :
 		?>
@@ -70,21 +68,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( '同窓会情報', 'alumni-theme' ); ?>
 			</a>
 			<ul class="alumni-nav-submenu">
-				<?php echo $alumni_nav_common_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_content_tree_items() and above. ?>
+				<?php echo $alumni_nav_common_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_menu_items() and above. ?>
 			</ul>
 		</li>
 		<?php
 	endif;
 
-	// 「卒業生向け」「在校生向け」は、それぞれのトップレベルコンテンツが
-	// 1件でもある場合だけドリルダウンとして表示する。
+	// 「卒業生向け」「在校生向け」は、それぞれのトップレベル項目が1件でも
+	// ある場合だけドリルダウンとして表示する。
 	$alumni_nav_audience_groups = array(
 		'alumni'  => __( '卒業生向け', 'alumni-theme' ),
 		'student' => __( '在校生向け', 'alumni-theme' ),
 	);
 
 	foreach ( $alumni_nav_audience_groups as $alumni_nav_audience_key => $alumni_nav_audience_label ) :
-		$alumni_nav_audience_items = alumni_theme_render_content_tree_items( alumni_theme_get_content_tree( $alumni_nav_audience_key ) );
+		$alumni_nav_audience_items = alumni_theme_render_menu_items( alumni_theme_get_menu_tree( $alumni_nav_audience_key ) );
 
 		if ( ! $alumni_nav_audience_items ) :
 			continue;
@@ -95,7 +93,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php echo esc_html( $alumni_nav_audience_label ); ?>
 			</a>
 			<ul class="alumni-nav-submenu">
-				<?php echo $alumni_nav_audience_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_content_tree_items(). ?>
+				<?php echo $alumni_nav_audience_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_html()/esc_url() in alumni_theme_render_menu_items(). ?>
 			</ul>
 		</li>
 		<?php

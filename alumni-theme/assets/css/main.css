@@ -522,8 +522,52 @@
 }
 
 .alumni-terms-effective-date,
-.alumni-terms-revised-date {
+.alumni-terms-last-revised-date {
 	margin: 0 0 0.2em;
+}
+
+.alumni-terms-revision-history-label {
+	margin: 0.5em 0 0.2em;
+}
+
+.alumni-terms-revision-history-list {
+	margin: 0;
+	padding-left: 1.5em;
+}
+
+/* 規約類の本文文字サイズ。Coreは「小／中／大」という意味だけを持ち、
+   実際のピクセル数はここで決定する（class-post-type.phpのdocblock参照）。 */
+.terms-font-small {
+	font-size: 0.875em;
+}
+
+.terms-font-medium {
+	font-size: 1em;
+}
+
+.terms-font-large {
+	font-size: 1.25em;
+}
+
+/* 更新日時（自由コンテンツ・人物挨拶・規約類・ニュース・イベント・
+   役員一覧、共通のスタイル） */
+.alumni-updated-at,
+.alumni-officers-listing-updated-at {
+	margin: 0.3em 0 1em;
+	color: #777;
+	font-size: 0.85em;
+}
+
+.alumni-officers-listing-term {
+	margin: 0.3em 0;
+	font-weight: bold;
+}
+
+.alumni-news-event-card-updated-at {
+	display: block;
+	margin-top: 0.3em;
+	color: #888;
+	font-size: 0.8em;
 }
 
 .alumni-terms-listing-list {
