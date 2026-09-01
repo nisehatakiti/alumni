@@ -391,22 +391,84 @@ function alumni_theme_get_person_greeting( $post = null ) {
 }
 
 /**
- * Every saved 役員・理事 row, in display order, with stale リンク先
- * already resolved to 0 by Core — or an empty array when Core is
- * inactive.
+ * Every field needed to render a 規約類 detail page (display title,
+ * effective/revised dates, body, ...), or null when Core is inactive or
+ * $post isn't a 規約類 コンテンツ post.
+ *
+ * @param int|WP_Post|null $post Post ID or object.
+ * @return array|null
+ */
+function alumni_theme_get_terms( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_terms( $post );
+}
+
+/**
+ * Every saved 役員・理事一覧, in display order (metadata only, no rows —
+ * see alumni_theme_get_officers_for_list() for one list's rows), or an
+ * empty array when Core is inactive.
  *
  * @return array[]
  */
-function alumni_theme_get_officers() {
+function alumni_theme_get_officer_lists() {
 	if ( ! alumni_theme_core_active() ) {
 		return array();
 	}
 
-	return alumni_core_get_officers();
+	return alumni_core_get_officer_lists();
 }
 
 /**
- * @param array $officer One row from alumni_theme_get_officers().
+ * A single 役員・理事一覧's metadata (no rows), or null when Core is
+ * inactive or $list_id doesn't exist.
+ *
+ * @param string $list_id
+ * @return array|null
+ */
+function alumni_theme_get_officer_list( $list_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	return alumni_core_get_officer_list( $list_id );
+}
+
+/**
+ * Every saved 役員・理事 row for one 一覧, in display order, with stale
+ * リンク先 already resolved to 0 by Core — or an empty array when Core is
+ * inactive.
+ *
+ * @param string $list_id
+ * @return array[]
+ */
+function alumni_theme_get_officers_for_list( $list_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_officers_for_list( $list_id );
+}
+
+/**
+ * The public URL of one 役員・理事一覧's own page, or '' when Core is
+ * inactive or $list_id doesn't exist / its page hasn't been created yet.
+ *
+ * @param string $list_id
+ * @return string
+ */
+function alumni_theme_get_officer_list_url( $list_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_officer_list_url( $list_id );
+}
+
+/**
+ * @param array $officer One row from alumni_theme_get_officers_for_list().
  * @return string URL, or '' when Core is inactive or the row has no
  *                 (currently valid) link.
  */
@@ -466,20 +528,6 @@ function alumni_theme_get_school_photo_slideshow_interval() {
 }
 
 /**
- * 現在の一覧ページの種別（'news'／'event'）。/news-events/ の統合一覧や
- * それ以外のページでは '' を返す。
- *
- * @return string
- */
-function alumni_theme_get_news_events_listing_type() {
-	if ( ! alumni_theme_core_active() ) {
-		return '';
-	}
-
-	return alumni_core_get_news_events_listing_type();
-}
-
-/**
  * ニュース一覧（/news/）のURL、またはCore無効時は ''。
  *
  * @return string
@@ -533,6 +581,21 @@ function alumni_theme_get_officers_listing_url() {
 	}
 
 	return alumni_core_get_officers_listing_url();
+}
+
+/**
+ * 規約類一覧ページ（[alumni_terms_list] ショートコードが自動的に配置
+ * される固定ページ）のURL、またはCore無効時は ''。トップページやメニュー
+ * はこの関数でリンクし、スラッグを直接ハードコードしない。
+ *
+ * @return string
+ */
+function alumni_theme_get_terms_listing_url() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_terms_listing_url();
 }
 
 /**

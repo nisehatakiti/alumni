@@ -22,8 +22,10 @@ class Module {
 	/**
 	 * Bumped whenever the post type's rewrite rules change, to trigger a
 	 * one-time flush on sites updated in place (no deactivate/reactivate).
-	 * Bumped to '2' for the addition of the /news/ and /events/ listing
-	 * rewrite rules (Listing_Rewrites).
+	 * The /news/ and /events/ listings no longer use custom rewrite rules
+	 * (see Listing_Shortcode) — only this CPT's own registration
+	 * (has_archive/rewrite in Post_Type::register()) still needs a flush
+	 * when it changes.
 	 */
 	const REWRITE_VERSION = '2';
 
@@ -38,7 +40,7 @@ class Module {
 	 */
 	public static function register() {
 		add_action( 'init', array( Post_Type::class, 'register' ) );
-		Listing_Rewrites::register();
+		Listing_Shortcode::register();
 
 		if ( ! is_admin() ) {
 			return;

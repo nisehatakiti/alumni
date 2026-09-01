@@ -2,9 +2,10 @@
 /**
  * Single template for コンテンツ (/contents/{slug}/).
  *
- * Both 自由コンテンツ and 人物挨拶 share this one template — the CPT and
- * URL structure are the same for both (see Alumni Core's Content module);
- * only the extra 氏名／肩書／卒業期／顔写真 block is conditional on kind.
+ * 自由コンテンツ・人物挨拶・規約類のすべてがこの1つのテンプレートを
+ * 共有する — CPTとURL構造はどのkindでも同じ（Alumni CoreのContent
+ * モジュール参照）で、氏名／肩書／卒業期／顔写真（人物挨拶）や
+ * 施行日／改定日（規約類）といった追加ブロックだけがkindに応じて変わる。
  * Without this template, WordPress would fall back to the theme's generic
  * index.php + template-parts/content.php, which shows the title and body
  * but has no idea a 人物挨拶 post carries those extra fields at all — this
@@ -28,16 +29,47 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 
-	// alumni_theme_get_person_greeting() already returns null for 自由
-	// コンテンツ (or when Core is inactive), so its own return value is
-	// the only branch check this template needs.
+	// alumni_theme_get_person_greeting()/alumni_theme_get_terms() already
+	// return null for a kind they don't apply to (or when Core is
+	// inactive), so their own return values are the only branch checks
+	// this template needs.
 	$alumni_greeting = alumni_theme_get_person_greeting();
+	$alumni_terms    = alumni_theme_get_terms();
 	?>
 	<main id="primary" class="site-main alumni-content-single">
 		<article id="post-<?php the_ID(); ?>" <?php post_class( 'alumni-content-entry' ); ?>>
 			<header class="entry-header">
-				<h1 class="entry-title"><?php the_title(); ?></h1>
+				<h1 class="entry-title"><?php echo esc_html( $alumni_terms ? $alumni_terms['display_title'] : get_the_title() ); ?></h1>
 			</header>
+
+			<?php if ( $alumni_terms ) : ?>
+				<?php if ( $alumni_terms['effective_date'] || $alumni_terms['revised_date'] ) : ?>
+					<div class="alumni-terms-meta">
+						<?php if ( $alumni_terms['effective_date'] ) : ?>
+							<p class="alumni-terms-effective-date">
+								<?php
+								printf(
+									/* translators: %s: effective date, Y-m-d */
+									esc_html__( '施行日：%s', 'alumni-theme' ),
+									esc_html( $alumni_terms['effective_date'] )
+								);
+								?>
+							</p>
+						<?php endif; ?>
+						<?php if ( $alumni_terms['revised_date'] ) : ?>
+							<p class="alumni-terms-revised-date">
+								<?php
+								printf(
+									/* translators: %s: revised date, Y-m-d */
+									esc_html__( '改定日：%s', 'alumni-theme' ),
+									esc_html( $alumni_terms['revised_date'] )
+								);
+								?>
+							</p>
+						<?php endif; ?>
+					</div>
+				<?php endif; ?>
+			<?php endif; ?>
 
 			<?php if ( $alumni_greeting ) : ?>
 				<div class="alumni-person-greeting-meta">

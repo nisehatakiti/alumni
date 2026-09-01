@@ -38,12 +38,15 @@ class Graduation_Lookup_Shortcode {
 	const SHORTCODE = 'alumni_graduation_lookup';
 
 	/**
-	 * Query var names used by the shortcode's two lookup forms. Namespaced
-	 * to avoid colliding with anything else on the page this shortcode is
-	 * embedded in.
+	 * Query var names used by the shortcode's 生年月日 lookup form.
+	 * Namespaced to avoid colliding with anything else on the page this
+	 * shortcode is embedded in. There is deliberately no 卒業期→生年月日
+	 * reverse-lookup form (it was removed — the only supported direction
+	 * is 生年月日→卒業期).
 	 */
-	const QUERY_VAR_BIRTHDATE = 'alumni_lookup_birthdate';
-	const QUERY_VAR_TERM      = 'alumni_lookup_term';
+	const QUERY_VAR_BIRTH_YEAR  = 'alumni_lookup_birth_year';
+	const QUERY_VAR_BIRTH_MONTH = 'alumni_lookup_birth_month';
+	const QUERY_VAR_BIRTH_DAY   = 'alumni_lookup_birth_day';
 
 	/**
 	 * How many rows the 早見表 table shows per page when no range is
@@ -123,23 +126,33 @@ class Graduation_Lookup_Shortcode {
 
 	/**
 	 * Renders the [alumni_graduation_lookup] shortcode: a 生年月日→卒業期
-	 * 検索フォーム、卒業期→誕生日目安 検索フォーム、and the 早見表 itself
-	 * — everything a visitor needs even when the active theme has no
-	 * dedicated template for this page.
+	 * 検索フォーム followed by the 早見表 itself — everything a visitor
+	 * needs even when the active theme has no dedicated template for this
+	 * page. The 卒業期→生年月日 reverse-lookup form that used to appear
+	 * here has been removed (生年月日→卒業期 is the only supported
+	 * direction), and the 早見表 no longer has a separate 色 column — each
+	 * row's own background color already carries that information.
 	 *
 	 * @return string
 	 */
 	public static function render_shortcode() {
-		$settings               = Settings::instance()->get_all();
-		$first_graduation_year  = $settings['first_graduation_year'];
-		$color_active           = $settings['color_feature_enabled'];
-		$color_cycle            = $settings['color_cycle'];
-		$colors                 = $settings['colors'];
+		$settings              = Settings::instance()->get_all();
+		$first_graduation_year = $settings['first_graduation_year'];
+		$color_active          = $settings['color_feature_enabled'];
+		$color_cycle           = $settings['color_cycle'];
+		$colors                = $settings['colors'];
 
+		// 生年月日は「年」「月」「日」の3つの数値入力に分けて受け取る
+		// （<input type="date">は環境によってカレンダーUIの操作性が悪く、
+		// スマートフォンで数字キーボードが出ないことがあったため）。
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup, nothing is written.
-		$birthdate = isset( $_GET[ self::QUERY_VAR_BIRTHDATE ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::QUERY_VAR_BIRTHDATE ] ) ) : '';
+		$birth_year_input  = isset( $_GET[ self::QUERY_VAR_BIRTH_YEAR ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::QUERY_VAR_BIRTH_YEAR ] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$term_query = isset( $_GET[ self::QUERY_VAR_TERM ] ) ? absint( $_GET[ self::QUERY_VAR_TERM ] ) : 0;
+		$birth_month_input = isset( $_GET[ self::QUERY_VAR_BIRTH_MONTH ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::QUERY_VAR_BIRTH_MONTH ] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$birth_day_input   = isset( $_GET[ self::QUERY_VAR_BIRTH_DAY ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::QUERY_VAR_BIRTH_DAY ] ) ) : '';
+
+		$search_submitted = ( '' !== $birth_year_input || '' !== $birth_month_input || '' !== $birth_day_input );
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination, nothing is written.
 		$from_term = isset( $_GET['from_term'] ) ? max( 1, absint( $_GET['from_term'] ) ) : 1;
@@ -162,36 +175,43 @@ class Graduation_Lookup_Shortcode {
 			<?php else : ?>
 
 				<section class="alumni-graduation-lookup-section">
-					<h2><?php esc_html_e( '生年月日から卒業期を調べる', 'alumni-core' ); ?></h2>
-					<form method="get" action="<?php echo esc_url( $current_url ); ?>" class="alumni-graduation-lookup-form">
-						<label for="alumni-lookup-birthdate"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label>
-						<input type="date" id="alumni-lookup-birthdate" name="<?php echo esc_attr( self::QUERY_VAR_BIRTHDATE ); ?>" value="<?php echo esc_attr( $birthdate ); ?>" />
-						<button type="submit"><?php esc_html_e( '調べる', 'alumni-core' ); ?></button>
+					<h2><?php esc_html_e( '卒業期を調べる', 'alumni-core' ); ?></h2>
+					<form method="get" action="<?php echo esc_url( $current_url ); ?>" class="alumni-graduation-lookup-form alumni-graduation-lookup-date-form">
+						<label for="alumni-lookup-birth-year"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label>
+						<span class="alumni-graduation-lookup-date-fields">
+							<input type="number" inputmode="numeric" id="alumni-lookup-birth-year" name="<?php echo esc_attr( self::QUERY_VAR_BIRTH_YEAR ); ?>" min="1000" max="9999" placeholder="<?php echo esc_attr__( '年', 'alumni-core' ); ?>" value="<?php echo esc_attr( $birth_year_input ); ?>" /><?php esc_html_e( '年', 'alumni-core' ); ?>
+							<input type="number" inputmode="numeric" id="alumni-lookup-birth-month" name="<?php echo esc_attr( self::QUERY_VAR_BIRTH_MONTH ); ?>" min="1" max="12" placeholder="<?php echo esc_attr__( '月', 'alumni-core' ); ?>" value="<?php echo esc_attr( $birth_month_input ); ?>" /><?php esc_html_e( '月', 'alumni-core' ); ?>
+							<input type="number" inputmode="numeric" id="alumni-lookup-birth-day" name="<?php echo esc_attr( self::QUERY_VAR_BIRTH_DAY ); ?>" min="1" max="31" placeholder="<?php echo esc_attr__( '日', 'alumni-core' ); ?>" value="<?php echo esc_attr( $birth_day_input ); ?>" /><?php esc_html_e( '日', 'alumni-core' ); ?>
+						</span>
+						<button type="submit"><?php esc_html_e( '卒業期を調べる', 'alumni-core' ); ?></button>
 					</form>
-					<?php if ( '' !== $birthdate ) : ?>
-						<?php
-						$year = Term_Calculator::birthdate_to_graduation_year( $birthdate );
-						$term = ( null === $year ) ? null : Term_Calculator::year_to_term( $year, $first_graduation_year );
-						?>
-						<?php if ( null === $year ) : ?>
-							<p class="alumni-lookup-result"><?php esc_html_e( '生年月日を正しく入力してください。', 'alumni-core' ); ?></p>
+					<?php if ( $search_submitted ) : ?>
+						<?php $birthdate = Term_Calculator::validate_date_parts( $birth_year_input, $birth_month_input, $birth_day_input ); ?>
+						<?php if ( null === $birthdate ) : ?>
+							<p class="alumni-lookup-result"><?php esc_html_e( '生年月日を正しく入力してください（実在する年月日ではありません）。', 'alumni-core' ); ?></p>
 						<?php else : ?>
-							<p class="alumni-lookup-result">
-								<?php
-								if ( null !== $term ) {
+							<?php
+							$year = Term_Calculator::birthdate_to_graduation_year( $birthdate );
+							$term = ( null === $year ) ? null : Term_Calculator::year_to_term( $year, $first_graduation_year );
+							?>
+							<?php if ( null !== $term ) : ?>
+								<p class="alumni-lookup-result-term">
+									<?php
 									printf(
-										/* translators: 1: graduation year, 2: graduation term (期) */
-										esc_html__( '標準的な進級・卒業を前提とした推定では、卒業年は%1$d年（第%2$d期）です。', 'alumni-core' ),
-										(int) $year,
+										/* translators: %d: graduation term (期) */
+										esc_html__( 'あなたの卒業期：第%d期', 'alumni-core' ),
 										(int) $term
 									);
-								} else {
-									printf(
-										/* translators: %d: graduation year */
-										esc_html__( '標準的な進級・卒業を前提とした推定では、卒業年は%d年です。', 'alumni-core' ),
-										(int) $year
-									);
-								}
+									?>
+								</p>
+							<?php endif; ?>
+							<p class="alumni-lookup-result">
+								<?php
+								printf(
+									/* translators: %d: graduation year */
+									esc_html__( '標準的な進級・卒業を前提とした推定では、卒業年は%d年です。', 'alumni-core' ),
+									(int) $year
+								);
 								?>
 							</p>
 							<p class="alumni-lookup-caveat"><?php esc_html_e( 'これは標準的な進級・卒業を前提とした推定であり、留年・浪人・転校・編入等は考慮していません。実際の卒業期を保証するものではありません。', 'alumni-core' ); ?></p>
@@ -200,49 +220,15 @@ class Graduation_Lookup_Shortcode {
 				</section>
 
 				<section class="alumni-graduation-lookup-section">
-					<h2><?php esc_html_e( '卒業期から生年月日の目安を確認する', 'alumni-core' ); ?></h2>
-					<form method="get" action="<?php echo esc_url( $current_url ); ?>" class="alumni-graduation-lookup-form">
-						<label for="alumni-lookup-term"><?php esc_html_e( '卒業期（例：12）', 'alumni-core' ); ?></label>
-						<input type="number" inputmode="numeric" min="1" id="alumni-lookup-term" name="<?php echo esc_attr( self::QUERY_VAR_TERM ); ?>" value="<?php echo $term_query ? esc_attr( $term_query ) : ''; ?>" />
-						<button type="submit"><?php esc_html_e( '調べる', 'alumni-core' ); ?></button>
-					</form>
-					<?php if ( $term_query ) : ?>
-						<?php
-						$range = Term_Calculator::term_to_birth_range( $term_query, $first_graduation_year );
-						$year  = Term_Calculator::term_to_year( $term_query, $first_graduation_year );
-						?>
-						<?php if ( null === $range || null === $year ) : ?>
-							<p class="alumni-lookup-result"><?php esc_html_e( '卒業期を正しく入力してください。', 'alumni-core' ); ?></p>
-						<?php else : ?>
-							<p class="alumni-lookup-result">
-								<?php
-								printf(
-									/* translators: 1: graduation term (期), 2: graduation year, 3: birth range start, 4: birth range end */
-									esc_html__( '第%1$d期（%2$d年卒業）の誕生日の目安は %3$s 〜 %4$s です。', 'alumni-core' ),
-									(int) $term_query,
-									(int) $year,
-									esc_html( $range['start'] ),
-									esc_html( $range['end'] )
-								);
-								?>
-							</p>
-						<?php endif; ?>
-					<?php endif; ?>
-				</section>
-
-				<section class="alumni-graduation-lookup-section">
-					<h2><?php esc_html_e( '卒業期早見表を見る', 'alumni-core' ); ?></h2>
+					<h2><?php esc_html_e( '卒業期早見表', 'alumni-core' ); ?></h2>
 					<?php $rows = Term_Calculator::build_lookup_table( $first_graduation_year, $from_term, $to_term ); ?>
 					<?php if ( ! empty( $rows ) ) : ?>
 						<table class="alumni-graduation-lookup-table">
 							<thead>
 								<tr>
-									<th><?php esc_html_e( '期', 'alumni-core' ); ?></th>
-									<th><?php esc_html_e( '卒業年', 'alumni-core' ); ?></th>
-									<th><?php esc_html_e( '誕生日範囲', 'alumni-core' ); ?></th>
-									<?php if ( $color_active ) : ?>
-										<th><?php esc_html_e( '卒業期カラー', 'alumni-core' ); ?></th>
-									<?php endif; ?>
+									<th><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
+									<th><?php esc_html_e( '卒業年度', 'alumni-core' ); ?></th>
+									<th><?php esc_html_e( '生年月日', 'alumni-core' ); ?></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -251,11 +237,13 @@ class Graduation_Lookup_Shortcode {
 									$color = $color_active ? Term_Calculator::term_to_color( $row['term'], $color_cycle, $colors ) : null;
 
 									// 卒業期カラーは行全体の背景色として適用する（ヘッダー行には
-									// 適用しない）。色そのものは管理者が自由に設定する動的な値
-									// なのでインラインstyleで指定するしかないが、読みやすさを保つ
-									// ための白文字／黒文字の切り替えはTheme側のCSSクラスに委ねる
-									// （main.cssの.alumni-lookup-row-text-light/-dark）— Coreは
-									// 明度判定の結果（どちらのクラスを使うか）だけを渡す。
+									// 適用しない）。色そのものを示す専用の列は置かない — 行の
+									// 背景色そのものが卒業期カラーを表す。色そのものは管理者が
+									// 自由に設定する動的な値なのでインラインstyleで指定するしか
+									// ないが、読みやすさを保つための白文字／黒文字の切り替えは
+									// Theme側のCSSクラスに委ねる（main.cssの
+									// .alumni-lookup-row-text-light/-dark）— Coreは明度判定の結果
+									// （どちらのクラスを使うか）だけを渡す。
 									$alumni_row_attrs = '';
 									if ( $color ) {
 										$text_class       = Term_Calculator::is_dark_color( $color ) ? 'alumni-lookup-row-text-light' : 'alumni-lookup-row-text-dark';
@@ -275,16 +263,6 @@ class Graduation_Lookup_Shortcode {
 												<?php echo esc_html( $row['birth_range']['start'] . ' 〜 ' . $row['birth_range']['end'] ); ?>
 											<?php endif; ?>
 										</td>
-										<?php if ( $color_active ) : ?>
-											<td>
-												<?php
-												// スウォッチ用の四角は、行自体が同じ色の背景になった今では
-												// 見えなくなってしまうため廃止し、色コードのテキストだけを
-												// 残す（管理画面側の早見表と同じ扱いに揃えている）。
-												echo $color ? esc_html( $color ) : '';
-												?>
-											</td>
-										<?php endif; ?>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>

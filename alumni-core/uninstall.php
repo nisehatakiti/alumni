@@ -31,8 +31,13 @@ $alumni_core_delete_user_data = apply_filters( 'alumni_core_uninstall_delete_use
 
 if ( $alumni_core_delete_user_data ) {
 	delete_option( 'alumni_core_settings' );
-	delete_option( 'alumni_core_officers' );
+	delete_option( 'alumni_core_officers' ); // Legacy (pre-複数一覧) flat officer list — kept alongside the option below it replaced.
+	delete_option( 'alumni_core_officer_lists' );
 	delete_option( 'alumni_core_graduation_lookup_page_id' );
+	delete_option( 'alumni_core_officers_page_id' );
+	delete_option( 'alumni_core_news_listing_page_id' );
+	delete_option( 'alumni_core_events_listing_page_id' );
+	delete_option( 'alumni_core_terms_listing_page_id' );
 
 	// alumni_news_event / alumni_content posts (news, events, and every
 	// コンテンツ including 人物挨拶) are deliberately left alone even in

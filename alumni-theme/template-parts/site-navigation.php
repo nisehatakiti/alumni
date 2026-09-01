@@ -7,10 +7,11 @@
  *
  * 固定項目（ホーム／ニュース／イベント／役員・理事紹介／卒業期早見表）に
  * 加えて、「同窓会情報」というドリルダウン（親子）メニューを1つ持つ。
- * その配下（会長挨拶・校長挨拶など）は固定文字列としてハードコードせず、
+ * その配下のうち会長挨拶・校長挨拶などは固定文字列としてハードコードせず、
  * 公開されている「人物挨拶」コンテンツから毎回動的に生成する — 管理者が
  * 人物挨拶コンテンツを新規作成するだけで、メニュー側の変更なしに
- * 自動的にここへ現れる。
+ * 自動的にここへ現れる。規約類は（一覧ページそのものはCoreが常に自動
+ * 作成しているため）固定項目として同じ配下に置く。
  *
  * @package AlumniTheme
  */
@@ -44,23 +45,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</li>
 	<?php endif; ?>
 	<?php
-	$alumni_nav_greetings = alumni_theme_get_person_greetings();
-	if ( $alumni_nav_greetings && $alumni_nav_greetings->have_posts() ) :
+	$alumni_nav_greetings     = alumni_theme_get_person_greetings();
+	$alumni_nav_has_greetings = $alumni_nav_greetings && $alumni_nav_greetings->have_posts();
+	$alumni_nav_terms_url     = alumni_theme_get_terms_listing_url();
+
+	if ( $alumni_nav_has_greetings || $alumni_nav_terms_url ) :
 		?>
 		<li class="alumni-nav-item alumni-nav-item-has-children">
 			<a href="#" class="alumni-nav-drilldown-toggle" aria-haspopup="true" aria-expanded="false">
 				<?php esc_html_e( '同窓会情報', 'alumni-theme' ); ?>
 			</a>
 			<ul class="alumni-nav-submenu">
-				<?php
-				while ( $alumni_nav_greetings->have_posts() ) :
-					$alumni_nav_greetings->the_post();
-					?>
-					<li><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
+				<?php if ( $alumni_nav_has_greetings ) : ?>
 					<?php
-				endwhile;
-				wp_reset_postdata();
-				?>
+					while ( $alumni_nav_greetings->have_posts() ) :
+						$alumni_nav_greetings->the_post();
+						?>
+						<li><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
+						<?php
+					endwhile;
+					wp_reset_postdata();
+					?>
+				<?php endif; ?>
+				<?php if ( $alumni_nav_terms_url ) : ?>
+					<li><a href="<?php echo esc_url( $alumni_nav_terms_url ); ?>"><?php esc_html_e( '規約類', 'alumni-theme' ); ?></a></li>
+				<?php endif; ?>
 			</ul>
 		</li>
 		<?php

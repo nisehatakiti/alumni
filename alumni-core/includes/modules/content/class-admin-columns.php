@@ -51,11 +51,13 @@ class Content_Admin_Columns {
 	 */
 	public function render_column( $column, $post_id ) {
 		if ( 'alumni_content_kind' === $column ) {
-			echo esc_html(
-				Post_Type::is_person_greeting( $post_id )
-					? __( '人物挨拶', 'alumni-core' )
-					: __( '自由コンテンツ', 'alumni-core' )
-			);
+			if ( Post_Type::is_person_greeting( $post_id ) ) {
+				echo esc_html__( '人物挨拶', 'alumni-core' );
+			} elseif ( Post_Type::is_terms( $post_id ) ) {
+				echo esc_html__( '規約類', 'alumni-core' );
+			} else {
+				echo esc_html__( '自由コンテンツ', 'alumni-core' );
+			}
 			return;
 		}
 
