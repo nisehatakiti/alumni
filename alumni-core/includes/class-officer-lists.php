@@ -47,6 +47,16 @@ class Officer_Lists {
 	const DEFAULT_TITLE_HEADING = '肩書';
 
 	/**
+	 * 対象者の値。Modules\Content\Post_Type::AUDIENCE_* と同じ文字列だが、
+	 * このクラスは意図的に他モジュールへ依存せず、同じ2行のルールを
+	 * 重複させている（Officer_Lists::sanitize_term()の既存の方針と同じ
+	 * 理由 — 状態を共有しない短いルールのために結合を増やす必要はない）。
+	 */
+	const AUDIENCE_ALUMNI  = 'alumni';
+	const AUDIENCE_STUDENT = 'student';
+	const AUDIENCE_COMMON  = 'common';
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Officer_Lists|null
@@ -99,9 +109,38 @@ class Officer_Lists {
 			} else {
 				$this->lists = is_array( $saved ) ? array_values( $saved ) : array();
 			}
+
+			// Lists saved before parent_id/audience/enabled existed (an
+			// earlier round of this plugin) won't have these keys at all —
+			// default them at read time rather than rewriting the stored
+			// option, the same "revalidate/backfill on read" rule used
+			// throughout this plugin (e.g. Post_Type::get_audience()).
+			$this->lists = array_map( array( __CLASS__, 'normalize_list' ), $this->lists );
 		}
 
 		return $this->lists;
+	}
+
+	/**
+	 * Backfills parent_id/audience/enabled with safe defaults on a list
+	 * that predates those fields, so every caller can rely on them always
+	 * being present.
+	 *
+	 * @param array $list
+	 * @return array
+	 */
+	private static function normalize_list( array $list ) {
+		if ( ! isset( $list['parent_id'] ) ) {
+			$list['parent_id'] = 0;
+		}
+		if ( ! isset( $list['audience'] ) || ! in_array( $list['audience'], array( self::AUDIENCE_ALUMNI, self::AUDIENCE_STUDENT, self::AUDIENCE_COMMON ), true ) ) {
+			$list['audience'] = self::AUDIENCE_COMMON;
+		}
+		if ( ! isset( $list['enabled'] ) ) {
+			$list['enabled'] = true;
+		}
+
+		return $list;
 	}
 
 	/**
@@ -150,6 +189,12 @@ class Officer_Lists {
 				'title_heading' => self::DEFAULT_TITLE_HEADING,
 				'page_id'       => 0,
 				'order'         => 1,
+				// 既存データからの自動移行なので、階層・対象者・有効状態は
+				// 何もしなくても安全な既定値（トップレベル／共通／有効）に
+				// なる — 移行によって非表示になったり構造が壊れたりしない。
+				'parent_id'     => 0,
+				'audience'      => self::AUDIENCE_COMMON,
+				'enabled'       => true,
 				'rows'          => $rows,
 			),
 		);
@@ -211,6 +256,9 @@ class Officer_Lists {
 			'title_heading' => self::DEFAULT_TITLE_HEADING,
 			'page_id'       => 0,
 			'order'         => count( $lists ) + 1,
+			'parent_id'     => 0,
+			'audience'      => self::AUDIENCE_COMMON,
+			'enabled'       => true,
 			'rows'          => array(),
 		);
 
@@ -270,6 +318,55 @@ class Officer_Lists {
 			$list['name']          = '' !== $name ? $name : $list['name'];
 			$list['title']         = '' !== $title ? $title : $list['name'];
 			$list['title_heading'] = '' !== $title_heading ? $title_heading : self::DEFAULT_TITLE_HEADING;
+
+			$found = $list;
+		}
+		unset( $list );
+
+		$this->save_lists( $lists );
+
+		return $found;
+	}
+
+	/**
+	 * Updates a list's site-structure fields (対象者・親コンテンツ・
+	 * 有効/無効) — deliberately separate from save_list_meta() so saving
+	 * one never silently resets the other when a caller only has one side
+	 * of the form.
+	 *
+	 * @param string $list_id
+	 * @param mixed  $parent_id 親コンテンツの投稿ID(alumni_content)、または0。
+	 *                           対象の投稿が存在しない場合は0(トップレベル)
+	 *                           にフォールバックする。
+	 * @param mixed  $audience  self::AUDIENCE_*のいずれか。それ以外は
+	 *                           AUDIENCE_COMMONにフォールバックする。
+	 * @param mixed  $enabled   有効/無効(公開一覧・メニュー・トップページ
+	 *                           候補に出すかどうか)。
+	 * @return array|null The updated list, or null if $list_id doesn't exist.
+	 */
+	public function save_list_structure( $list_id, $parent_id, $audience, $enabled ) {
+		$lists = $this->get_all();
+		$found = null;
+
+		$parent_id = absint( $parent_id );
+		if ( $parent_id && \AlumniCore\Includes\Modules\Content\Post_Type::SLUG !== get_post_type( $parent_id ) ) {
+			$parent_id = 0;
+		}
+
+		if ( ! in_array( $audience, array( self::AUDIENCE_ALUMNI, self::AUDIENCE_STUDENT, self::AUDIENCE_COMMON ), true ) ) {
+			$audience = self::AUDIENCE_COMMON;
+		}
+
+		$enabled = (bool) $enabled;
+
+		foreach ( $lists as &$list ) {
+			if ( $list['list_id'] !== $list_id ) {
+				continue;
+			}
+
+			$list['parent_id'] = $parent_id;
+			$list['audience']  = $audience;
+			$list['enabled']   = $enabled;
 
 			$found = $list;
 		}

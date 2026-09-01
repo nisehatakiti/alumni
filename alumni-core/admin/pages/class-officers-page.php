@@ -10,6 +10,7 @@ namespace AlumniCore\Admin\Pages;
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Officer_Lists;
 use AlumniCore\Includes\Officers_Shortcode;
+use AlumniCore\Includes\Content_Hierarchy;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -94,6 +95,7 @@ class Officers_Page {
 						<tr>
 							<th><?php esc_html_e( '一覧名', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '役員数', 'alumni-core' ); ?></th>
+							<th><?php esc_html_e( '状態', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '公開URL', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '操作', 'alumni-core' ); ?></th>
 						</tr>
@@ -101,15 +103,18 @@ class Officers_Page {
 					<tbody>
 						<?php foreach ( $lists as $list ) : ?>
 							<?php $edit_url = add_query_arg( array( 'page' => self::SLUG, 'list' => $list['list_id'] ), admin_url( 'admin.php' ) ); ?>
-							<?php $public_url = Officers_Shortcode::get_list_url( $list['list_id'] ); ?>
+							<?php $public_url = ! empty( $list['enabled'] ) ? Officers_Shortcode::get_list_url( $list['list_id'] ) : ''; ?>
 							<tr>
 								<td>
 									<a href="<?php echo esc_url( $edit_url ); ?>"><?php echo esc_html( $list['name'] ); ?></a>
 								</td>
 								<td><?php echo esc_html( count( $list['rows'] ) ); ?></td>
+								<td><?php echo empty( $list['enabled'] ) ? esc_html__( '非公開', 'alumni-core' ) : esc_html__( '公開', 'alumni-core' ); ?></td>
 								<td>
 									<?php if ( $public_url ) : ?>
 										<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $public_url ); ?></a>
+									<?php elseif ( empty( $list['enabled'] ) ) : ?>
+										<?php esc_html_e( '（非公開のため表示されません）', 'alumni-core' ); ?>
 									<?php else : ?>
 										<?php esc_html_e( '（次回のページ読み込み時に作成されます）', 'alumni-core' ); ?>
 									<?php endif; ?>
@@ -189,6 +194,35 @@ class Officers_Page {
 						<td>
 							<input type="text" id="alumni-officer-list-title-heading" name="list_title_heading" class="regular-text" value="<?php echo esc_attr( $title_heading ); ?>" placeholder="<?php echo esc_attr__( '例：肩書、役職、役名、ポジション', 'alumni-core' ); ?>" />
 							<p class="description"><?php esc_html_e( '下の入力表・公開ページの両方で「肩書」列の見出しとして使われます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="alumni-officer-list-audience"><?php esc_html_e( '対象者', 'alumni-core' ); ?></label></th>
+						<td>
+							<select id="alumni-officer-list-audience" name="list_audience">
+								<option value="<?php echo esc_attr( Officer_Lists::AUDIENCE_COMMON ); ?>" <?php selected( Officer_Lists::AUDIENCE_COMMON, $list['audience'] ); ?>><?php esc_html_e( '共通', 'alumni-core' ); ?></option>
+								<option value="<?php echo esc_attr( Officer_Lists::AUDIENCE_ALUMNI ); ?>" <?php selected( Officer_Lists::AUDIENCE_ALUMNI, $list['audience'] ); ?>><?php esc_html_e( '卒業生向け', 'alumni-core' ); ?></option>
+								<option value="<?php echo esc_attr( Officer_Lists::AUDIENCE_STUDENT ); ?>" <?php selected( Officer_Lists::AUDIENCE_STUDENT, $list['audience'] ); ?>><?php esc_html_e( '在校生向け', 'alumni-core' ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="alumni-officer-list-parent-id"><?php esc_html_e( '親コンテンツ', 'alumni-core' ); ?></label></th>
+						<td>
+							<select id="alumni-officer-list-parent-id" name="list_parent_id">
+								<option value="0"><?php esc_html_e( '（トップレベル）', 'alumni-core' ); ?></option>
+								<?php $this->render_parent_options( (int) $list['parent_id'] ); ?>
+							</select>
+							<p class="description"><?php esc_html_e( '例えば「同窓会組織図」というフォルダの下に「理事・役員一覧」フォルダを作り、その下にこの一覧を置く、といった整理ができます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( '公開状態', 'alumni-core' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="list_enabled" value="1" <?php checked( ! empty( $list['enabled'] ) ); ?> />
+								<?php esc_html_e( '公開する（メニュー・トップページ候補・一覧に表示する）', 'alumni-core' ); ?>
+							</label>
 						</td>
 					</tr>
 				</table>
@@ -344,6 +378,57 @@ class Officers_Page {
 	}
 
 	/**
+	 * 親コンテンツ select の <option> を、対象者ごとにoptgroupでまとめ、
+	 * 階層の深さをインデントで表しながら出力する。Content_Meta_Box の同名
+	 * メソッドと同じ考え方だが、役員一覧はalumni_content投稿の祖先には
+	 * なり得ない（一覧が他のコンテンツの親になることはない）ため、循環
+	 * 参照の除外対象を考える必要がなく、単純にすべての投稿を列挙できる。
+	 *
+	 * @param int $selected_parent_id
+	 */
+	private function render_parent_options( $selected_parent_id ) {
+		$audience_labels = array(
+			Officer_Lists::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
+			Officer_Lists::AUDIENCE_ALUMNI  => __( '卒業生向け', 'alumni-core' ),
+			Officer_Lists::AUDIENCE_STUDENT => __( '在校生向け', 'alumni-core' ),
+		);
+
+		foreach ( $audience_labels as $audience_value => $audience_label ) {
+			$tree = Content_Hierarchy::build_tree( $audience_value, true );
+
+			if ( empty( $tree ) ) {
+				continue;
+			}
+
+			echo '<optgroup label="' . esc_attr( $audience_label ) . '">';
+			$this->render_parent_option_nodes( $tree, $selected_parent_id, 0 );
+			echo '</optgroup>';
+		}
+	}
+
+	/**
+	 * @param array $nodes Content_Hierarchy::build_tree() shape.
+	 * @param int   $selected_parent_id
+	 * @param int   $depth
+	 */
+	private function render_parent_option_nodes( array $nodes, $selected_parent_id, $depth ) {
+		foreach ( $nodes as $node ) {
+			$post  = $node['post'];
+			$label = str_repeat( '— ', $depth ) . ( $post->post_title ? $post->post_title : sprintf( '#%d', $post->ID ) );
+			printf(
+				'<option value="%1$d" %2$s>%3$s</option>',
+				(int) $post->ID,
+				selected( (int) $post->ID, (int) $selected_parent_id, false ),
+				esc_html( $label )
+			);
+
+			if ( ! empty( $node['children'] ) ) {
+				$this->render_parent_option_nodes( $node['children'], $selected_parent_id, $depth + 1 );
+			}
+		}
+	}
+
+	/**
 	 * 人物紹介ページ dropdown options: every 人物挨拶 content post,
 	 * regardless of publish status (an admin linking an officer while both
 	 * are still drafts is a normal editing order, not an error) — the
@@ -463,7 +548,7 @@ class Officers_Page {
 			wp_die( esc_html__( '指定された一覧が見つかりません。', 'alumni-core' ) );
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by save_list_meta()/save_list_rows().
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by save_list_meta()/save_list_rows()/save_list_structure().
 		$list_name     = isset( $_POST['list_name'] ) ? wp_unslash( $_POST['list_name'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$list_title    = isset( $_POST['list_title'] ) ? wp_unslash( $_POST['list_title'] ) : '';
@@ -471,9 +556,15 @@ class Officers_Page {
 		$title_heading = isset( $_POST['list_title_heading'] ) ? wp_unslash( $_POST['list_title_heading'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$raw_rows      = isset( $_POST['officers'] ) ? $_POST['officers'] : array();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$audience      = isset( $_POST['list_audience'] ) ? sanitize_key( wp_unslash( $_POST['list_audience'] ) ) : Officer_Lists::AUDIENCE_COMMON;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$parent_id     = isset( $_POST['list_parent_id'] ) ? absint( wp_unslash( $_POST['list_parent_id'] ) ) : 0;
+		$enabled       = ! empty( $_POST['list_enabled'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- unchecked checkbox simply omits the key.
 
 		Officer_Lists::instance()->save_list_meta( $list_id, $list_name, $list_title, $title_heading );
 		Officer_Lists::instance()->save_list_rows( $list_id, $raw_rows );
+		Officer_Lists::instance()->save_list_structure( $list_id, $parent_id, $audience, $enabled );
 
 		wp_safe_redirect(
 			add_query_arg(

@@ -35,8 +35,14 @@ while ( have_posts() ) :
 	// this template needs.
 	$alumni_greeting = alumni_theme_get_person_greeting();
 	$alumni_terms    = alumni_theme_get_terms();
+	// フォルダ（階層をまとめるだけの見出し、本文なし）は、本文の代わりに
+	// 自分の子コンテンツの一覧を表示する — これにより「メニューで辿れる
+	// 階層」と「実際に閲覧できる公開ページの階層」が一致する
+	// （site-navigation.phpと同じ Content_Hierarchy データソース）。
+	$alumni_children = alumni_theme_get_content_children( get_the_ID() );
 	?>
 	<main id="primary" class="site-main alumni-content-single">
+		<?php get_template_part( 'template-parts/breadcrumbs' ); ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class( 'alumni-content-entry' ); ?>>
 			<header class="entry-header">
 				<h1 class="entry-title"><?php echo esc_html( $alumni_terms ? $alumni_terms['display_title'] : get_the_title() ); ?></h1>
@@ -107,6 +113,18 @@ while ( have_posts() ) :
 			<div class="entry-content">
 				<?php the_content(); ?>
 			</div>
+
+			<?php if ( ! empty( $alumni_children ) ) : ?>
+				<nav class="alumni-content-children" aria-label="<?php echo esc_attr__( 'このページの下にあるコンテンツ', 'alumni-theme' ); ?>">
+					<ul class="alumni-content-children-list">
+						<?php foreach ( $alumni_children as $alumni_child ) : ?>
+							<li>
+								<a href="<?php echo esc_url( alumni_theme_get_content_url( $alumni_child->ID ) ); ?>"><?php echo esc_html( $alumni_child->post_title ); ?></a>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				</nav>
+			<?php endif; ?>
 		</article>
 	</main>
 	<?php

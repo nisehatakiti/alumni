@@ -173,7 +173,7 @@ class Officers_Shortcode {
 	public static function get_list_url( $list_id ) {
 		$list = Officer_Lists::instance()->get_list( $list_id );
 
-		if ( null === $list || ! $list['page_id'] ) {
+		if ( null === $list || empty( $list['enabled'] ) || ! $list['page_id'] ) {
 			return '';
 		}
 

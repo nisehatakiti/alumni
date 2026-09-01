@@ -251,45 +251,79 @@
 	object-fit: contain;
 }
 
-/* ニュース・イベント */
-.front-news-events {
+/* トップページ：スロットベースのセクション（同窓会 > トップページ設定
+   画面で管理者が構成する）。以前ここに書かれていた「お知らせ・イベント」
+   「同窓会情報」専用のCSSは、段数(1〜3)を汎用的に扱うこの仕組みに
+   置き換わっている。 */
+.alumni-homepage-section {
 	margin-bottom: 2em;
 }
 
-.front-news-events-header {
+.alumni-homepage-section-heading {
+	margin-bottom: 0.75em;
+}
+
+.alumni-homepage-section-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1.5em;
+}
+
+.alumni-homepage-section-columns-2 .alumni-homepage-section-grid {
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.alumni-homepage-section-columns-3 .alumni-homepage-section-grid {
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.alumni-homepage-slot-title {
+	margin: 0 0 0.5em;
+}
+
+.alumni-homepage-slot-content-person {
+	font-weight: bold;
+	margin: 0 0 0.25em;
+}
+
+.alumni-homepage-slot-content-excerpt {
+	color: #555;
+}
+
+.alumni-homepage-slot-teaser-list {
+	display: grid;
+	gap: 1em;
+}
+
+/* コンテンツ階層のパンくずリスト（single-alumni_content.php） */
+.alumni-breadcrumbs-list {
 	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
 	flex-wrap: wrap;
+	gap: 0.4em;
+	margin: 0 0 1em;
+	padding: 0;
+	list-style: none;
+	font-size: 0.9em;
+	color: #666;
+}
+
+.alumni-breadcrumbs-item:not(:last-child)::after {
+	content: '\203A';
+	margin-left: 0.4em;
+}
+
+.alumni-breadcrumbs-current {
+	color: inherit;
+}
+
+/* フォルダ（階層をまとめるだけのコンテンツ）の子コンテンツ一覧 */
+.alumni-content-children-list {
+	display: flex;
+	flex-direction: column;
 	gap: 0.5em;
-}
-
-.front-news-events-links {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1em;
-	margin-top: 1em;
-}
-
-/* トップページの「同窓会情報」導線（卒業期早見表／役員・理事紹介への
-   リンク）。単純な<ul>のリンク一覧に留めているのは、将来これをメニュー
-   （site-navigation.php の「同窓会情報」ドリルダウン等）へ移す際に、
-   マークアップの前提を作り込みすぎないようにするため。 */
-.front-quick-links {
-	margin-bottom: 2em;
-}
-
-.front-quick-links-list {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1em;
 	margin: 1em 0 0;
 	padding: 0;
 	list-style: none;
-}
-
-.front-quick-links-link {
-	display: inline-block;
 }
 
 .alumni-news-events-grid {

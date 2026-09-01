@@ -13,6 +13,7 @@ use AlumniCore\Admin\Pages\School_Photos_Page;
 use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
 use AlumniCore\Admin\Pages\Terms_Page;
+use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -81,6 +82,13 @@ class Admin {
 	private $terms_page;
 
 	/**
+	 * トップページ設定 screen handler.
+	 *
+	 * @var Homepage_Page
+	 */
+	private $homepage_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -114,6 +122,7 @@ class Admin {
 		$this->officers_page          = new Officers_Page();
 		$this->graduation_lookup_page = new Graduation_Lookup_Page();
 		$this->terms_page             = new Terms_Page();
+		$this->homepage_page           = new Homepage_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -122,6 +131,10 @@ class Admin {
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_homepage_section', array( $this->homepage_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_delete_homepage_section', array( $this->homepage_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_homepage_section', array( $this->homepage_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_save_homepage_sections', array( $this->homepage_page, 'handle_save' ) );
 	}
 
 	/**
@@ -232,6 +245,15 @@ class Admin {
 			self::CAPABILITY,
 			Terms_Page::SLUG,
 			array( $this->terms_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'トップページ設定', 'alumni-core' ),
+			__( 'トップページ設定', 'alumni-core' ),
+			self::CAPABILITY,
+			Homepage_Page::SLUG,
+			array( $this->homepage_page, 'render' )
 		);
 
 		/**

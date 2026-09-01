@@ -34,9 +34,11 @@ class Content_Admin_Columns {
 			$new[ $key ] = $label;
 
 			if ( 'title' === $key ) {
-				$new['alumni_content_kind'] = __( '種別', 'alumni-core' );
-				$new['alumni_person_name']  = __( '氏名', 'alumni-core' );
-				$new['alumni_person_title'] = __( '肩書', 'alumni-core' );
+				$new['alumni_content_kind']     = __( '種別', 'alumni-core' );
+				$new['alumni_content_audience'] = __( '対象者', 'alumni-core' );
+				$new['alumni_content_parent']   = __( '親コンテンツ', 'alumni-core' );
+				$new['alumni_person_name']      = __( '氏名', 'alumni-core' );
+				$new['alumni_person_title']     = __( '肩書', 'alumni-core' );
 			}
 		}
 
@@ -55,9 +57,27 @@ class Content_Admin_Columns {
 				echo esc_html__( '人物挨拶', 'alumni-core' );
 			} elseif ( Post_Type::is_terms( $post_id ) ) {
 				echo esc_html__( '規約類', 'alumni-core' );
+			} elseif ( Post_Type::is_folder( $post_id ) ) {
+				echo esc_html__( 'フォルダ', 'alumni-core' );
 			} else {
 				echo esc_html__( '自由コンテンツ', 'alumni-core' );
 			}
+			return;
+		}
+
+		if ( 'alumni_content_audience' === $column ) {
+			$labels = array(
+				Post_Type::AUDIENCE_ALUMNI  => __( '卒業生向け', 'alumni-core' ),
+				Post_Type::AUDIENCE_STUDENT => __( '在校生向け', 'alumni-core' ),
+				Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
+			);
+			echo esc_html( $labels[ Post_Type::get_audience( $post_id ) ] );
+			return;
+		}
+
+		if ( 'alumni_content_parent' === $column ) {
+			$parent_id = Post_Type::get_parent_id( $post_id );
+			echo $parent_id ? esc_html( get_the_title( $parent_id ) ) : '&#8212;';
 			return;
 		}
 

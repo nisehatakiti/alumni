@@ -8,6 +8,7 @@
 namespace AlumniCore\Includes\Modules\Content;
 
 use AlumniCore\Includes\Settings;
+use AlumniCore\Includes\Content_Hierarchy;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -103,6 +104,8 @@ class Content_Meta_Box {
 				$kind = Post_Type::KIND_PERSON_GREETING;
 			} elseif ( Post_Type::KIND_TERMS === $requested_kind ) {
 				$kind = Post_Type::KIND_TERMS;
+			} elseif ( Post_Type::KIND_FOLDER === $requested_kind ) {
+				$kind = Post_Type::KIND_FOLDER;
 			}
 		}
 
@@ -114,6 +117,8 @@ class Content_Meta_Box {
 		$display_title  = (string) get_post_meta( $post->ID, Post_Type::META_TERMS_DISPLAY_TITLE, true );
 		$effective_date = Post_Type::get_terms_effective_date( $post );
 		$revised_date   = Post_Type::get_terms_revised_date( $post );
+		$audience       = Post_Type::get_audience( $post );
+		$parent_id      = Post_Type::get_parent_id( $post );
 		?>
 		<div class="alumni-content-fields">
 			<p>
@@ -133,7 +138,31 @@ class Content_Meta_Box {
 						<?php checked( Post_Type::KIND_TERMS, $kind ); ?> />
 					<?php esc_html_e( '規約類', 'alumni-core' ); ?>
 				</label>
-				<p class="description"><?php esc_html_e( '「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。規約類の場合、「コンテンツ名」がそのまま規約名になります（例：同窓会規約、会則、個人情報保護方針）。', 'alumni-core' ); ?></p>
+				<label class="alumni-content-kind-option">
+					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_FOLDER ); ?>"
+						<?php checked( Post_Type::KIND_FOLDER, $kind ); ?> />
+					<?php esc_html_e( 'フォルダ（階層をまとめるだけの見出し）', 'alumni-core' ); ?>
+				</label>
+				<p class="description"><?php esc_html_e( '「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。規約類の場合、「コンテンツ名」がそのまま規約名になります（例：同窓会規約、会則、個人情報保護方針）。フォルダは、例えば「同窓会情報」「同窓会組織図」のように、他のコンテンツをまとめるためだけの階層ノードです。フォルダ自体に本文を書く必要はありません（メニュー・パンくず用の見出しとしてのみ使われます）。', 'alumni-core' ); ?></p>
+			</p>
+
+			<p>
+				<label for="alumni_content_audience"><strong><?php esc_html_e( '対象者', 'alumni-core' ); ?></strong></label><br />
+				<select id="alumni_content_audience" name="alumni_content_audience">
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_COMMON ); ?>" <?php selected( Post_Type::AUDIENCE_COMMON, $audience ); ?>><?php esc_html_e( '共通', 'alumni-core' ); ?></option>
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_ALUMNI ); ?>" <?php selected( Post_Type::AUDIENCE_ALUMNI, $audience ); ?>><?php esc_html_e( '卒業生向け', 'alumni-core' ); ?></option>
+					<option value="<?php echo esc_attr( Post_Type::AUDIENCE_STUDENT ); ?>" <?php selected( Post_Type::AUDIENCE_STUDENT, $audience ); ?>><?php esc_html_e( '在校生向け', 'alumni-core' ); ?></option>
+				</select>
+				<p class="description"><?php esc_html_e( 'このコンテンツが誰に向けた情報かを表します（「在校生向け」は学校からの発信ではなく、同窓会が在校生に向けて発信する情報という意味です）。トップレベル（親コンテンツ未設定）の場合、メニュー上でこの区分ごとにまとめて表示されます。', 'alumni-core' ); ?></p>
+			</p>
+
+			<p>
+				<label for="alumni_content_parent_id"><strong><?php esc_html_e( '親コンテンツ', 'alumni-core' ); ?></strong></label><br />
+				<select id="alumni_content_parent_id" name="alumni_content_parent_id">
+					<option value="0"><?php esc_html_e( '（トップレベル）', 'alumni-core' ); ?></option>
+					<?php $this->render_parent_options( $post->ID, $parent_id ); ?>
+				</select>
+				<p class="description"><?php esc_html_e( 'このコンテンツをどのコンテンツの下に整理するかを選びます。未選択（トップレベル）の場合、上の「対象者」の直下に配置されます。', 'alumni-core' ); ?></p>
 			</p>
 
 			<div id="alumni-person-greeting-fields" class="alumni-person-greeting-fields">
@@ -184,11 +213,85 @@ class Content_Meta_Box {
 			</div>
 
 			<p>
-				<label for="alumni_content_body"><strong><?php esc_html_e( '本文（必須）', 'alumni-core' ); ?></strong></label><br />
+				<label for="alumni_content_body">
+					<strong>
+						<?php
+						echo Post_Type::KIND_FOLDER === $kind
+							? esc_html__( '本文（任意）', 'alumni-core' )
+							: esc_html__( '本文（必須）', 'alumni-core' );
+						?>
+					</strong>
+				</label><br />
 				<textarea id="alumni_content_body" name="alumni_content_body" rows="12" class="large-text"><?php echo esc_textarea( $post->post_content ); ?></textarea>
 			</p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Renders <option> elements for the 親コンテンツ select, one per
+	 * existing alumni_content post (any status, any kind — including
+	 * drafts and other フォルダ, so an editor can see and build the
+	 * structure before publishing), grouped by 対象者 and indented to show
+	 * depth. $exclude_post_id itself and its own descendants are left out,
+	 * since choosing either would create a cycle
+	 * (Content_Hierarchy::validate_parent() enforces this again at save
+	 * time regardless, in case the submitted value didn't come from this
+	 * select at all).
+	 *
+	 * @param int $exclude_post_id 0 for a not-yet-created post.
+	 * @param int $selected_parent_id
+	 */
+	private function render_parent_options( $exclude_post_id, $selected_parent_id ) {
+		$exclude_ids = array( (int) $exclude_post_id );
+
+		if ( $exclude_post_id ) {
+			$exclude_ids = array_merge( $exclude_ids, Content_Hierarchy::get_descendant_ids( $exclude_post_id ) );
+		}
+
+		$audience_labels = array(
+			Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
+			Post_Type::AUDIENCE_ALUMNI  => __( '卒業生向け', 'alumni-core' ),
+			Post_Type::AUDIENCE_STUDENT => __( '在校生向け', 'alumni-core' ),
+		);
+
+		foreach ( $audience_labels as $audience_value => $audience_label ) {
+			$tree = Content_Hierarchy::build_tree( $audience_value, true );
+
+			if ( empty( $tree ) ) {
+				continue;
+			}
+
+			echo '<optgroup label="' . esc_attr( $audience_label ) . '">';
+			$this->render_parent_option_nodes( $tree, $exclude_ids, $selected_parent_id, 0 );
+			echo '</optgroup>';
+		}
+	}
+
+	/**
+	 * @param array $nodes               Content_Hierarchy::build_tree() shape.
+	 * @param int[] $exclude_ids
+	 * @param int   $selected_parent_id
+	 * @param int   $depth
+	 */
+	private function render_parent_option_nodes( array $nodes, array $exclude_ids, $selected_parent_id, $depth ) {
+		foreach ( $nodes as $node ) {
+			$post = $node['post'];
+
+			if ( ! in_array( (int) $post->ID, $exclude_ids, true ) ) {
+				$label = str_repeat( '— ', $depth ) . ( $post->post_title ? $post->post_title : sprintf( '#%d', $post->ID ) );
+				printf(
+					'<option value="%1$d" %2$s>%3$s</option>',
+					(int) $post->ID,
+					selected( (int) $post->ID, (int) $selected_parent_id, false ),
+					esc_html( $label )
+				);
+			}
+
+			if ( ! empty( $node['children'] ) ) {
+				$this->render_parent_option_nodes( $node['children'], $exclude_ids, $selected_parent_id, $depth + 1 );
+			}
+		}
 	}
 
 	/**
@@ -240,11 +343,35 @@ class Content_Meta_Box {
 
 		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
 
-		if ( ! in_array( $kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS ), true ) ) {
+		if ( ! in_array( $kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS, Post_Type::KIND_FOLDER ), true ) ) {
 			$kind = Post_Type::KIND_FREE;
 		}
 
 		update_post_meta( $post_id, Post_Type::META_KIND, $kind );
+
+		// 対象者・親コンテンツはkindに関わらず全種別共通で保存する
+		// （対象者・階層はコンテンツ種別とは独立した別概念のため）。
+		$audience = isset( $_POST['alumni_content_audience'] ) ? sanitize_key( wp_unslash( $_POST['alumni_content_audience'] ) ) : Post_Type::AUDIENCE_COMMON;
+
+		if ( ! in_array( $audience, array( Post_Type::AUDIENCE_ALUMNI, Post_Type::AUDIENCE_STUDENT ), true ) ) {
+			$audience = Post_Type::AUDIENCE_COMMON;
+		}
+
+		update_post_meta( $post_id, Post_Type::META_AUDIENCE, $audience );
+
+		$parent_id = isset( $_POST['alumni_content_parent_id'] ) ? absint( wp_unslash( $_POST['alumni_content_parent_id'] ) ) : 0;
+
+		if ( ! Content_Hierarchy::validate_parent( $post_id, $parent_id ) ) {
+			// 循環参照になる／存在しない投稿を指す等、不正な選択は無視して
+			// トップレベル扱いにする（保存自体は失敗させない）。
+			$parent_id = 0;
+		}
+
+		if ( $parent_id ) {
+			update_post_meta( $post_id, Post_Type::META_PARENT_ID, $parent_id );
+		} else {
+			delete_post_meta( $post_id, Post_Type::META_PARENT_ID );
+		}
 
 		if ( Post_Type::KIND_PERSON_GREETING === $kind ) {
 			$name  = isset( $_POST['alumni_person_name'] ) ? sanitize_text_field( wp_unslash( $_POST['alumni_person_name'] ) ) : '';
@@ -297,7 +424,7 @@ class Content_Meta_Box {
 			// longer apply.
 			self::clear_person_greeting_meta( $post_id );
 		} else {
-			// 自由コンテンツ: neither 人物挨拶 nor 規約類 fields apply.
+			// 自由コンテンツ／フォルダ: neither 人物挨拶 nor 規約類 fields apply.
 			self::clear_person_greeting_meta( $post_id );
 			self::clear_terms_meta( $post_id );
 		}

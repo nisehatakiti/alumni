@@ -230,3 +230,29 @@
 .alumni-lookup-row-text-dark a {
 	color: #1d2327;
 }
+
+/* トップページ設定: セクション(見出し・段数・各段のスロット)の編集UI。 */
+.alumni-homepage-section {
+	max-width: 720px;
+	margin: 0 0 1.5em;
+	padding: 1em 1.5em 1.5em;
+	border: 1px solid #dcdcde;
+	background: #fff;
+}
+
+.alumni-homepage-slots {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5em;
+	margin-top: 1em;
+}
+
+.alumni-homepage-slot {
+	min-width: 220px;
+}
+
+.alumni-homepage-section-actions {
+	display: flex;
+	gap: 0.5em;
+	margin: -1em 0 1.5em;
+}
