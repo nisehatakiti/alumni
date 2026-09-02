@@ -1,3 +1,19 @@
+/* Layout: サイト全体の共通コンテンツ幅。header.php/footer.phpがヘッダー
+   内側・フッター・メイン コンテンツ領域(#content > .alumni-container)の
+   すべてに.alumni-containerを使っているため、この1つのクラスがサイト
+   全体の横幅を決めている。以前このルール自体が抜けていて、ヘッダー・
+   フッター・メインコンテンツのすべてが画面幅いっぱいに広がっていた
+   ため、学校写真(width:100%; aspect-ratio:16/9のトラック)もワイドな
+   モニタでは非常に大きくなっていた — トップページの写真が大きすぎる
+   不具合の根本原因はここ(学校写真自体のCSSの問題ではなく、そもそも
+   ページ全体のコンテンツ幅に上限が無かったこと)。 */
+.alumni-container {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 0 1.5em;
+	box-sizing: border-box;
+}
+
 /* Header */
 .site-header {
 	border-bottom: 1px solid #e2e2e2;
@@ -138,11 +154,19 @@
 	line-height: 1;
 }
 
-/* 開いている状態のアイコン（▾）— パネルの表示条件(.is-open/
-   :focus-within/Simpleでの:hover)と常に同じ条件にして、見た目とパネルの
-   開閉が食い違わないようにする。 */
+/* 開いている状態のアイコン（▾）— パネルの表示条件と常に同じ条件にして、
+   見た目とパネルの開閉が食い違わないようにする。:focus-withinはSimple
+   （.alumni-nav-layout-top）限定 — Formalでこれをレイアウト無指定のまま
+   にしていると、クリックでトグルを閉じた直後もその<a>要素自体には
+   フォーカスが残ったままのため:focus-withinが真であり続け、JS側は
+   is-openを正しく外している（aria-expanded="false"）のに、CSS側だけ
+   パネルが開いたまま(display:flex)になってしまう実害のある不具合が
+   あった（実ブラウザ確認で検出）。Formalの開閉は元々クリック駆動の
+   JSだけで完結する設計であり、キーボード操作（Tab+Enter/Space）でも
+   同じクリックハンドラが働くため、:focus-withinをFormalにまで適用する
+   必要はない。 */
 .alumni-nav-item-has-children.is-open > .alumni-nav-drilldown-toggle::after,
-.alumni-nav-item-has-children:focus-within > .alumni-nav-drilldown-toggle::after,
+.alumni-nav-layout-top .alumni-nav-item-has-children:focus-within > .alumni-nav-drilldown-toggle::after,
 .alumni-nav-layout-top .alumni-nav-item-has-children:hover > .alumni-nav-drilldown-toggle::after {
 	content: ' \25BE'; /* ▾ 開いている状態 */
 }
@@ -176,9 +200,13 @@
 
 /* 各階層は「自分の直下の子」だけを開閉する（子孫セレクタではなく子
    セレクタ「>」）— 親を開いても孫まで一斉に開かない、フライアウトの
-   各段が独立して開閉するちゃんとした階層メニューにするため。 */
+   各段が独立して開閉するちゃんとした階層メニューにするため。
+   :focus-withinをSimple限定にしている理由は、上のアイコン切替ルールの
+   コメント参照（Formalでクリックして閉じた直後もフォーカスが残り、
+   :focus-withinだけでパネルが開いたままになってしまう実害のある不具合
+   があったため）。 */
 .alumni-nav-item-has-children.is-open > .alumni-nav-submenu,
-.alumni-nav-item-has-children:focus-within > .alumni-nav-submenu,
+.alumni-nav-layout-top .alumni-nav-item-has-children:focus-within > .alumni-nav-submenu,
 .alumni-nav-layout-top .alumni-nav-item-has-children:hover > .alumni-nav-submenu {
 	display: flex;
 	flex-direction: column;
@@ -186,7 +214,17 @@
 }
 
 /* 上部メニュー: 階層に関わらず、開いたサブメニューは常にフローティング
-   パネルとして重ねて表示する共通の見た目（背景・枠線・影・幅の制約）。 */
+   パネルとして重ねて表示する共通の見た目（背景・枠線・影・幅の制約）。
+   overflow(縦スクロール・高さ上限)はここでは一切設定しない —
+   overflow-yを設定すると、CSSの仕様上overflow-xも(visibleのままでは
+   なく)autoへ自動的に読み替えられてしまい、2階層目以降がleft:100%で
+   右へフライアウトするための子要素が「はみ出したコンテンツ」として
+   扱われ、横スクロールバーとクリップが発生してしまう(実ブラウザで
+   確認された不具合の直接の原因)。かわりに、これ以上フライアウトする
+   子を持たない「末端のパネル」だけに限定して、下の:has()セレクタで
+   高さ上限・縦スクロールを付ける — 子階層を持つパネルには一切
+   overflow指定をしない(overflow: visibleのまま)ことで、右方向への
+   フライアウトが親のoverflowによってクリップされることはなくなる。 */
 .alumni-nav-layout-top .alumni-nav-item-has-children > .alumni-nav-submenu {
 	position: absolute;
 	background: #fff;
@@ -195,10 +233,19 @@
 	padding: 0.6em 1em;
 	min-width: 12em;
 	max-width: min(22em, calc(100vw - 2em));
-	max-height: calc(100vh - 6em);
-	overflow-y: auto;
 	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 	z-index: 100;
+}
+
+/* 通常の階層数では縦スクロールバーも表示しない、という前提のうえで、
+   「これより深い階層を持たない」末端パネルに限り、極端に項目数が多い
+   場合の保険として高さ上限を付ける。:has()で「.alumni-nav-item-has-
+   childrenを子孫に持たないサブメニュー」だけに絞っているため、まだ
+   右へフライアウトする子を持つ中間階層のパネルには絶対に適用されない
+   （= フライアウトがクリップされる経路が構造的に存在しない）。 */
+.alumni-nav-layout-top .alumni-nav-item-has-children > .alumni-nav-submenu:not(:has(.alumni-nav-item-has-children)) {
+	max-height: calc(100vh - 6em);
+	overflow-y: auto;
 }
 
 /* 1階層目だけは、ヘッダーの外へ出ないようトリガーの「下」に開く
@@ -650,10 +697,18 @@
 	margin-bottom: 2em;
 }
 
+/* 16:9を基準にしつつ、.alumni-containerの最大幅制約(上のLayoutセクション
+   参照)だけでは足りない広いビューポートでも縦に伸びすぎないよう、
+   max-heightで上限を設ける — width:100%はそのまま(コンテナ幅に追従する
+   レスポンシブ)、高さだけがmin(360px, 45vh)でクランプされ、比較的狭い
+   画面ではほぼ16:9のまま、広いデスクトップ画面ではより横長のバナー状に
+   なる。object-fit: coverなので画像が歪む(引き伸ばされる)ことはなく、
+   クランプされた分だけ周囲がクロップされるだけ。 */
 .school-photos-track {
 	position: relative;
 	width: 100%;
 	aspect-ratio: 16 / 9;
+	max-height: min(360px, 45vh);
 	overflow: hidden;
 	border-radius: 4px;
 	background: #eee;
