@@ -41,6 +41,16 @@ if ( $alumni_core_delete_user_data ) {
 	delete_option( 'alumni_core_homepage_sections' );
 	delete_option( 'alumni_core_menu_structure' );
 	delete_option( 'alumni_core_officer_lists_updated_at' );
+	delete_option( 'alumni_core_org_chart' );
+	delete_option( 'alumni_core_org_chart_page_id' );
+	delete_option( 'alumni_core_person_greeting_groups' );
+	delete_option( 'alumni_core_school_photos_page_id' );
+	// Person_Greeting_Groups_Shortcode::PAGE_ID_OPTION_PREFIXの各グループ別
+	// オプション(alumni_core_person_greeting_group_page_id_{group_id})は
+	// group_idごとに動的な名前のため、この固定リストでは網羅できない —
+	// 削除しなくても孤立したページIDを指すだけの無害な残留データであり、
+	// 他のCoreオプションと同様「削除しない」デフォルト方針の対象として
+	// そのままにしておく。
 
 	// alumni_news_event / alumni_content posts (news, events, and every
 	// コンテンツ including 人物挨拶) are deliberately left alone even in

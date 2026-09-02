@@ -68,6 +68,9 @@ final class Plugin {
 		\AlumniCore\Includes\Graduation_Lookup_Shortcode::register();
 		\AlumniCore\Includes\Officers_Shortcode::register();
 		\AlumniCore\Includes\Terms_Listing_Shortcode::register();
+		\AlumniCore\Includes\Org_Chart_Shortcode::register();
+		\AlumniCore\Includes\Person_Greeting_Groups_Shortcode::register();
+		\AlumniCore\Includes\School_Photos_Shortcode::register();
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
@@ -89,8 +92,14 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-content-hierarchy.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-homepage-sections.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-menu-structure.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-photos-shortcode.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
+		require_once ALUMNI_CORE_PATH . 'public/org-chart-functions.php';
 
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
@@ -101,6 +110,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-terms-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-menu-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-shortcode.php';

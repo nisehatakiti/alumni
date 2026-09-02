@@ -15,6 +15,7 @@ use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
 use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Admin\Pages\Menu_Page;
+use AlumniCore\Admin\Pages\Org_Chart_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -97,6 +98,13 @@ class Admin {
 	private $menu_page;
 
 	/**
+	 * 同窓会組織図 screen handler.
+	 *
+	 * @var Org_Chart_Page
+	 */
+	private $org_chart_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -132,6 +140,7 @@ class Admin {
 		$this->terms_page             = new Terms_Page();
 		$this->homepage_page           = new Homepage_Page();
 		$this->menu_page                = new Menu_Page();
+		$this->org_chart_page           = new Org_Chart_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -151,6 +160,12 @@ class Admin {
 		add_action( 'admin_post_alumni_core_move_menu_item', array( $this->menu_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_indent_menu_item', array( $this->menu_page, 'handle_indent' ) );
 		add_action( 'admin_post_alumni_core_outdent_menu_item', array( $this->menu_page, 'handle_outdent' ) );
+		add_action( 'admin_post_alumni_core_apply_standard_menu_preset', array( $this->menu_page, 'handle_apply_standard_preset' ) );
+		add_action( 'admin_post_alumni_core_create_org_chart_node', array( $this->org_chart_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_update_org_chart_node', array( $this->org_chart_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_org_chart_node', array( $this->org_chart_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_reparent_org_chart_node', array( $this->org_chart_page, 'handle_reparent' ) );
 	}
 
 	/**
@@ -250,10 +265,26 @@ class Admin {
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
 		);
 
-		// 規約類も同じ alumni_content CPT（kind=terms）だが、他のコンテンツ
-		// と混ざらない専用の一覧screen（Terms_Page）を独立した項目として
-		// 持つ — 同窓会規約・会則・個人情報保護方針などを他のコンテンツと
-		// 一緒くたにせず、まとめて見渡せるようにするため。
+		// 規約類の新規作成も他の2つと同じ「入口」パターンの専用クイック
+		// リンクを持つ — これがないと、WordPressが自動追加する汎用の
+		// 「コンテンツ > 新規追加」（種別クエリ文字列なし）から規約類を
+		// 作ろうとした際、Content_Post_Type::maybe_use_block_editor()
+		// が種別を判別できずブロックエディターを無効化したままにしてしまい
+		// （本文が入力できない不具合の根本原因だった）、後から「規約類」を
+		// 選び直す手段（種別ラジオボタン）ももう存在しないため、規約類だけ
+		// 専用の入口がないと詰んでしまう。
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '規約類を追加', 'alumni-core' ),
+			__( '＋ 規約類を追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
+		);
+
+		// 一覧そのもの（既存投稿の管理・並び順確認用）は、他のコンテンツと
+		// 混ざらない専用の一覧screen（Terms_Page）として引き続き持つ —
+		// 同窓会規約・会則・個人情報保護方針などを他のコンテンツと一緒くた
+		// にせず、まとめて見渡せるようにするため。
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '規約類', 'alumni-core' ),
@@ -279,6 +310,15 @@ class Admin {
 			self::CAPABILITY,
 			Menu_Page::SLUG,
 			array( $this->menu_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '同窓会組織図', 'alumni-core' ),
+			__( '同窓会組織図', 'alumni-core' ),
+			self::CAPABILITY,
+			Org_Chart_Page::SLUG,
+			array( $this->org_chart_page, 'render' )
 		);
 
 		/**

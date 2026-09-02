@@ -53,6 +53,8 @@ class Homepage_Sections {
 	const SYSTEM_OFFICERS_INDEX     = 'officers_index';
 	const SYSTEM_TERMS_INDEX        = 'terms_index';
 	const SYSTEM_GRADUATION_LOOKUP  = 'graduation_lookup';
+	const SYSTEM_ORG_CHART          = 'org_chart';
+	const SYSTEM_SCHOOL_PHOTOS      = 'school_photos';
 
 	/**
 	 * Singleton instance.
@@ -96,6 +98,8 @@ class Homepage_Sections {
 			self::SYSTEM_OFFICERS_INDEX,
 			self::SYSTEM_TERMS_INDEX,
 			self::SYSTEM_GRADUATION_LOOKUP,
+			self::SYSTEM_ORG_CHART,
+			self::SYSTEM_SCHOOL_PHOTOS,
 		);
 	}
 
@@ -111,6 +115,8 @@ class Homepage_Sections {
 			self::SYSTEM_OFFICERS_INDEX    => __( '役員・理事紹介', 'alumni-core' ),
 			self::SYSTEM_TERMS_INDEX       => __( '規約類一覧', 'alumni-core' ),
 			self::SYSTEM_GRADUATION_LOOKUP => __( '卒業期早見表', 'alumni-core' ),
+			self::SYSTEM_ORG_CHART         => __( '同窓会組織図', 'alumni-core' ),
+			self::SYSTEM_SCHOOL_PHOTOS     => __( '学校写真', 'alumni-core' ),
 		);
 	}
 
@@ -135,6 +141,10 @@ class Homepage_Sections {
 				return alumni_core_get_terms_listing_url();
 			case self::SYSTEM_GRADUATION_LOOKUP:
 				return alumni_core_get_graduation_lookup_url();
+			case self::SYSTEM_ORG_CHART:
+				return alumni_core_get_org_chart_url();
+			case self::SYSTEM_SCHOOL_PHOTOS:
+				return \AlumniCore\Includes\School_Photos_Shortcode::get_url();
 			default:
 				return '';
 		}

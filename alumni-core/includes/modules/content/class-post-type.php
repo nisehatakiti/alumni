@@ -82,6 +82,16 @@ class Post_Type {
 	const QUERY_VAR_KIND = 'alumni_content_kind';
 
 	/**
+	 * Query var used only by a per-group 「＋母校校長挨拶を追加」style admin
+	 * menu quick-link (when one exists) to pre-select the intended 人物挨拶
+	 * グループ on the 新規追加 screen — see Content_Meta_Box::render(). Same
+	 * "never trusted at save time" rule as QUERY_VAR_KIND: the actually
+	 * saved group always comes from the submitted
+	 * 'alumni_person_greeting_group_id' POST field.
+	 */
+	const QUERY_VAR_GROUP = 'alumni_person_greeting_group';
+
+	/**
 	 * Meta keys used only when META_KIND is KIND_PERSON_GREETING.
 	 */
 	const META_PERSON_NAME     = '_alumni_person_name';
@@ -89,6 +99,22 @@ class Post_Type {
 	const META_PERSON_TITLE    = '_alumni_person_title';
 	const META_PERSON_TERM     = '_alumni_person_term';
 	const META_PERSON_PHOTO_ID = '_alumni_person_photo_id';
+
+	/**
+	 * 人物挨拶グループ（Person_Greeting_Groups）のID — 「母校校長挨拶」
+	 * 「同窓会長挨拶」のように、歴代の人物挨拶を1つにまとめる専用の分類。
+	 * サイト階層を作るための汎用的な「親コンテンツ」(META_PARENT_ID)とは
+	 * 別物で、KIND_PERSON_GREETINGのときだけ意味を持つ。
+	 */
+	const META_PERSON_GREETING_GROUP_ID = '_alumni_person_greeting_group_id';
+
+	/**
+	 * 任期（例：「2020年〜2024年」「初代」等の自由記述） — 構造化した年度
+	 * フィールドにせず自由記述にしているのは、「初代」「現任」のような
+	 * 年度で表せない表記も、学校によって異なる年度区切り（4月始まり等）
+	 * も、無理に決め打ちの構造へ押し込めないため。
+	 */
+	const META_PERSON_TENURE = '_alumni_person_greeting_tenure';
 
 	/**
 	 * Meta keys used only when META_KIND is KIND_TERMS (規約類). 表示順は
@@ -150,17 +176,19 @@ class Post_Type {
 				'show_in_menu' => \AlumniCore\Admin\Admin::MENU_SLUG,
 				'show_in_rest' => true,
 				// 'editor' is supported at the post-type level (required —
-				// WordPress decides whether the block editor is even
-				// available for a CPT before it knows which post/kind is
-				// being edited), but is then conditionally REMOVED per
-				// request for every kind except KIND_TERMS (see
-				// maybe_restrict_editor_support(), hooked on
-				// load-post.php/load-post-new.php in Module::register()).
+				// use_block_editor_for_post_type() returns false
+				// unconditionally, before even consulting its own filter,
+				// when the post type doesn't support 'editor' at all), but
+				// whether the block editor is actually USED for a given
+				// request is then narrowed down to KIND_TERMS only via the
+				// 'use_block_editor_for_post_type' filter (see
+				// maybe_use_block_editor(), hooked in Module::register()).
 				// This lets 規約類 alone use WordPress's own block editor
 				// for paragraph-level formatting (太字／文字サイズ), while
 				// every other kind keeps the exact same fixed-field
-				// Content_Meta_Box UI as before (no 'editor' shown to them —
-				// same reasoning as alumni_news_event never having it).
+				// Content_Meta_Box UI as before (no block editor shown to
+				// them — same reasoning as alumni_news_event never having
+				// one).
 				'supports'     => array( 'title', 'editor' ),
 				'has_archive'  => false,
 				'rewrite'      => array(
@@ -172,34 +200,46 @@ class Post_Type {
 	}
 
 	/**
-	 * Removes 'editor' support for THIS REQUEST ONLY when the post being
-	 * edited (or, for a brand-new post, the kind requested via the
-	 * 「規約類」新規追加リンク's query string — see QUERY_VAR_KIND) isn't
-	 * 規約類. Must run before WordPress decides whether to show the block
-	 * editor for this screen, so it's hooked on load-post.php /
-	 * load-post-new.php (Module::register()) — both fire early enough,
-	 * before the edit screen itself is rendered.
+	 * Whether the current request should show WordPress's own block editor
+	 * for this alumni_content post — 規約類だけ真。
 	 *
-	 * remove_post_type_support() only affects the in-memory registry for
-	 * the current request; it never persists, so every other kind keeps
-	 * exactly the same 「本文」テキストエリアだけの編集画面 it always had
-	 * (Content_Meta_Box) on its own next page load.
+	 * Hooked to the 'use_block_editor_for_post_type' filter (Module::
+	 * register()) rather than conditionally calling remove_post_type_support()
+	 * on load-post.php/load-post-new.php (this class's earlier approach):
+	 * that relied on running before WordPress's own internal call to
+	 * use_block_editor_for_post_type() during post-new.php/post.php's own
+	 * bootstrap, which is fragile — it depends on exact hook-ordering that
+	 * isn't part of any documented contract, and doesn't cover every code
+	 * path that asks the same question (e.g. REST-preloaded editor data).
+	 * 'use_block_editor_for_post_type' is the extension point WordPress
+	 * core itself provides for exactly this "block editor for some posts
+	 * of this type, not others" case, so it fires correctly and
+	 * consistently regardless of which admin screen or REST request is
+	 * asking. This CPT keeps 'editor' in its base `supports` (register()
+	 * above) — required for use_block_editor_for_post_type() to ever
+	 * return true at all — and this filter narrows it down to 規約類 only,
+	 * same restriction as before, just via the correct mechanism.
+	 *
+	 * @param bool   $use_block_editor Whether the block editor would be used.
+	 * @param string $post_type        Post type being checked.
+	 * @return bool
 	 */
-	public static function maybe_restrict_editor_support() {
+	public static function maybe_use_block_editor( $use_block_editor, $post_type ) {
+		if ( self::SLUG !== $post_type ) {
+			return $use_block_editor;
+		}
+
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only branch decision (which editor UI to render), nothing is written; mirrors Content_Meta_Box::render()'s identical use of the same query var for the same purpose.
 		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
 
 		if ( $post_id ) {
-			$is_terms = ( self::KIND_TERMS === self::get_kind( $post_id ) );
-		} else {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$requested_kind = isset( $_GET[ self::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR_KIND ] ) ) : '';
-			$is_terms       = ( self::KIND_TERMS === $requested_kind );
+			return self::KIND_TERMS === self::get_kind( $post_id );
 		}
 
-		if ( ! $is_terms ) {
-			remove_post_type_support( self::SLUG, 'editor' );
-		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$requested_kind = isset( $_GET[ self::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR_KIND ] ) ) : '';
+
+		return self::KIND_TERMS === $requested_kind;
 	}
 
 	/**
@@ -358,6 +398,26 @@ class Post_Type {
 		$term = get_post_meta( $post->ID, self::META_PERSON_TERM, true );
 
 		return ( '' !== $term && is_numeric( $term ) && (int) $term > 0 ) ? (int) $term : '';
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string 人物挨拶グループのID、または未設定なら ''。
+	 */
+	public static function get_person_greeting_group_id( $post = null ) {
+		$post = get_post( $post );
+
+		return $post ? (string) get_post_meta( $post->ID, self::META_PERSON_GREETING_GROUP_ID, true ) : '';
+	}
+
+	/**
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string 任期の自由記述、または未設定なら ''。
+	 */
+	public static function get_person_tenure( $post = null ) {
+		$post = get_post( $post );
+
+		return $post ? (string) get_post_meta( $post->ID, self::META_PERSON_TENURE, true ) : '';
 	}
 
 	/**

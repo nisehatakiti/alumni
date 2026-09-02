@@ -49,14 +49,6 @@ class Graduation_Lookup_Shortcode {
 	const QUERY_VAR_BIRTH_DAY   = 'alumni_lookup_birth_day';
 
 	/**
-	 * The default view already shows every term from 1 through the term
-	 * the current year graduates (see Term_Calculator::default_to_term())
-	 * — this constant is only the step size for the 前へ／次へ manual
-	 * pagination links, for browsing past that default range.
-	 */
-	const DEFAULT_ROWS = 30;
-
-	/**
 	 * Registers hooks. Safe to call unconditionally — the page-creation
 	 * check is gated internally to is_admin().
 	 */
@@ -156,21 +148,14 @@ class Graduation_Lookup_Shortcode {
 
 		$search_submitted = ( '' !== $birth_year_input || '' !== $birth_month_input || '' !== $birth_day_input );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination, nothing is written.
-		$from_term = isset( $_GET['from_term'] ) ? max( 1, absint( $_GET['from_term'] ) ) : 1;
-		// 固定の期数(旧30期)で早見表を打ち切らない — 既定では第1期から
-		// 「現在の年に卒業する期」まで一覧表示する
-		// （Term_Calculator::default_to_term()、計算式そのものは
-		// year_to_term()を再利用し二重化しない）。MAX_LOOKUP_ROWSによる
-		// 上限は安全策として引き続き有効。
-		$to_term = Term_Calculator::default_to_term( $first_graduation_year, $from_term, (int) current_time( 'Y' ) );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['to_term'] ) && absint( $_GET['to_term'] ) >= $from_term ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$to_term = absint( $_GET['to_term'] );
-		}
-
-		$current_url = home_url( add_query_arg( null, null ) );
+		// 早見表はページングしない — 常に第1期から「現在の年に卒業する期」
+		// までを1ページで全件表示する（Term_Calculator::default_to_term()、
+		// 計算式そのものはyear_to_term()を再利用し二重化しない）。
+		// from_term/to_termをクエリ文字列で受け取る仕組み自体を廃止した
+		// （以前は「前へ／次へ」で30件ずつページ送りしていたが、既定表示が
+		// 最新期まで届くようになったため不要になった）。MAX_LOOKUP_ROWSに
+		// よる安全策（build_lookup_table()側）は引き続き有効。
+		$to_term = Term_Calculator::default_to_term( $first_graduation_year, 1, (int) current_time( 'Y' ) );
 
 		// 検索フォームのaction先は、常にこのページ自体のURL
 		// （self::get_url()）を指す。ここが実環境で「検索しても結果が
@@ -265,7 +250,7 @@ class Graduation_Lookup_Shortcode {
 
 				<section class="alumni-graduation-lookup-section">
 					<h2><?php esc_html_e( '卒業期早見表', 'alumni-core' ); ?></h2>
-					<?php $rows = Term_Calculator::build_lookup_table( $first_graduation_year, $from_term, $to_term ); ?>
+					<?php $rows = Term_Calculator::build_lookup_table( $first_graduation_year, 1, $to_term ); ?>
 					<?php if ( ! empty( $rows ) ) : ?>
 						<table class="alumni-graduation-lookup-table">
 							<thead>
@@ -311,14 +296,6 @@ class Graduation_Lookup_Shortcode {
 								<?php endforeach; ?>
 							</tbody>
 						</table>
-						<p class="alumni-graduation-lookup-pagination">
-							<a href="<?php echo esc_url( add_query_arg( 'from_term', max( 1, $from_term - self::DEFAULT_ROWS ), $current_url ) ); ?>">
-								<?php esc_html_e( '前へ', 'alumni-core' ); ?>
-							</a>
-							<a href="<?php echo esc_url( add_query_arg( 'from_term', $to_term + 1, $current_url ) ); ?>">
-								<?php esc_html_e( '次へ', 'alumni-core' ); ?>
-							</a>
-						</p>
 					<?php endif; ?>
 				</section>
 

@@ -69,6 +69,38 @@ if ( ! function_exists( 'alumni_core_get_person_greetings_query' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
+	/**
+	 * 指定した人物挨拶グループ（Person_Greeting_Groups）に属する、公開済み
+	 * 人物挨拶コンテンツを歴代順(menu_order昇順、任期を管理する場合の並び順
+	 * と同じ列を規約類の表示順と同様に流用)で返す。
+	 *
+	 * @param string $group_id
+	 * @return WP_Post[]
+	 */
+	function alumni_core_get_person_greeting_group_members( $group_id ) {
+		$query = alumni_core_get_person_greetings_query(
+			array(
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by kind+group is the entire purpose of this query.
+					array(
+						'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_KIND,
+						'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_PERSON_GREETING,
+					),
+					array(
+						'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_PERSON_GREETING_GROUP_ID,
+						'value' => (string) $group_id,
+					),
+				),
+				'posts_per_page' => -1,
+				'orderby'        => 'menu_order',
+				'order'          => 'ASC',
+			)
+		);
+
+		return $query->posts;
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_content' ) ) {
 	/**
 	 * A single published コンテンツ post, or null if $id doesn't resolve to

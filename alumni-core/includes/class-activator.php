@@ -32,6 +32,11 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/class-officer-lists.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-terms-listing-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-photos-shortcode.php';
 
 		Installer::install();
 		Settings::instance()->set_defaults();
@@ -45,6 +50,9 @@ class Activator {
 		Officers_Shortcode::maybe_create_pages();
 		\AlumniCore\Includes\Modules\NewsEvents\Listing_Shortcode::maybe_create_pages();
 		Terms_Listing_Shortcode::maybe_create_page();
+		Org_Chart_Shortcode::maybe_create_page();
+		Person_Greeting_Groups_Shortcode::maybe_create_pages();
+		School_Photos_Shortcode::maybe_create_page();
 
 		// register_activation_hook() fires before 'init' on this request,
 		// so the post types must be registered explicitly here — otherwise

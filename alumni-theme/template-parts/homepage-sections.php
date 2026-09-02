@@ -56,19 +56,52 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 									<a href="<?php echo esc_url( $alumni_hp_system_url ); ?>"><?php echo esc_html( $alumni_hp_system_label ); ?></a>
 								</h3>
 
-								<?php if ( 'news' === $alumni_hp_system_key || 'events' === $alumni_hp_system_key ) : ?>
-									<?php $alumni_hp_teaser = ( 'events' === $alumni_hp_system_key ) ? alumni_theme_get_events_teaser( 3 ) : alumni_theme_get_news_teaser( 3 ); ?>
+								<?php if ( 'news' === $alumni_hp_system_key ) : ?>
+									<?php $alumni_hp_teaser = alumni_theme_get_news_teaser( 3 ); ?>
 									<?php if ( $alumni_hp_teaser && $alumni_hp_teaser->have_posts() ) : ?>
 										<div class="alumni-homepage-slot-teaser-list">
 											<?php
+											// トップページはコンパクトな1行リスト表示
+											// （news-event-row.php）を使う — カード型の
+											// news-event-card.phpは/news/・/events/一覧や
+											// 詳細ページ用のまま変更しない。
 											while ( $alumni_hp_teaser->have_posts() ) :
 												$alumni_hp_teaser->the_post();
-												// トップページはコンパクトな1行リスト表示
-										// （news-event-row.php）を使う — カード型の
-										// news-event-card.phpは/news/・/events/一覧や
-										// 詳細ページ用のまま変更しない。
-										get_template_part( 'template-parts/news-event-row' );
+												get_template_part( 'template-parts/news-event-row' );
 											endwhile;
+											wp_reset_postdata();
+											?>
+										</div>
+									<?php endif; ?>
+								<?php elseif ( 'events' === $alumni_hp_system_key ) : ?>
+									<?php
+									// イベントは「今後」(開催日が近い順)と「終了済み」
+									// (開催日が新しい順)を見出しで明確に分けて表示する
+									// — 今日のイベントは「今後」に含める
+									// (alumni_core_get_events_split_by_date()参照)。
+									$alumni_hp_upcoming_events = alumni_theme_get_upcoming_events( 3 );
+									$alumni_hp_past_events     = alumni_theme_get_past_events( 3 );
+									?>
+									<?php if ( $alumni_hp_upcoming_events ) : ?>
+										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '今後のイベント', 'alumni-theme' ); ?></h4>
+										<div class="alumni-homepage-slot-teaser-list">
+											<?php
+											foreach ( $alumni_hp_upcoming_events as $alumni_hp_event_post ) :
+												setup_postdata( $alumni_hp_event_post );
+												get_template_part( 'template-parts/news-event-row' );
+											endforeach;
+											wp_reset_postdata();
+											?>
+										</div>
+									<?php endif; ?>
+									<?php if ( $alumni_hp_past_events ) : ?>
+										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '終了したイベント', 'alumni-theme' ); ?></h4>
+										<div class="alumni-homepage-slot-teaser-list">
+											<?php
+											foreach ( $alumni_hp_past_events as $alumni_hp_event_post ) :
+												setup_postdata( $alumni_hp_event_post );
+												get_template_part( 'template-parts/news-event-row' );
+											endforeach;
 											wp_reset_postdata();
 											?>
 										</div>

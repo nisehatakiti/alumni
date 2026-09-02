@@ -66,9 +66,10 @@ class Menu_Structure {
 	const TYPE_FOLDER  = 'folder';
 	const TYPE_CONTENT = 'content';
 
-	const REF_CONTENT      = 'content';
-	const REF_SYSTEM       = 'system';
-	const REF_OFFICER_LIST = 'officer_list';
+	const REF_CONTENT               = 'content';
+	const REF_SYSTEM                = 'system';
+	const REF_OFFICER_LIST          = 'officer_list';
+	const REF_PERSON_GREETING_GROUP = 'person_greeting_group';
 
 	const AUDIENCE_ALUMNI  = 'alumni';
 	const AUDIENCE_STUDENT = 'student';
@@ -120,16 +121,230 @@ class Menu_Structure {
 			$saved = get_option( self::OPTION_NAME, null );
 
 			if ( null === $saved ) {
-				$items = self::migrate_from_content_hierarchy();
-				update_option( self::OPTION_NAME, $items );
+				// 「新規インストール」か「Menu_Structure導入前からの既存
+				// サイト」かを、既存のContent_Hierarchyデータの有無で判定
+				// する — 何かしら既存のコンテンツ階層があれば、それは
+				// アップグレード中の既存サイトとみなし、これまでどおり
+				// そこから移行する(migrate_from_content_hierarchy())。
+				// 完全に空(コンテンツ階層すら一度も作られていない)場合
+				// だけ、標準プリセット(apply_standard_preset())を適用する。
+				// いずれの分岐でも、この判定は「OPTION_NAMEが一度も保存
+				// されたことがない」ときの、たった1回だけしか実行されない
+				// (以後は$savedがnullでなくなるため) — 既存サイトのMenu
+				// Structureを後から書き換えることは絶対にない。
+				if ( self::has_existing_content_hierarchy() ) {
+					$items = self::migrate_from_content_hierarchy();
+					update_option( self::OPTION_NAME, $items );
+					$this->items = array_map( array( __CLASS__, 'normalize_item' ), $items );
+				} else {
+					// 先にオプションを「保存済み・空」の状態にしてから
+					// apply_standard_preset()を呼ぶ — 同メソッドは内部で
+					// $this->get_all()/create_folder()等(結局この
+					// get_all()を再帰的に呼ぶ)を使うため、$this->itemsを
+					// 先にnullでない状態(空配列)にしておく必要がある。
+					update_option( self::OPTION_NAME, array() );
+					$this->items = array();
+					$this->apply_standard_preset();
+				}
 			} else {
-				$items = is_array( $saved ) ? array_values( $saved ) : array();
+				$items        = is_array( $saved ) ? array_values( $saved ) : array();
+				$this->items = array_map( array( __CLASS__, 'normalize_item' ), $items );
 			}
-
-			$this->items = array_map( array( __CLASS__, 'normalize_item' ), $items );
 		}
 
 		return $this->items;
+	}
+
+	/**
+	 * Whether any 対象者 already has at least one Content_Hierarchy node
+	 * (published or not) — used only to decide, on the very first
+	 * get_all() call, whether this is an existing site upgrading (migrate
+	 * its コンテンツ階層) or a genuinely new install (use the standard
+	 * preset instead). Never called again afterward.
+	 *
+	 * @return bool
+	 */
+	private static function has_existing_content_hierarchy() {
+		foreach ( array( self::AUDIENCE_ALUMNI, self::AUDIENCE_STUDENT, self::AUDIENCE_COMMON ) as $audience ) {
+			if ( ! empty( Content_Hierarchy::build_tree( $audience, true ) ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * 標準メニュー構成を適用する — 新規インストール時にget_all()から
+	 * 一度だけ自動的に呼ばれるほか、管理画面（同窓会 > メニュー構成）の
+	 * 「標準メニューを設定」ボタンから、既存サイトに対しても何度でも
+	 * 安全に呼び出せる（Menu_Page::handle_apply_standard_preset()）。
+	 *
+	 * 完全に非破壊・加算のみ: 各項目は「同じ場所に、同じ参照先／同じ
+	 * ラベルの項目が既にあるか」を確認してから、無ければ作成する
+	 * （find_top_level_item()/find_child_item()）。既存の項目を上書き・
+	 * 削除することは一切ない。同じ名前の人物挨拶グループ・役員一覧を
+	 * 二重作成しないことは、Person_Greeting_Groups::create_group()／
+	 * find_or_create_officer_list_by_name()自体が保証する。
+	 *
+	 * 標準構成:
+	 *   共通
+	 *     ├─ 役員・理事紹介（フォルダ）
+	 *     │    ├─ 母校校長挨拶（人物挨拶グループ）
+	 *     │    ├─ 同窓会長挨拶（人物挨拶グループ）
+	 *     │    ├─ 役員紹介（役員・理事一覧）
+	 *     │    └─ 理事一覧（役員・理事一覧）
+	 *     ├─ 規約類一覧（システムページ）
+	 *     ├─ 卒業期早見表（システムページ）
+	 *     └─ 学校写真（システムページ）
+	 *
+	 * 実在しない学校名・人物名・本文は一切生成しない — 「母校校長挨拶」
+	 * 「同窓会長挨拶」は歴代の人物挨拶をまとめる空のグループだけを用意し
+	 * (Person_Greeting_Groups)、個々の人物投稿は作らない。「役員紹介」
+	 * 「理事一覧」も同様に空の一覧だけを用意する。
+	 *
+	 * 「校歌・校訓」「在校生向け>卒業生の声」は、対応する機能がまだこの
+	 * プラグインに実装されていないため、今回の標準構成には含めない
+	 * （完了報告の既知の問題を参照。卒業生の声は将来Alumni-Voicesが
+	 * 有効化された際に非破壊的に参加する設計とし、Core自身では作らない）。
+	 *
+	 * @return array{created:int, skipped:int}
+	 */
+	public function apply_standard_preset() {
+		$created = 0;
+		$skipped = 0;
+
+		$officers_folder_label = __( '役員・理事紹介', 'alumni-core' );
+		$officers_folder_id    = $this->find_top_level_item( self::AUDIENCE_COMMON, self::TYPE_FOLDER, '', '', $officers_folder_label );
+
+		if ( null === $officers_folder_id ) {
+			$officers_folder_id = $this->create_folder( '', self::AUDIENCE_COMMON, $officers_folder_label );
+			$created++;
+		} else {
+			$skipped++;
+		}
+
+		$principal_group_id = Person_Greeting_Groups::instance()->create_group( __( '母校校長挨拶', 'alumni-core' ) );
+		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $principal_group_id, $created, $skipped );
+
+		$chair_group_id = Person_Greeting_Groups::instance()->create_group( __( '同窓会長挨拶', 'alumni-core' ) );
+		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $chair_group_id, $created, $skipped );
+
+		$officer_intro_list_id = self::find_or_create_officer_list_by_name( __( '役員紹介', 'alumni-core' ) );
+		$this->ensure_child_ref( $officers_folder_id, self::REF_OFFICER_LIST, $officer_intro_list_id, $created, $skipped );
+
+		$director_list_id = self::find_or_create_officer_list_by_name( __( '理事一覧', 'alumni-core' ) );
+		$this->ensure_child_ref( $officers_folder_id, self::REF_OFFICER_LIST, $director_list_id, $created, $skipped );
+
+		foreach (
+			array(
+				Homepage_Sections::SYSTEM_TERMS_INDEX,
+				Homepage_Sections::SYSTEM_GRADUATION_LOOKUP,
+				Homepage_Sections::SYSTEM_SCHOOL_PHOTOS,
+			) as $system_key
+		) {
+			$existing_id = $this->find_top_level_item( self::AUDIENCE_COMMON, self::TYPE_CONTENT, self::REF_SYSTEM, $system_key, '' );
+
+			if ( null === $existing_id ) {
+				$this->create_content_item( '', self::AUDIENCE_COMMON, self::REF_SYSTEM, $system_key );
+				$created++;
+			} else {
+				$skipped++;
+			}
+		}
+
+		return array(
+			'created' => $created,
+			'skipped' => $skipped,
+		);
+	}
+
+	/**
+	 * Creates a $ref_type/$ref_id child of $parent_id, unless a child
+	 * already references the exact same thing — increments $created or
+	 * $skipped (passed by reference) accordingly.
+	 *
+	 * @param string $parent_id
+	 * @param string $ref_type
+	 * @param string $ref_id
+	 * @param int    $created Passed by reference.
+	 * @param int    $skipped Passed by reference.
+	 */
+	private function ensure_child_ref( $parent_id, $ref_type, $ref_id, &$created, &$skipped ) {
+		if ( null !== $this->find_child_item( $parent_id, $ref_type, $ref_id ) ) {
+			$skipped++;
+			return;
+		}
+
+		$this->create_content_item( $parent_id, self::AUDIENCE_COMMON, $ref_type, $ref_id );
+		$created++;
+	}
+
+	/**
+	 * Finds an existing top-level item (parent_id='') in $audience matching
+	 * either a フォルダ by $label (when $type is TYPE_FOLDER) or a content
+	 * item by $ref_type/$ref_id (otherwise).
+	 *
+	 * @param string $audience
+	 * @param string $type
+	 * @param string $ref_type
+	 * @param string $ref_id
+	 * @param string $label
+	 * @return string|null item_id, or null if nothing matches.
+	 */
+	private function find_top_level_item( $audience, $type, $ref_type, $ref_id, $label ) {
+		foreach ( $this->get_children( '', $audience ) as $item ) {
+			if ( $item['type'] !== $type ) {
+				continue;
+			}
+			if ( self::TYPE_FOLDER === $type ) {
+				if ( $item['label'] === $label ) {
+					return $item['item_id'];
+				}
+			} elseif ( $item['ref_type'] === $ref_type && $item['ref_id'] === (string) $ref_id ) {
+				return $item['item_id'];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Finds an existing child of $parent_id referencing $ref_type/$ref_id.
+	 *
+	 * @param string $parent_id
+	 * @param string $ref_type
+	 * @param string $ref_id
+	 * @return string|null item_id, or null if nothing matches.
+	 */
+	private function find_child_item( $parent_id, $ref_type, $ref_id ) {
+		foreach ( $this->get_children( $parent_id ) as $item ) {
+			if ( $item['ref_type'] === $ref_type && $item['ref_id'] === (string) $ref_id ) {
+				return $item['item_id'];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Finds an existing 役員・理事一覧 by exact name match, or creates a new
+	 * (empty) one — Officer_Lists::create_list() itself always creates a
+	 * new list unconditionally, so this find-before-create wrapper is what
+	 * makes re-running apply_standard_preset() safe (never duplicates
+	 * "役員紹介"/"理事一覧").
+	 *
+	 * @param string $name
+	 * @return string The (new or pre-existing) list's ID.
+	 */
+	private static function find_or_create_officer_list_by_name( $name ) {
+		foreach ( Officer_Lists::instance()->get_all() as $list ) {
+			if ( $list['name'] === $name ) {
+				return $list['list_id'];
+			}
+		}
+
+		return Officer_Lists::instance()->create_list( $name );
 	}
 
 	/**
@@ -142,7 +357,7 @@ class Menu_Structure {
 		$type = ( self::TYPE_FOLDER === ( $item['type'] ?? '' ) ) ? self::TYPE_FOLDER : self::TYPE_CONTENT;
 
 		$ref_type = isset( $item['ref_type'] ) ? $item['ref_type'] : '';
-		if ( ! in_array( $ref_type, array( self::REF_CONTENT, self::REF_SYSTEM, self::REF_OFFICER_LIST ), true ) ) {
+		if ( ! in_array( $ref_type, array( self::REF_CONTENT, self::REF_SYSTEM, self::REF_OFFICER_LIST, self::REF_PERSON_GREETING_GROUP ), true ) ) {
 			$ref_type = '';
 		}
 
@@ -444,6 +659,27 @@ class Menu_Structure {
 				'item_id' => $item['item_id'],
 				'type'    => 'content',
 				'label'   => '' !== $item['label'] ? $item['label'] : ( $list['title'] ? $list['title'] : $list['name'] ),
+				'url'     => $url,
+			);
+		}
+
+		if ( self::REF_PERSON_GREETING_GROUP === $item['ref_type'] ) {
+			$group = Person_Greeting_Groups::instance()->get_group( $item['ref_id'] );
+
+			if ( null === $group ) {
+				return null;
+			}
+
+			$url = Person_Greeting_Groups_Shortcode::get_group_url( $item['ref_id'] );
+
+			if ( ! $url ) {
+				return null;
+			}
+
+			return array(
+				'item_id' => $item['item_id'],
+				'type'    => 'content',
+				'label'   => '' !== $item['label'] ? $item['label'] : $group['name'],
 				'url'     => $url,
 			);
 		}

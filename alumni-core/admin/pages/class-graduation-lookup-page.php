@@ -32,14 +32,6 @@ class Graduation_Lookup_Page {
 	const SLUG = 'alumni-core-graduation-lookup';
 
 	/**
-	 * The default view already shows every term from 1 through the term
-	 * the current year graduates (see Term_Calculator::default_to_term())
-	 * — this constant is only the step size for the 前へ／次へ manual
-	 * pagination links, for browsing past that default range.
-	 */
-	const DEFAULT_ROWS = 30;
-
-	/**
 	 * Renders the screen.
 	 */
 	public function render() {
@@ -49,23 +41,17 @@ class Graduation_Lookup_Page {
 
 		$first_graduation_year = Settings::instance()->get( 'first_graduation_year' );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup, nothing is written.
-		$from_term = isset( $_GET['from_term'] ) ? max( 1, absint( $_GET['from_term'] ) ) : 1;
-		// 固定の期数(旧30期)で早見表を打ち切らない — 既定では第1期から
-		// 「現在の年に卒業する期」まで一覧表示する
-		// (Term_Calculator::default_to_term()、計算式そのものは
-		// year_to_term()を再利用し二重化しない)。MAX_LOOKUP_ROWSによる
-		// 上限は安全策として引き続き有効。
-		$to_term = Term_Calculator::default_to_term( $first_graduation_year, $from_term, (int) current_time( 'Y' ) );
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['to_term'] ) && absint( $_GET['to_term'] ) >= $from_term ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$to_term = absint( $_GET['to_term'] );
-		}
+		// 早見表はページングしない — 常に第1期から「現在の年に卒業する期」
+		// までを1ページで全件表示する(Term_Calculator::default_to_term()、
+		// 計算式そのものはyear_to_term()を再利用し二重化しない)。
+		// from_term/to_termをクエリ文字列で受け取る仕組み自体を廃止した。
+		// MAX_LOOKUP_ROWSによる安全策(build_lookup_table()側)は引き続き
+		// 有効。
+		$to_term = Term_Calculator::default_to_term( $first_graduation_year, 1, (int) current_time( 'Y' ) );
 
 		$rows = ( '' === $first_graduation_year )
 			? array()
-			: Term_Calculator::build_lookup_table( $first_graduation_year, $from_term, $to_term );
+			: Term_Calculator::build_lookup_table( $first_graduation_year, 1, $to_term );
 
 		$settings     = Settings::instance()->get_all();
 		$color_cycle  = $settings['color_cycle'];
@@ -214,15 +200,6 @@ class Graduation_Lookup_Page {
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-
-				<p>
-					<a class="button" href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG, 'from_term' => max( 1, $from_term - self::DEFAULT_ROWS ) ), admin_url( 'admin.php' ) ) ); ?>">
-						<?php esc_html_e( '前へ', 'alumni-core' ); ?>
-					</a>
-					<a class="button" href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG, 'from_term' => $to_term + 1 ), admin_url( 'admin.php' ) ) ); ?>">
-						<?php esc_html_e( '次へ', 'alumni-core' ); ?>
-					</a>
-				</p>
 			<?php endif; ?>
 		</div>
 		<?php
