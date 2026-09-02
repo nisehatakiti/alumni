@@ -205,7 +205,16 @@ class Menu_Structure {
 				'order'     => $order++,
 				'enabled'   => true,
 				'type'      => $is_folder ? self::TYPE_FOLDER : self::TYPE_CONTENT,
-				'label'     => '',
+				// フォルダ種別の投稿はMenu_Structure上では「参照先を持たない
+				// 純粋な構造項目」になる(class docblock「フォルダは必ずしも
+				// コンテンツではない」)ため、移行後は post_title を読みに行く
+				// 手段がなくなる — 移行時点の post_title をそのままlabelへ
+				// コピーしておかないと、既存のフォルダ名が「（無題フォルダ）」
+				// に変わってしまい、既存データを壊さないという方針に反する。
+				// コンテンツ項目側はlabel=''のままでよい(resolve_item()が
+				// 都度post_titleを読みに行くため、コンテンツ側の改題は
+				// 自動的にメニューへ反映される)。
+				'label'     => $is_folder ? (string) $post->post_title : '',
 				'ref_type'  => $is_folder ? '' : self::REF_CONTENT,
 				'ref_id'    => $is_folder ? '' : (string) $post->ID,
 			);

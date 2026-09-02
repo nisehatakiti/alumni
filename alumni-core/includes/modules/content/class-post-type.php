@@ -149,11 +149,19 @@ class Post_Type {
 				// 同窓会 top-level menu instead of creating a new one.
 				'show_in_menu' => \AlumniCore\Admin\Admin::MENU_SLUG,
 				'show_in_rest' => true,
-				// No 'editor' support, same reasoning as alumni_news_event:
-				// this disables both the block and classic editors, and
-				// Content_Meta_Box renders a plain, fixed set of fields in
-				// their place (see Content_Meta_Box::render()).
-				'supports'     => array( 'title' ),
+				// 'editor' is supported at the post-type level (required —
+				// WordPress decides whether the block editor is even
+				// available for a CPT before it knows which post/kind is
+				// being edited), but is then conditionally REMOVED per
+				// request for every kind except KIND_TERMS (see
+				// maybe_restrict_editor_support(), hooked on
+				// load-post.php/load-post-new.php in Module::register()).
+				// This lets 規約類 alone use WordPress's own block editor
+				// for paragraph-level formatting (太字／文字サイズ), while
+				// every other kind keeps the exact same fixed-field
+				// Content_Meta_Box UI as before (no 'editor' shown to them —
+				// same reasoning as alumni_news_event never having it).
+				'supports'     => array( 'title', 'editor' ),
 				'has_archive'  => false,
 				'rewrite'      => array(
 					'slug'       => 'contents',
@@ -161,6 +169,37 @@ class Post_Type {
 				),
 			)
 		);
+	}
+
+	/**
+	 * Removes 'editor' support for THIS REQUEST ONLY when the post being
+	 * edited (or, for a brand-new post, the kind requested via the
+	 * 「規約類」新規追加リンク's query string — see QUERY_VAR_KIND) isn't
+	 * 規約類. Must run before WordPress decides whether to show the block
+	 * editor for this screen, so it's hooked on load-post.php /
+	 * load-post-new.php (Module::register()) — both fire early enough,
+	 * before the edit screen itself is rendered.
+	 *
+	 * remove_post_type_support() only affects the in-memory registry for
+	 * the current request; it never persists, so every other kind keeps
+	 * exactly the same 「本文」テキストエリアだけの編集画面 it always had
+	 * (Content_Meta_Box) on its own next page load.
+	 */
+	public static function maybe_restrict_editor_support() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only branch decision (which editor UI to render), nothing is written; mirrors Content_Meta_Box::render()'s identical use of the same query var for the same purpose.
+		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+
+		if ( $post_id ) {
+			$is_terms = ( self::KIND_TERMS === self::get_kind( $post_id ) );
+		} else {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$requested_kind = isset( $_GET[ self::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR_KIND ] ) ) : '';
+			$is_terms       = ( self::KIND_TERMS === $requested_kind );
+		}
+
+		if ( ! $is_terms ) {
+			remove_post_type_support( self::SLUG, 'editor' );
+		}
 	}
 
 	/**
