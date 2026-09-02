@@ -97,6 +97,10 @@ class Settings {
 			// overwritten by this default.
 			'school_founded_year'        => 1950,
 			'first_graduation_year'      => '',
+			// 学校創立年・第1期卒業年とは完全に別概念（同窓会という組織の
+			// 創立年）。卒業期計算には一切使用しない — 沿革・周年計算用途
+			// のみ。未設定時は安全に空値として扱う。
+			'association_founded_year'   => '',
 			'color_feature_enabled'      => false,
 			'color_cycle'                => 1,
 			'colors'                     => array( 1 => '#cc0000' ),
@@ -238,8 +242,9 @@ class Settings {
 		$sanitized = array(
 			'association_name'     => isset( $raw['association_name'] ) ? sanitize_text_field( wp_unslash( $raw['association_name'] ) ) : $fallback['association_name'],
 			'school_name'           => isset( $raw['school_name'] ) ? sanitize_text_field( wp_unslash( $raw['school_name'] ) ) : $fallback['school_name'],
-			'school_founded_year'   => $this->sanitize_year( isset( $raw['school_founded_year'] ) ? $raw['school_founded_year'] : '' ),
-			'first_graduation_year' => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
+			'school_founded_year'      => $this->sanitize_year( isset( $raw['school_founded_year'] ) ? $raw['school_founded_year'] : '' ),
+			'first_graduation_year'    => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
+			'association_founded_year' => $this->sanitize_year( isset( $raw['association_founded_year'] ) ? $raw['association_founded_year'] : '' ),
 			'color_feature_enabled' => ! empty( $raw['color_feature_enabled'] ),
 			'color_cycle'           => isset( $raw['color_cycle'] ) ? min( self::MAX_COLOR_CYCLE, max( 1, absint( $raw['color_cycle'] ) ) ) : $fallback['color_cycle'],
 			// array_key_exists() (not isset()) so a genuinely missing key

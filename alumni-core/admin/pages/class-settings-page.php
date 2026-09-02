@@ -94,6 +94,17 @@ class Settings_Page {
 							<p class="description"><?php esc_html_e( '例：1950 と設定すると、1950年卒業が第1期になります。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_association_founded_year"><?php esc_html_e( '同窓会組織創立年（任意）', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" inputmode="numeric" id="alumni_core_association_founded_year" name="association_founded_year" class="small-text"
+								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
+								value="<?php echo esc_attr( $settings['association_founded_year'] ); ?>" />
+							<p class="description"><?php esc_html_e( '同窓会という組織そのものが発足した年です。学校創立年・第1期卒業年とは別の項目で、卒業期計算には使用されません（同窓会の沿革・周年記念などに利用します）。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
 				</table>
 
 				<h2><?php esc_html_e( '学校ブランディング', 'alumni-core' ); ?></h2>
