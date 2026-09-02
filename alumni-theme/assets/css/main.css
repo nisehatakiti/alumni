@@ -38,10 +38,17 @@
 	min-width: 0;
 }
 
+/* justify-content: flex-startにしているのは意図的 — ナビ側の箱自体は
+   ブランド領域と同じ幅(50%)を確保しているが、中の項目(ホーム/共通/
+   卒業生向け/在校生向け)は実際の文字数だとその半分よりずっと狭いため、
+   flex-end(右揃え)だとナビの中身が箱の右端(=画面のかなり右寄り)まで
+   押し込まれてしまう(実ブラウザで確認された不具合)。flex-startにする
+   ことで、ナビの中身は箱の左端 = コンテナのちょうど中央付近から始まり、
+   そこから右へ自然に並ぶ(右端まで詰めない)。 */
 .main-navigation {
 	flex: 1 1 0;
 	display: flex;
-	justify-content: flex-end;
+	justify-content: flex-start;
 }
 
 /* タブレット幅以下では、半分ずつに分けるとブランド領域・ナビゲーション
@@ -107,9 +114,11 @@
 	list-style: none;
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 1.5em;
 	margin: 0;
 	padding: 0;
+	font-size: 1.1rem;
 }
 
 .main-navigation a {
@@ -179,7 +188,7 @@
 .alumni-nav-menu > .alumni-nav-item > a {
 	display: inline-flex;
 	align-items: center;
-	padding: 0.4em 0.3em;
+	padding: 0.6em 0.7em;
 	line-height: 1.2;
 }
 
@@ -188,7 +197,33 @@
 .alumni-nav-drilldown-toggle,
 .alumni-nav-drilldown-caret {
 	display: inline-block;
-	padding: 0.2em 0.3em;
+	padding: 0.4em 0.5em;
+}
+
+/* 現在表示中のページ、およびその祖先(現在ページが配下にある
+   フォルダ/コンテンツ項目)を、通常状態と視覚的にはっきり区別する
+   （反転表示：背景色+白文字）。alumni_theme_render_menu_items_with_state()
+   がli要素に付与する.alumni-nav-item-current／
+   .alumni-nav-item-current-ancestorが起点 — リンク・フォルダの
+   開閉トグル・子を持たない空フォルダのspan、いずれの項目種別でも
+   同じ見た目になるようまとめて指定する。 */
+.alumni-nav-item-current > a,
+.alumni-nav-item-current > .alumni-nav-drilldown-toggle,
+.alumni-nav-item-current > .alumni-nav-empty-folder,
+.alumni-nav-item-current-ancestor > a,
+.alumni-nav-item-current-ancestor > .alumni-nav-drilldown-toggle,
+.alumni-nav-item-current-ancestor > .alumni-nav-empty-folder {
+	background: #2c5aa0;
+	color: #fff;
+	border-radius: 0.3em;
+}
+
+.alumni-nav-item-current > a:hover,
+.alumni-nav-item-current > .alumni-nav-drilldown-toggle:hover,
+.alumni-nav-item-current-ancestor > a:hover,
+.alumni-nav-item-current-ancestor > .alumni-nav-drilldown-toggle:hover {
+	background: #244a85;
+	color: #fff;
 }
 
 .main-navigation .alumni-nav-submenu {
@@ -704,11 +739,14 @@
    画面ではほぼ16:9のまま、広いデスクトップ画面ではより横長のバナー状に
    なる。object-fit: coverなので画像が歪む(引き伸ばされる)ことはなく、
    クランプされた分だけ周囲がクロップされるだけ。 */
+/* 高さはaspect-ratio(16:9)のみで決める — max-heightで人為的に
+   縮めない。写真が大きく見える場合は.alumni-containerの横幅
+   (max-width:1180px、上部で定義)側で調整するのが正しい対処であり、
+   写真自体の縦横比を歪める/切り詰める対処はしない。 */
 .school-photos-track {
 	position: relative;
 	width: 100%;
 	aspect-ratio: 16 / 9;
-	max-height: min(360px, 45vh);
 	overflow: hidden;
 	border-radius: 4px;
 	background: #eee;

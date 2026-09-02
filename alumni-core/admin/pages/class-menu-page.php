@@ -10,6 +10,7 @@ namespace AlumniCore\Admin\Pages;
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Menu_Structure;
 use AlumniCore\Includes\Officer_Lists;
+use AlumniCore\Includes\Person_Greeting_Groups;
 use AlumniCore\Includes\Homepage_Sections;
 use AlumniCore\Includes\Content_Hierarchy;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
@@ -46,6 +47,7 @@ class Menu_Page {
 	const NONCE_ACTION_MOVE           = 'alumni_core_move_menu_item';
 	const NONCE_ACTION_INDENT         = 'alumni_core_indent_menu_item';
 	const NONCE_ACTION_OUTDENT        = 'alumni_core_outdent_menu_item';
+	const NONCE_ACTION_APPLY_PRESET   = 'alumni_core_apply_standard_menu_preset';
 
 	/**
 	 * Renders the screen: the item edit screen when ?item= is present and
@@ -83,7 +85,31 @@ class Menu_Page {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['preset_applied'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag. ?>
+				<div class="notice notice-success is-dismissible">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: number of newly created items, 2: number of items that already existed and were left untouched */
+							esc_html__( '標準メニューを設定しました（新規作成 %1$d件、既存のため変更なし %2$d件）。', 'alumni-core' ),
+							(int) ( $_GET['created'] ?? 0 ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag, cast to int.
+							(int) ( $_GET['skipped'] ?? 0 ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<p><?php esc_html_e( 'サイトのメニュー・階層構造をここで設計します。まず「対象者」の下にフォルダやコンテンツへのリンクを配置し、必要に応じてフォルダの中にさらにフォルダやコンテンツを重ねてください。同じコンテンツを複数の場所に配置することもできます。', 'alumni-core' ); ?></p>
+
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-menu-apply-preset-form">
+				<input type="hidden" name="action" value="alumni_core_apply_standard_menu_preset" />
+				<?php wp_nonce_field( self::NONCE_ACTION_APPLY_PRESET ); ?>
+				<?php submit_button( __( '標準メニューを設定', 'alumni-core' ), 'secondary', 'submit', false ); ?>
+				<p class="description">
+					<?php esc_html_e( '同窓会サイトの標準的なメニュー構造（役員・理事紹介、規約類一覧、卒業期早見表、学校写真など）を追加します。既存のメニュー項目は一切変更・削除されず、まだ無い項目だけが追加されます（重複作成もされません）。何度クリックしても安全です。', 'alumni-core' ); ?>
+				</p>
+			</form>
 
 			<div class="alumni-menu-tree">
 				<?php
@@ -316,6 +342,11 @@ class Menu_Page {
 			return $list ? ( $list['title'] ? $list['title'] : $list['name'] ) : __( '（見つかりません）', 'alumni-core' );
 		}
 
+		if ( Menu_Structure::REF_PERSON_GREETING_GROUP === $item['ref_type'] ) {
+			$group = Person_Greeting_Groups::instance()->get_group( $item['ref_id'] );
+			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
+		}
+
 		return __( '（未設定）', 'alumni-core' );
 	}
 
@@ -402,6 +433,15 @@ class Menu_Page {
 					<?php endforeach; ?>
 				</optgroup>
 			<?php endif; ?>
+			<?php $greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
+			<?php if ( ! empty( $greeting_groups ) ) : ?>
+				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
+					<?php foreach ( $greeting_groups as $group ) : ?>
+						<?php $value = 'person_greeting_group:' . $group['group_id']; ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+					<?php endforeach; ?>
+				</optgroup>
+			<?php endif; ?>
 			<?php
 			$audience_labels = array(
 				Content_Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
@@ -455,7 +495,7 @@ class Menu_Page {
 	 * @return array{0:string,1:string}
 	 */
 	private static function parse_reference_value( $raw_value ) {
-		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_CONTENT ) as $ref_type ) {
+		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_PERSON_GREETING_GROUP, Menu_Structure::REF_CONTENT ) as $ref_type ) {
 			$prefix = $ref_type . ':';
 			if ( 0 === strpos( $raw_value, $prefix ) ) {
 				return array( $ref_type, substr( $raw_value, strlen( $prefix ) ) );
@@ -644,6 +684,34 @@ class Menu_Page {
 		}
 
 		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * Handles 「標準メニューを設定」
+	 * (admin_post_alumni_core_apply_standard_menu_preset). 完全に非破壊・
+	 * 加算のみ — Menu_Structure::apply_standard_preset()参照。
+	 */
+	public function handle_apply_standard_preset() {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+
+		check_admin_referer( self::NONCE_ACTION_APPLY_PRESET );
+
+		$result = Menu_Structure::instance()->apply_standard_preset();
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'           => self::SLUG,
+					'preset_applied' => 'true',
+					'created'        => (int) $result['created'],
+					'skipped'        => (int) $result['skipped'],
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 }

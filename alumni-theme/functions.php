@@ -811,6 +811,24 @@ function alumni_theme_get_menu_tree( $audience = null ) {
 }
 
 /**
+ * 現在表示中のURLを、ドメイン・クエリ文字列の差異に影響されにくい
+ * パス単位で返す（末尾スラッシュは正規化）。alumni_theme_render_menu_items()
+ * が、各メニュー項目のURLと比較して「現在ページに対応する項目」を
+ * 判定するために使う。
+ *
+ * @return string
+ */
+function alumni_theme_get_current_url_path() {
+	if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+		return '';
+	}
+
+	$path = wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+
+	return $path ? untrailingslashit( $path ) : '';
+}
+
+/**
  * alumni_theme_get_menu_tree() が返すノード配列を、階層に沿った
  * <li>...</li> のマークアップへ再帰的に変換する（呼び出し側で<ul>に
  * まとめる）— alumni_theme_render_content_tree_items() と同じマークアップ
@@ -820,18 +838,59 @@ function alumni_theme_get_menu_tree( $audience = null ) {
  * フォルダ自身の公開ページを別途用意する必要がない
  * （「フォルダは必ずしもコンテンツではない」）。
  *
+ * 現在表示中のページに対応する項目には.alumni-nav-item-currentを、
+ * その祖先（現在ページが配下にあるフォルダ／コンテンツ項目）には
+ * .alumni-nav-item-current-ancestorを付与する — main.cssがどちらも
+ * 通常状態と視覚的に区別する（反転表示）ためのフック。
+ *
  * @param array[] $nodes alumni_theme_get_menu_tree()と同じ形。
  * @return string
  */
 function alumni_theme_render_menu_items( array $nodes ) {
-	$html = '';
+	list( $html ) = alumni_theme_render_menu_items_with_state( $nodes, alumni_theme_get_current_url_path() );
+
+	return $html;
+}
+
+/**
+ * alumni_theme_render_menu_items()の実装本体。$current_pathとの一致状態を
+ * 親ノードへ伝播できるよう、htmlと「この階層に現在ページ(または
+ * その祖先)が含まれるか」のboolを両方返す。
+ *
+ * @param array[] $nodes
+ * @param string  $current_path alumni_theme_get_current_url_path()の値。
+ * @return array{0:string,1:bool}
+ */
+function alumni_theme_render_menu_items_with_state( array $nodes, $current_path ) {
+	$html        = '';
+	$has_current = false;
 
 	foreach ( $nodes as $node ) {
-		$children_items = ! empty( $node['children'] ) ? alumni_theme_render_menu_items( $node['children'] ) : '';
-		$is_folder      = ( 'folder' === $node['type'] );
-		$has_children    = (bool) $children_items;
+		list( $children_items, $child_has_current ) = ! empty( $node['children'] )
+			? alumni_theme_render_menu_items_with_state( $node['children'], $current_path )
+			: array( '', false );
 
-		$html .= '<li' . ( $has_children ? ' class="alumni-nav-item-has-children"' : '' ) . '>';
+		$is_folder    = ( 'folder' === $node['type'] );
+		$has_children = (bool) $children_items;
+
+		$node_url_path = ( '' !== $current_path && ! empty( $node['url'] ) ) ? untrailingslashit( (string) wp_parse_url( $node['url'], PHP_URL_PATH ) ) : '';
+		$is_current    = ( '' !== $node_url_path && $node_url_path === $current_path );
+
+		if ( $is_current || $child_has_current ) {
+			$has_current = true;
+		}
+
+		$li_classes = array();
+		if ( $has_children ) {
+			$li_classes[] = 'alumni-nav-item-has-children';
+		}
+		if ( $is_current ) {
+			$li_classes[] = 'alumni-nav-item-current';
+		} elseif ( $child_has_current ) {
+			$li_classes[] = 'alumni-nav-item-current-ancestor';
+		}
+
+		$html .= '<li' . ( $li_classes ? ' class="' . esc_attr( implode( ' ', $li_classes ) ) . '"' : '' ) . '>';
 
 		if ( $is_folder ) {
 			// フォルダは自分自身の公開ページを持たない。子がある場合は
@@ -847,7 +906,7 @@ function alumni_theme_render_menu_items( array $nodes ) {
 			// コンテンツへのリンク項目に子がある場合（同一コンテンツの
 			// 複数配置等で稀に起こり得る構成）でも、リンク自体は常に
 			// 参照先へ遷移する — 開閉トグルは別に用意する。
-			$html .= '<a href="' . esc_url( $node['url'] ) . '">' . esc_html( $node['label'] ) . '</a>';
+			$html .= '<a href="' . esc_url( $node['url'] ) . '"' . ( $is_current ? ' aria-current="page"' : '' ) . '>' . esc_html( $node['label'] ) . '</a>';
 			if ( $has_children ) {
 				$html .= '<button type="button" class="alumni-nav-drilldown-toggle alumni-nav-drilldown-caret" aria-haspopup="true" aria-expanded="false" aria-label="' . esc_attr__( 'サブメニューを開く', 'alumni-theme' ) . '">▾</button>';
 			}
@@ -860,7 +919,7 @@ function alumni_theme_render_menu_items( array $nodes ) {
 		$html .= '</li>';
 	}
 
-	return $html;
+	return array( $html, $has_current );
 }
 
 /**

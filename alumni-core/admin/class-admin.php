@@ -160,6 +160,7 @@ class Admin {
 		add_action( 'admin_post_alumni_core_move_menu_item', array( $this->menu_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_indent_menu_item', array( $this->menu_page, 'handle_indent' ) );
 		add_action( 'admin_post_alumni_core_outdent_menu_item', array( $this->menu_page, 'handle_outdent' ) );
+		add_action( 'admin_post_alumni_core_apply_standard_menu_preset', array( $this->menu_page, 'handle_apply_standard_preset' ) );
 		add_action( 'admin_post_alumni_core_create_org_chart_node', array( $this->org_chart_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_update_org_chart_node', array( $this->org_chart_page, 'handle_update' ) );
 		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
@@ -267,7 +268,7 @@ class Admin {
 		// 規約類の新規作成も他の2つと同じ「入口」パターンの専用クイック
 		// リンクを持つ — これがないと、WordPressが自動追加する汎用の
 		// 「コンテンツ > 新規追加」（種別クエリ文字列なし）から規約類を
-		// 作ろうとした際、Content_Post_Type::maybe_restrict_editor_support()
+		// 作ろうとした際、Content_Post_Type::maybe_use_block_editor()
 		// が種別を判別できずブロックエディターを無効化したままにしてしまい
 		// （本文が入力できない不具合の根本原因だった）、後から「規約類」を
 		// 選び直す手段（種別ラジオボタン）ももう存在しないため、規約類だけ
