@@ -29,6 +29,10 @@ get_header();
 	</section>
 
 	<?php if ( alumni_theme_core_active() ) : ?>
+		<?php get_template_part( 'template-parts/alumni-logo' ); ?>
+	<?php endif; ?>
+
+	<?php if ( alumni_theme_core_active() ) : ?>
 		<?php get_template_part( 'template-parts/school-photos' ); ?>
 	<?php endif; ?>
 
@@ -36,12 +40,13 @@ get_header();
 		<section class="front-news-events">
 			<div class="front-news-events-header">
 				<h2><?php esc_html_e( 'お知らせ・イベント', 'alumni-theme' ); ?></h2>
-				<a class="front-news-events-more" href="<?php echo esc_url( get_post_type_archive_link( alumni_core_news_events_post_type() ) ); ?>">
-					<?php esc_html_e( 'すべて見る', 'alumni-theme' ); ?>
-				</a>
 			</div>
 
 			<?php
+			// alumni_core_get_news_events_query()（wp-content 側）は
+			// orderby => 'date', order => 'DESC' を既定にしており、ニュース・
+			// イベントを問わず「投稿日時」順で並ぶ — イベントの開催日順には
+			// ならない。
 			$alumni_front_news_events = alumni_theme_get_news_events( array( 'posts_per_page' => 5 ) );
 			?>
 			<?php if ( $alumni_front_news_events && $alumni_front_news_events->have_posts() ) : ?>
@@ -57,6 +62,15 @@ get_header();
 			<?php else : ?>
 				<p><?php esc_html_e( '現在、お知らせ・イベントはありません。', 'alumni-theme' ); ?></p>
 			<?php endif; ?>
+
+			<div class="front-news-events-links">
+				<a class="front-news-events-link" href="<?php echo esc_url( alumni_theme_get_news_listing_url() ); ?>">
+					<?php esc_html_e( 'ニュース一覧を見る', 'alumni-theme' ); ?>
+				</a>
+				<a class="front-news-events-link" href="<?php echo esc_url( alumni_theme_get_events_listing_url() ); ?>">
+					<?php esc_html_e( 'イベント一覧を見る', 'alumni-theme' ); ?>
+				</a>
+			</div>
 		</section>
 	<?php endif; ?>
 

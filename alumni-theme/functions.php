@@ -68,6 +68,17 @@ function alumni_theme_enqueue_assets() {
 		ALUMNI_THEME_VERSION,
 		true
 	);
+
+	// Passes the admin-configurable 写真の切替時間 to the slideshow script
+	// via WordPress's standard localization mechanism, rather than hardcoding
+	// it in JS or embedding it directly into a template.
+	wp_localize_script(
+		'alumni-theme-school-photos',
+		'alumniSchoolPhotos',
+		array(
+			'intervalMs' => alumni_theme_get_school_photo_slideshow_interval() * 1000,
+		)
+	);
 }
 add_action( 'wp_enqueue_scripts', 'alumni_theme_enqueue_assets' );
 
@@ -145,9 +156,16 @@ function alumni_theme_get_school_emblem_html() {
  * logo, distinct from the school emblem), or '' when Core is inactive or
  * none is set.
  *
+ * 学校情報（校章・同窓会名・学校名、ヘッダーで表示）とはあえて役割を分け、
+ * ロゴの見た目（サイズ・CSSクラス）は呼び出し側が用途ごとに指定する —
+ * ヘッダー用の小さな表示と、トップページの大きな専用セクション
+ * （template-parts/alumni-logo.php）とで、同じ画像を別の見た目で使い回す。
+ *
+ * @param string|int[] $size  WordPress image size name, or array( width, height ).
+ * @param string       $class CSS class for the <img> element.
  * @return string Safe HTML from wp_get_attachment_image(), or ''.
  */
-function alumni_theme_get_alumni_logo_html() {
+function alumni_theme_get_alumni_logo_html( $size = array( 120, 60 ), $class = 'alumni-logo' ) {
 	if ( ! alumni_theme_core_active() ) {
 		return '';
 	}
@@ -160,9 +178,9 @@ function alumni_theme_get_alumni_logo_html() {
 
 	return (string) wp_get_attachment_image(
 		$id,
-		array( 120, 60 ),
+		$size,
 		false,
-		array( 'class' => 'alumni-logo' )
+		array( 'class' => $class )
 	);
 }
 
@@ -271,4 +289,58 @@ function alumni_theme_get_news_event_date_display( $post = null ) {
 	$date = alumni_core_get_news_event_display_date( $post );
 
 	return $date ? mysql2date( get_option( 'date_format' ), $date ) : '';
+}
+
+/**
+ * 学校写真の自動切替（スライドショー）の切替間隔（秒）。固定表示では
+ * 使われない値だが、Core無効時のフォールバックとしても既定の5秒を返す。
+ *
+ * @return int 1〜60 の整数。
+ */
+function alumni_theme_get_school_photo_slideshow_interval() {
+	if ( ! alumni_theme_core_active() ) {
+		return 5;
+	}
+
+	return alumni_core_get_school_photo_slideshow_interval();
+}
+
+/**
+ * 現在の一覧ページの種別（'news'／'event'）。/news-events/ の統合一覧や
+ * それ以外のページでは '' を返す。
+ *
+ * @return string
+ */
+function alumni_theme_get_news_events_listing_type() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_news_events_listing_type();
+}
+
+/**
+ * ニュース一覧（/news/）のURL、またはCore無効時は ''。
+ *
+ * @return string
+ */
+function alumni_theme_get_news_listing_url() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_news_listing_url();
+}
+
+/**
+ * イベント一覧（/events/）のURL、またはCore無効時は ''。
+ *
+ * @return string
+ */
+function alumni_theme_get_events_listing_url() {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_events_listing_url();
 }

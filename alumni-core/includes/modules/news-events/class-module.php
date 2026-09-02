@@ -22,8 +22,10 @@ class Module {
 	/**
 	 * Bumped whenever the post type's rewrite rules change, to trigger a
 	 * one-time flush on sites updated in place (no deactivate/reactivate).
+	 * Bumped to '2' for the addition of the /news/ and /events/ listing
+	 * rewrite rules (Listing_Rewrites).
 	 */
-	const REWRITE_VERSION = '1';
+	const REWRITE_VERSION = '2';
 
 	/**
 	 * Option name storing which rewrite version has already been flushed.
@@ -36,6 +38,7 @@ class Module {
 	 */
 	public static function register() {
 		add_action( 'init', array( Post_Type::class, 'register' ) );
+		Listing_Rewrites::register();
 
 		if ( ! is_admin() ) {
 			return;

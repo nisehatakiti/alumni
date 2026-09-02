@@ -59,6 +59,42 @@ if ( ! function_exists( 'alumni_core_get_news_event_display_date' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_news_events_listing_type' ) ) {
+	/**
+	 * The current request's listing type: 'news' on /news/, 'event' on
+	 * /events/, or '' on the combined /news-events/ archive (or anywhere
+	 * else) — so themes can vary the archive heading without touching
+	 * rewrite/query internals directly.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_news_events_listing_type() {
+		return \AlumniCore\Includes\Modules\NewsEvents\Listing_Rewrites::get_listing_type();
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_news_listing_url' ) ) {
+	/**
+	 * URL of the ニュース-only listing (/news/).
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_news_listing_url() {
+		return home_url( '/news/' );
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_events_listing_url' ) ) {
+	/**
+	 * URL of the イベント-only listing (/events/).
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_events_listing_url() {
+		return home_url( '/events/' );
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_news_events_query' ) ) {
 	/**
 	 * Runs a WP_Query for published ニュース／イベント, newest first by

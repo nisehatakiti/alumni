@@ -24,15 +24,18 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/class-settings.php';
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-rewrites.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-module.php';
 
 		Installer::install();
 		Settings::instance()->set_defaults();
 
 		// register_activation_hook() fires before 'init' on this request,
-		// so the post type must be registered explicitly here — otherwise
-		// flush_rewrite_rules() below would flush without its rules.
+		// so the post type and rewrite rules must be registered explicitly
+		// here — otherwise flush_rewrite_rules() below would flush without
+		// them.
 		\AlumniCore\Includes\Modules\NewsEvents\Post_Type::register();
+		\AlumniCore\Includes\Modules\NewsEvents\Listing_Rewrites::register_rewrite_rules();
 
 		flush_rewrite_rules();
 
