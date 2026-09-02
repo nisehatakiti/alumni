@@ -16,14 +16,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Renders and saves the alumni_content post type's fixed input form:
- * コンテンツ種別 (free/person_greeting), 本文 (plain textarea, saved to
- * post_content), and — only when the kind is 人物挨拶 — 氏名／ふりがな／
- * 肩書／卒業期／顔写真.
+ * コンテンツ種別 (free/person_greeting/terms/folder), 本文 (plain textarea,
+ * saved to post_content — for every kind except 規約類), and —
+ * kind-specific — 氏名／ふりがな／肩書／卒業期／顔写真 (人物挨拶) or
+ * 公開タイトル／施行日／改定履歴／文字サイズ／表示順 (規約類).
  *
- * Structurally identical to NewsEvents\Meta_Box: no 'editor' support on
- * this CPT (see Post_Type::register()), so this meta box takes the block
- * editor's place, and post_content is written via wp_insert_post_data
- * (not save_post) for the same reason documented there.
+ * 'editor' support (see Post_Type::register()) is conditionally removed for
+ * every kind except 規約類 (Post_Type::maybe_restrict_editor_support()), so
+ * this meta box's 本文 textarea only renders for those other kinds and
+ * takes the block editor's place there, with post_content written via
+ * wp_insert_post_data (not save_post), same reasoning as
+ * NewsEvents\Meta_Box. For 規約類, the block editor itself owns
+ * post_content — this meta box neither renders nor writes 本文 for that
+ * kind (see render()/inject_content()), so a 規約類 post can use
+ * WordPress's own paragraph-level formatting (太字／文字サイズ) instead of
+ * a single plugin-wide font size.
  */
 class Content_Meta_Box {
 
@@ -224,13 +231,13 @@ class Content_Meta_Box {
 					</p>
 				</p>
 				<p>
-					<label for="alumni_terms_font_size"><strong><?php esc_html_e( '本文の文字サイズ', 'alumni-core' ); ?></strong></label><br />
+					<label for="alumni_terms_font_size"><strong><?php esc_html_e( '本文全体の既定の文字サイズ', 'alumni-core' ); ?></strong></label><br />
 					<select id="alumni_terms_font_size" name="alumni_terms_font_size">
 						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_SMALL ); ?>" <?php selected( Post_Type::TERMS_FONT_SMALL, $font_size ); ?>><?php esc_html_e( '小', 'alumni-core' ); ?></option>
 						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_MEDIUM ); ?>" <?php selected( Post_Type::TERMS_FONT_MEDIUM, $font_size ); ?>><?php esc_html_e( '中', 'alumni-core' ); ?></option>
 						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_LARGE ); ?>" <?php selected( Post_Type::TERMS_FONT_LARGE, $font_size ); ?>><?php esc_html_e( '大', 'alumni-core' ); ?></option>
 					</select>
-					<p class="description"><?php esc_html_e( '公開ページでの本文の文字サイズです。実際のサイズはテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
+					<p class="description"><?php esc_html_e( '本文（下のブロックエディター）の段落ごとの文字サイズ・太字は個別に指定できます。ここでの指定は、段落ごとに個別指定していない部分の既定値、および実際のサイズはテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
 				</p>
 				<p>
 					<label for="alumni_terms_menu_order"><strong><?php esc_html_e( '表示順（任意）', 'alumni-core' ); ?></strong></label><br />
@@ -239,18 +246,24 @@ class Content_Meta_Box {
 				</p>
 			</div>
 
-			<p>
-				<label for="alumni_content_body">
-					<strong>
-						<?php
-						echo Post_Type::KIND_FOLDER === $kind
-							? esc_html__( '本文（任意）', 'alumni-core' )
-							: esc_html__( '本文（必須）', 'alumni-core' );
-						?>
-					</strong>
-				</label><br />
-				<textarea id="alumni_content_body" name="alumni_content_body" rows="12" class="large-text"><?php echo esc_textarea( $post->post_content ); ?></textarea>
-			</p>
+			<?php if ( Post_Type::KIND_TERMS === $kind ) : ?>
+				<p class="description alumni-terms-editor-note">
+					<?php esc_html_e( '規約類の本文は、この上の「タイトルを追加」欄の下にあるブロックエディターで編集します。段落ごとに太字や文字サイズ（小・標準・大・特大）を指定できます。', 'alumni-core' ); ?>
+				</p>
+			<?php else : ?>
+				<p>
+					<label for="alumni_content_body">
+						<strong>
+							<?php
+							echo Post_Type::KIND_FOLDER === $kind
+								? esc_html__( '本文（任意）', 'alumni-core' )
+								: esc_html__( '本文（必須）', 'alumni-core' );
+							?>
+						</strong>
+					</label><br />
+					<textarea id="alumni_content_body" name="alumni_content_body" rows="12" class="large-text"><?php echo esc_textarea( $post->post_content ); ?></textarea>
+				</p>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -509,9 +522,10 @@ class Content_Meta_Box {
 	}
 
 	/**
-	 * Writes the 本文 textarea into post_content, and (規約類のみ) 表示順
-	 * into menu_order. Hooked to wp_insert_post_data at a lower priority
-	 * number than Content_Required_Fields::enforce(), same reasoning as
+	 * Writes the 本文 textarea into post_content (every kind except 規約類
+	 * — see class docblock), and (規約類のみ) 表示順 into menu_order.
+	 * Hooked to wp_insert_post_data at a lower priority number than
+	 * Content_Required_Fields::enforce(), same reasoning as
 	 * NewsEvents\Meta_Box::inject_content(). menu_order is a native post
 	 * table column, not postmeta, so it must be injected here (via
 	 * wp_insert_post_data) rather than via update_post_meta() in save() —
@@ -531,11 +545,19 @@ class Content_Meta_Box {
 			return $data;
 		}
 
-		$content = isset( $_POST['alumni_content_body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
-
-		$data['post_content'] = wp_slash( $content );
-
 		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
+
+		// 規約類は本文をWordPress標準のブロックエディターで編集する
+		// (Post_Type::maybe_restrict_editor_support()参照)ため、この
+		// リクエストにはalumni_content_bodyテキストエリア自体が存在しない
+		// （render()が規約類の場合は描画しない）。$dataのpost_contentには
+		// すでにWordPress自身がブロックエディターの送信値を正しく入れて
+		// いるので、ここで空文字などに上書きしない。
+		if ( Post_Type::KIND_TERMS !== $kind ) {
+			$content = isset( $_POST['alumni_content_body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
+
+			$data['post_content'] = wp_slash( $content );
+		}
 
 		if ( Post_Type::KIND_TERMS === $kind && isset( $_POST['alumni_terms_menu_order'] ) ) {
 			$data['menu_order'] = (int) wp_unslash( $_POST['alumni_terms_menu_order'] );

@@ -32,8 +32,10 @@ class Graduation_Lookup_Page {
 	const SLUG = 'alumni-core-graduation-lookup';
 
 	/**
-	 * How many terms the table shows per page when the visitor hasn't
-	 * requested a specific range.
+	 * The default view already shows every term from 1 through the term
+	 * the current year graduates (see Term_Calculator::default_to_term())
+	 * — this constant is only the step size for the 前へ／次へ manual
+	 * pagination links, for browsing past that default range.
 	 */
 	const DEFAULT_ROWS = 30;
 
@@ -49,7 +51,12 @@ class Graduation_Lookup_Page {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only lookup, nothing is written.
 		$from_term = isset( $_GET['from_term'] ) ? max( 1, absint( $_GET['from_term'] ) ) : 1;
-		$to_term   = $from_term + self::DEFAULT_ROWS - 1;
+		// 固定の期数(旧30期)で早見表を打ち切らない — 既定では第1期から
+		// 「現在の年に卒業する期」まで一覧表示する
+		// (Term_Calculator::default_to_term()、計算式そのものは
+		// year_to_term()を再利用し二重化しない)。MAX_LOOKUP_ROWSによる
+		// 上限は安全策として引き続き有効。
+		$to_term = Term_Calculator::default_to_term( $first_graduation_year, $from_term, (int) current_time( 'Y' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['to_term'] ) && absint( $_GET['to_term'] ) >= $from_term ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended

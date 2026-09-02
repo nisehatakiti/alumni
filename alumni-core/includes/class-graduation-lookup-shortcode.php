@@ -49,8 +49,10 @@ class Graduation_Lookup_Shortcode {
 	const QUERY_VAR_BIRTH_DAY   = 'alumni_lookup_birth_day';
 
 	/**
-	 * How many rows the 早見表 table shows per page when no range is
-	 * requested via the query string.
+	 * The default view already shows every term from 1 through the term
+	 * the current year graduates (see Term_Calculator::default_to_term())
+	 * — this constant is only the step size for the 前へ／次へ manual
+	 * pagination links, for browsing past that default range.
 	 */
 	const DEFAULT_ROWS = 30;
 
@@ -156,7 +158,12 @@ class Graduation_Lookup_Shortcode {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination, nothing is written.
 		$from_term = isset( $_GET['from_term'] ) ? max( 1, absint( $_GET['from_term'] ) ) : 1;
-		$to_term   = $from_term + self::DEFAULT_ROWS - 1;
+		// 固定の期数(旧30期)で早見表を打ち切らない — 既定では第1期から
+		// 「現在の年に卒業する期」まで一覧表示する
+		// （Term_Calculator::default_to_term()、計算式そのものは
+		// year_to_term()を再利用し二重化しない）。MAX_LOOKUP_ROWSによる
+		// 上限は安全策として引き続き有効。
+		$to_term = Term_Calculator::default_to_term( $first_graduation_year, $from_term, (int) current_time( 'Y' ) );
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['to_term'] ) && absint( $_GET['to_term'] ) >= $from_term ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -165,17 +172,39 @@ class Graduation_Lookup_Shortcode {
 
 		$current_url = home_url( add_query_arg( null, null ) );
 
-		// 検索フォームのaction先は、現在のURL（$current_url、既存の検索
-		// パラメータを含み得る）ではなく、常にこのページ自体のクリーンな
-		// URL（クエリ文字列なし）を使う。GET method="get"のフォームは、
-		// 送信時にブラウザがaction属性のクエリ文字列を丸ごとフォーム自身の
-		// 値で置き換える仕様のため機能上は同じ結果になるはずだが、
-		// action自体に累積したクエリ文字列（前回検索やページネーションの
-		// from_term等）を含めておくのは事故のもと — 例えば一部の環境・
-		// キャッシュ設定・古いブラウザでの差異を避けるため、常にクリーンな
-		// URLを使うのが最も安全（早見表の「前へ／次へ」ページネーション
-		// リンクは、引き続き$current_urlを使って検索条件を維持する）。
-		$search_form_action_url = self::get_url();
+		// 検索フォームのaction先は、常にこのページ自体のURL
+		// （self::get_url()）を指す。ここが実環境で「検索しても結果が
+		// 出ない」不具合の実際の原因だった —
+		// method="get"のフォームは送信時、action属性に含まれる既存の
+		// クエリ文字列をブラウザが丸ごと捨て、フォーム自身の入力値だけの
+		// クエリ文字列に置き換える（HTML仕様上の標準動作）。パーマリンク
+		// 設定が「基本」（Plain、多くの環境の初期値）のサイトでは
+		// get_url()が返すURLそのものが `?page_id=123` のようにクエリ
+		// 文字列でページを識別しているため、送信時にaction属性の中身が
+		// フォーム自身の値（alumni_lookup_birth_year等）に丸ごと置換され、
+		// `page_id`が失われてトップページへ飛んでしまい、ショートコードが
+		// 実行されず検索結果が一切表示されなかった（パーマリンク設定が
+		// 「投稿名」等でページURLがパスだけで完結する環境では発生しない
+		// ため、環境によって再現有無が分かれていたと考えられる）。
+		//
+		// 修正: 管理画面側（Graduation_Lookup_Page）が元々使っている
+		// パターンと同じく、action属性はクエリ文字列を含まない「土台」の
+		// URLだけにし、ページを識別するために必要なクエリパラメータ
+		// （`page_id`等。パーマリンクが「投稿名」等の場合は無し）は
+		// <input type="hidden">としてフォーム自身に含める。hiddenフィールド
+		// はGETフォーム送信時にフォーム自身の値として一緒に送信されるため、
+		// パーマリンク設定に関わらず必ずこのページへ戻ってくる。
+		$alumni_lookup_page_url        = self::get_url();
+		$alumni_lookup_action_parsed   = wp_parse_url( $alumni_lookup_page_url );
+		$alumni_lookup_action_base     = ( isset( $alumni_lookup_action_parsed['scheme'], $alumni_lookup_action_parsed['host'] ) )
+			? $alumni_lookup_action_parsed['scheme'] . '://' . $alumni_lookup_action_parsed['host'] . ( isset( $alumni_lookup_action_parsed['port'] ) ? ':' . $alumni_lookup_action_parsed['port'] : '' )
+			: '';
+		$alumni_lookup_action_base    .= isset( $alumni_lookup_action_parsed['path'] ) ? $alumni_lookup_action_parsed['path'] : '/';
+		$alumni_lookup_action_hidden_args = array();
+		if ( ! empty( $alumni_lookup_action_parsed['query'] ) ) {
+			wp_parse_str( $alumni_lookup_action_parsed['query'], $alumni_lookup_action_hidden_args );
+		}
+		$search_form_action_url = $alumni_lookup_action_base;
 
 		ob_start();
 		?>
@@ -189,6 +218,9 @@ class Graduation_Lookup_Shortcode {
 				<section class="alumni-graduation-lookup-section">
 					<h2><?php esc_html_e( '卒業期を調べる', 'alumni-core' ); ?></h2>
 					<form method="get" action="<?php echo esc_url( $search_form_action_url ); ?>" class="alumni-graduation-lookup-form alumni-graduation-lookup-date-form">
+						<?php foreach ( $alumni_lookup_action_hidden_args as $alumni_lookup_hidden_key => $alumni_lookup_hidden_value ) : ?>
+							<input type="hidden" name="<?php echo esc_attr( $alumni_lookup_hidden_key ); ?>" value="<?php echo esc_attr( $alumni_lookup_hidden_value ); ?>" />
+						<?php endforeach; ?>
 						<label for="alumni-lookup-birth-year"><?php esc_html_e( '生年月日', 'alumni-core' ); ?></label>
 						<span class="alumni-graduation-lookup-date-fields">
 							<input type="number" inputmode="numeric" id="alumni-lookup-birth-year" name="<?php echo esc_attr( self::QUERY_VAR_BIRTH_YEAR ); ?>" min="1000" max="9999" placeholder="<?php echo esc_attr__( '年', 'alumni-core' ); ?>" value="<?php echo esc_attr( $birth_year_input ); ?>" /><?php esc_html_e( '年', 'alumni-core' ); ?>

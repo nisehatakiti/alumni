@@ -42,6 +42,14 @@ class Module {
 
 		add_action( 'admin_init', array( __CLASS__, 'maybe_flush_rewrite_rules' ) );
 
+		// 規約類のみWordPress標準のブロックエディターで本文を編集できるように
+		// する(段落単位の太字・文字サイズ)ため、他のkindでは'editor'
+		// サポートをこのリクエスト限りで取り除く — 編集画面が実際に描画
+		// される前に判定する必要があるので、load-post.php/load-post-new.php
+		// という早い段階のフックを使う(Post_Type::maybe_restrict_editor_support()参照)。
+		add_action( 'load-post.php', array( Post_Type::class, 'maybe_restrict_editor_support' ) );
+		add_action( 'load-post-new.php', array( Post_Type::class, 'maybe_restrict_editor_support' ) );
+
 		$meta_box = new Content_Meta_Box();
 		add_action( 'add_meta_boxes', array( $meta_box, 'register' ) );
 		add_action( 'admin_enqueue_scripts', array( $meta_box, 'enqueue_assets' ) );

@@ -304,6 +304,38 @@ class Term_Calculator {
 	}
 
 	/**
+	 * The default last term (期) a 卒業期早見表 should show when the caller
+	 * has no explicit to_term override: 第1期から「現在の年に卒業する期」
+	 * まで — a full listing, not a fixed-size page (no hardcoded term
+	 * count, e.g. no "30期まで"; this class stays free of WordPress calls
+	 * per its docblock, so the caller passes in $current_year, typically
+	 * (int) current_time( 'Y' )). MAX_LOOKUP_ROWS in build_lookup_table()
+	 * still caps how many rows are actually ever computed, so this can't
+	 * turn into an unbounded table.
+	 *
+	 * A future or otherwise invalid $first_graduation_year — the current
+	 * year's term can't be resolved, or resolves to before $from_term —
+	 * safely yields an empty table ($from_term - 1, which
+	 * build_lookup_table() treats as "nothing to show") rather than
+	 * guessing at some other range.
+	 *
+	 * @param mixed $first_graduation_year e.g. 1950, or '' when unset.
+	 * @param int   $from_term             First term the table will show.
+	 * @param int   $current_year          e.g. (int) current_time( 'Y' ).
+	 * @return int
+	 */
+	public static function default_to_term( $first_graduation_year, $from_term, $current_year ) {
+		$from_term    = max( 1, (int) $from_term );
+		$current_term = self::year_to_term( (int) $current_year, $first_graduation_year );
+
+		if ( null === $current_term || $current_term < $from_term ) {
+			return $from_term - 1; // Empty range — build_lookup_table() returns no rows.
+		}
+
+		return $current_term;
+	}
+
+	/**
 	 * Whether a hex color is "dark" enough that white text reads better on
 	 * it than black — used by 卒業期早見表 to pick a readable text color
 	 * when a 卒業期カラー is applied as a row's background rather than

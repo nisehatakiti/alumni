@@ -63,7 +63,11 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 											<?php
 											while ( $alumni_hp_teaser->have_posts() ) :
 												$alumni_hp_teaser->the_post();
-												get_template_part( 'template-parts/news-event-card' );
+												// トップページはコンパクトな1行リスト表示
+										// （news-event-row.php）を使う — カード型の
+										// news-event-card.phpは/news/・/events/一覧や
+										// 詳細ページ用のまま変更しない。
+										get_template_part( 'template-parts/news-event-row' );
 											endwhile;
 											wp_reset_postdata();
 											?>
