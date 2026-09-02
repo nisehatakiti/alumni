@@ -74,23 +74,28 @@
 	display: none;
 }
 
-/* ドリルダウン（親子）メニュー: 「共通」「卒業生向け」「在校生向け」の
-   ように、配下の項目をメニュー構成(Menu_Structure)から動的に生成する
-   親メニュー用。既定では閉じており、navigation.js が
-   .alumni-nav-item-has-children に .is-open を付け外しすることでクリック
-   開閉する（ホバーだけに頼らずタッチ操作でも確実に開けるようにする
-   ため）。:focus-within も併用し、Tabキーによるキーボード操作だけで
-   中の項目にフォーカスが移った場合も同様に開いた状態として見えるように
-   する。
-   ネストしたサブメニュー（2階層目以降、例: 共通 > 同窓会情報 > 規約類）は
-   別のフローティングパネルを重ねず、常に開いている1階層目パネルの中で
-   そのままインデントして続ける(position: staticのまま) —
-   position: absoluteの入れ子（フライアウト形式）は、パネル同士が互いの
-   上に重なったり、画面外にはみ出したりする不安定さの主な原因になるため、
-   採用しない。1階層目が開けば配下は自動的にすべて見える（各ノードの
-   is-openを個別に管理する必要がない — 下の.alumni-nav-submenuの表示
-   ルールは子孫セレクタなので、祖先のどれか1つがis-open/focus-withinに
-   なった時点で配下すべてが表示される）。
+/* ドリルダウン（親子）メニュー。SimpleとFormalで操作方法を明確に分ける
+   （Menu_Structureのデータそのものは共通 — Theme側の見た目・操作方法
+   だけがレイアウトごとに異なる）。
+
+   Simple（上部メニュー、.alumni-nav-layout-top）: マウスホバー
+   （CSS :hover）が基本の展開操作 — クリックを必須にしない。カーソルが
+   項目に乗った時点でその場（1階層目は下、2階層目以降は右）へ即座に
+   展開する。タッチ操作（ホバーが存在しない環境）のためにクリックでの
+   開閉もnavigation.jsで併用する。キーボード操作は:focus-withinで
+   カバーする。メニュー領域外にカーソルが出ればCSSの:hoverが自然に外れ
+   閉じる（親から子パネルへは同じLI要素の子孫として連続してホバー
+   判定されるため、フライアウト間の隙間は0にして「一瞬閉じる」現象を
+   避けている）。同じ階層の兄弟フォルダを開くと、重なりを避けるため
+   他の兄弟を閉じる（navigation.jsのcloseSiblingItems()、Simpleのみ）。
+
+   Formal（左サイドメニュー、.alumni-nav-layout-side）: ホバーでは
+   一切開閉しない — navigation.jsによるクリックのopen/closeトグル
+   （アコーディオン）のみ。各フォルダは独立して開閉でき、他の兄弟を
+   自動で閉じない（左サイドバーは複数のブランチを同時に開いたまま
+   ブラウジングできる方が自然なため）。開閉状態は▸(閉)／▾(開)の
+   アイコン切替とaria-expandedで示す。
+
    セレクタの詳細度は上の .main-navigation ul（display: flex を強制する
    汎用ルール）に必ず勝つよう、常に .main-navigation を前置している。 */
 .alumni-nav-item-has-children {
@@ -98,12 +103,34 @@
 }
 
 .alumni-nav-drilldown-toggle::after {
-	content: ' \25BE';
+	content: ' \25B8'; /* ▸ 閉じている状態 */
 	font-size: 0.8em;
+	line-height: 1;
+}
+
+/* 開いている状態のアイコン（▾）— パネルの表示条件(.is-open/
+   :focus-within/Simpleでの:hover)と常に同じ条件にして、見た目とパネルの
+   開閉が食い違わないようにする。 */
+.alumni-nav-item-has-children.is-open > .alumni-nav-drilldown-toggle::after,
+.alumni-nav-item-has-children:focus-within > .alumni-nav-drilldown-toggle::after,
+.alumni-nav-layout-top .alumni-nav-item-has-children:hover > .alumni-nav-drilldown-toggle::after {
+	content: ' \25BE'; /* ▾ 開いている状態 */
+}
+
+/* トップレベル項目（ホーム／共通／卒業生向け／在校生向け）は、リンクか
+   開閉トグルかに関わらず、すべて同じクリック領域の高さ・縦位置になる
+   よう統一する — 以前は.alumni-nav-drilldown-toggleだけにpaddingが
+   付いており、「ホーム」（ただのリンクでpadding無し）だけ縦位置が
+   ずれて見えた。 */
+.alumni-nav-menu > .alumni-nav-item > a {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.4em 0.3em;
+	line-height: 1.2;
 }
 
 /* クリック可能領域を十分に確保する（タッチ操作・隣接項目との誤操作
-   防止）。 */
+   防止）。トップレベル以外（ネストしたフォルダ等）の開閉トグル用。 */
 .alumni-nav-drilldown-toggle,
 .alumni-nav-drilldown-caret {
 	display: inline-block;
@@ -117,21 +144,21 @@
 	padding: 0;
 }
 
-.alumni-nav-item-has-children.is-open .alumni-nav-submenu,
-.alumni-nav-item-has-children:focus-within .alumni-nav-submenu {
+/* 各階層は「自分の直下の子」だけを開閉する（子孫セレクタではなく子
+   セレクタ「>」）— 親を開いても孫まで一斉に開かない、フライアウトの
+   各段が独立して開閉するちゃんとした階層メニューにするため。 */
+.alumni-nav-item-has-children.is-open > .alumni-nav-submenu,
+.alumni-nav-item-has-children:focus-within > .alumni-nav-submenu,
+.alumni-nav-layout-top .alumni-nav-item-has-children:hover > .alumni-nav-submenu {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4em;
 }
 
-/* 上部メニュー: 1階層目のサブメニューだけをドロップダウンパネルとして
-   重ねて表示する（直下の子セレクタ「>」で1階層目に限定 — 2階層目以降は
-   下のルールでフローティングにしない）。 */
-.alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children > .alumni-nav-submenu {
+/* 上部メニュー: 階層に関わらず、開いたサブメニューは常にフローティング
+   パネルとして重ねて表示する共通の見た目（背景・枠線・影・幅の制約）。 */
+.alumni-nav-layout-top .alumni-nav-item-has-children > .alumni-nav-submenu {
 	position: absolute;
-	top: 100%;
-	left: 0;
-	margin-top: 0;
 	background: #fff;
 	border: 1px solid #e2e2e2;
 	border-radius: 4px;
@@ -144,31 +171,50 @@
 	z-index: 100;
 }
 
-/* 長い日本語メニュー名でパネルの横幅が伸びすぎないよう、項目テキストは
-   必要に応じて折り返す（隣接するナビ項目の上に大きくはみ出すのを防ぐ）。 */
-.alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children > .alumni-nav-submenu a,
-.alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children > .alumni-nav-submenu span {
-	white-space: normal;
-	word-break: break-word;
+/* 1階層目だけは、ヘッダーの外へ出ないようトリガーの「下」に開く
+   （直下の子セレクタで1階層目に限定）。 */
+.alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children > .alumni-nav-submenu {
+	top: 100%;
+	left: 0;
+	margin-top: 0;
 }
 
-/* 一番右側の項目（例: 「在校生向け」）は左端(left:0)のままだと画面右端から
-   はみ出しやすいため、右揃えに切り替える。 */
+/* 一番右側の1階層目の項目（例: 「在校生向け」）は左端(left:0)のままだと
+   画面右端からはみ出しやすいため、右揃えに切り替える。 */
 .alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children:last-child > .alumni-nav-submenu {
 	left: auto;
 	right: 0;
 }
 
-/* 2階層目以降: フローティングパネルを重ねず、開いている1階層目パネルの
-   中でそのままインデントして続ける（左サイドメニューと同じ考え方）。 */
-.alumni-nav-layout-top .alumni-nav-menu > .alumni-nav-item-has-children .alumni-nav-submenu .alumni-nav-submenu {
-	position: static;
-	padding-left: 1em;
-	margin-top: 0.3em;
+/* 2階層目以降: 自分のトリガー行の「右側」へフライアウトする（左サイド
+   メニューのインデント方式とは異なり、横方向に階層を展開する）。
+   トリガーとパネルの間に隙間を作らない(margin: 0)— 隙間があると、
+   親から子パネルへ斜めにカーソルを移動する際に一瞬:hoverが外れて
+   パネルが閉じてしまうことがあるため。 */
+.alumni-nav-layout-top .alumni-nav-submenu .alumni-nav-item-has-children > .alumni-nav-submenu {
+	top: -0.6em;
+	left: 100%;
+	margin-left: 0;
+}
+
+/* フライアウトパネルが画面右端に近い場合は、右側ではなく左側へ開く
+   （横方向のはみ出し防止）。 */
+.alumni-nav-layout-top .alumni-nav-submenu .alumni-nav-item-has-children.alumni-nav-flyout-left > .alumni-nav-submenu {
+	left: auto;
+	right: 100%;
+	margin-right: 0;
+}
+
+/* 長い日本語メニュー名でパネルの横幅が伸びすぎないよう、項目テキストは
+   必要に応じて折り返す（隣接するナビ項目の上に大きくはみ出すのを防ぐ）。 */
+.alumni-nav-layout-top .alumni-nav-item-has-children > .alumni-nav-submenu a,
+.alumni-nav-layout-top .alumni-nav-item-has-children > .alumni-nav-submenu span {
+	white-space: normal;
+	word-break: break-word;
 }
 
 /* 左サイドメニュー: サブメニューはどの階層でもインデントされたまま同じ
-   縦列に続く(position: staticのまま、フローティングパネルにしない)。 */
+   縦列に続く(position: staticのまま、フライアウトにしない)。 */
 .alumni-nav-layout-side .alumni-nav-item-has-children .alumni-nav-submenu {
 	padding-left: 1em;
 }
@@ -338,6 +384,18 @@
 
 .alumni-homepage-slot-content-excerpt {
 	color: #555;
+}
+
+/* イベントスロットの「今後のイベント」「終了したイベント」見出し。 */
+.alumni-homepage-slot-teaser-heading {
+	margin: 0.75em 0 0.25em;
+	font-size: 0.85em;
+	font-weight: 600;
+	color: #555;
+}
+
+.alumni-homepage-slot-teaser-heading:first-of-type {
+	margin-top: 0;
 }
 
 .alumni-homepage-slot-teaser-list {

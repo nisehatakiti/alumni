@@ -22,14 +22,25 @@ class Term_Calculator {
 	 * Years from a birth cohort's start (see graduation_year_to_birth_range())
 	 * to that cohort's high school graduation, under Japan's standard
 	 * 6-3-3 school system (6 elementary + 3 junior-high + 3 high-school
-	 * years) and the April-2 school-year cutoff: a child born between
-	 * April 2 of year N and April 1 of year N+1 enters 1st grade in April
-	 * of N+6, and finishes 12th grade (graduates) in March of N+6+12 =
-	 * N+18. This is a standard-progression estimate only — it does not,
-	 * and cannot, account for repeated years, transfers, or any other
+	 * years) and the April-2 school-year cutoff.
+	 *
+	 * A child born between April 2 of year N and April 1 of year N+1 turns
+	 * 6 between April 2 of year N+6 and April 1 of year N+7. Japan's rule
+	 * is "must be 6 years old as of April 1 to enroll that April" — the
+	 * earliest birthdate in the cohort (April 2, N) turns 6 on April 2,
+	 * N+6, i.e. one day AFTER that year's April 1 cutoff, so even that
+	 * earliest-born child misses the N+6 enrollment and, like the rest of
+	 * the cohort, enters 1st grade in April of N+7 (by which point every
+	 * member of the cohort has already turned 6). Twelve school years
+	 * later, the cohort finishes 12th grade (graduates) in March of
+	 * N+7+12 = N+19 — not N+18, which would incorrectly assume enrollment
+	 * a year earlier than the April-1 cutoff actually allows.
+	 *
+	 * This is a standard-progression estimate only — it does not, and
+	 * cannot, account for repeated years, transfers, or any other
 	 * non-standard history.
 	 */
-	const GRADUATION_AGE_YEARS = 18;
+	const GRADUATION_AGE_YEARS = 19;
 
 	/**
 	 * Upper bound on how many rows build_lookup_table() will ever compute

@@ -246,6 +246,36 @@ function alumni_theme_get_events_teaser( $limit = 3 ) {
 }
 
 /**
+ * 開催日が今日以降(今日を含む)のイベントを、開催日が近い順に返す —
+ * トップページの「今後のイベント」セクション用。
+ *
+ * @param int $limit
+ * @return WP_Post[]
+ */
+function alumni_theme_get_upcoming_events( $limit = 3 ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_upcoming_events( $limit );
+}
+
+/**
+ * 開催日が今日より前のイベントを、開催日が新しい順に返す —
+ * トップページの「終了したイベント」セクション用。
+ *
+ * @param int $limit
+ * @return WP_Post[]
+ */
+function alumni_theme_get_past_events( $limit = 3 ) {
+	if ( ! alumni_theme_core_active() ) {
+		return array();
+	}
+
+	return alumni_core_get_past_events( $limit );
+}
+
+/**
  * 学校関連写真として登録された添付ファイルIDの一覧（表示順）、または
  * Core無効時は空配列。
  *
