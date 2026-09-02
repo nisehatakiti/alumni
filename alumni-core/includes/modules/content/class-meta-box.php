@@ -131,27 +131,11 @@ class Content_Meta_Box {
 		<div class="alumni-content-fields">
 			<p>
 				<strong><?php esc_html_e( 'コンテンツ種別', 'alumni-core' ); ?></strong><br />
-				<label class="alumni-content-kind-option">
-					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_FREE ); ?>"
-						<?php checked( Post_Type::KIND_FREE, $kind ); ?> />
-					<?php esc_html_e( '自由コンテンツ', 'alumni-core' ); ?>
-				</label>
-				<label class="alumni-content-kind-option">
-					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_PERSON_GREETING ); ?>"
-						<?php checked( Post_Type::KIND_PERSON_GREETING, $kind ); ?> />
-					<?php esc_html_e( '人物挨拶', 'alumni-core' ); ?>
-				</label>
-				<label class="alumni-content-kind-option">
-					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_TERMS ); ?>"
-						<?php checked( Post_Type::KIND_TERMS, $kind ); ?> />
-					<?php esc_html_e( '規約類', 'alumni-core' ); ?>
-				</label>
-				<label class="alumni-content-kind-option">
-					<input type="radio" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( Post_Type::KIND_FOLDER ); ?>"
-						<?php checked( Post_Type::KIND_FOLDER, $kind ); ?> />
-					<?php esc_html_e( 'フォルダ（階層をまとめるだけの見出し）', 'alumni-core' ); ?>
-				</label>
-				<p class="description"><?php esc_html_e( '「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。規約類の場合、「コンテンツ名」がそのまま規約名になります（例：同窓会規約、会則、個人情報保護方針）。フォルダは、例えば「同窓会情報」「同窓会組織図」のように、他のコンテンツをまとめるためだけの階層ノードです。フォルダ自体に本文を書く必要はありません（メニュー・パンくず用の見出しとしてのみ使われます）。', 'alumni-core' ); ?></p>
+				<span class="alumni-content-kind-display"><?php echo esc_html( self::kind_label( $kind ) ); ?></span>
+				<input type="hidden" name="<?php echo esc_attr( Post_Type::QUERY_VAR_KIND ); ?>" value="<?php echo esc_attr( $kind ); ?>" />
+				<p class="description">
+					<?php esc_html_e( 'コンテンツ種別は、作成時に選んだ入口（「同窓会」メニューの「＋ 人物挨拶を追加」「＋ 自由コンテンツを追加」「＋ 規約類を追加」など）で決まり、この画面では変更できません。種別を間違えた場合は、正しい入口から新しく作成し直し、この投稿は削除してください。「コンテンツ名」（タイトル欄）は自由に決められます。例：会長挨拶、副会長挨拶、校長からのメッセージ、いずれも種別は「人物挨拶」のまま登録できます。規約類の場合、「コンテンツ名」がそのまま規約名になります（例：同窓会規約、会則、個人情報保護方針）。', 'alumni-core' ); ?>
+				</p>
 			</p>
 
 			<p>
@@ -173,7 +157,7 @@ class Content_Meta_Box {
 				<p class="description"><?php esc_html_e( 'このコンテンツをどのコンテンツの下に整理するかを選びます。未選択（トップレベル）の場合、上の「対象者」の直下に配置されます。', 'alumni-core' ); ?></p>
 			</p>
 
-			<div id="alumni-person-greeting-fields" class="alumni-person-greeting-fields">
+			<div id="alumni-person-greeting-fields" class="alumni-person-greeting-fields"<?php echo Post_Type::KIND_PERSON_GREETING === $kind ? '' : ' style="display:none;"'; ?>>
 				<p class="description alumni-person-greeting-intro">
 					<?php esc_html_e( '上の「コンテンツ名」（タイトル欄）と、この下の「氏名」「肩書」は別の項目です。コンテンツ名はページの見出し（例：校長挨拶）、氏名・肩書はその挨拶を書いた本人の情報（例：氏名＝鈴木花子、肩書＝校長）を表します。', 'alumni-core' ); ?>
 				</p>
@@ -199,7 +183,7 @@ class Content_Meta_Box {
 				</p>
 			</div>
 
-			<div id="alumni-terms-fields" class="alumni-terms-fields">
+			<div id="alumni-terms-fields" class="alumni-terms-fields"<?php echo Post_Type::KIND_TERMS === $kind ? '' : ' style="display:none;"'; ?>>
 				<p>
 					<label for="alumni_terms_display_title"><strong><?php esc_html_e( '公開タイトル（任意）', 'alumni-core' ); ?></strong></label><br />
 					<input type="text" id="alumni_terms_display_title" name="alumni_terms_display_title" class="regular-text" value="<?php echo esc_attr( $display_title ); ?>" placeholder="<?php echo esc_attr__( '未入力の場合はコンテンツ名（規約名）をそのまま使用します', 'alumni-core' ); ?>" />
@@ -363,6 +347,29 @@ class Content_Meta_Box {
 	}
 
 	/**
+	 * A human-readable label for a kind, for the read-only display in
+	 * render() (there's no editable control for this any more — see class
+	 * docblock "コンテンツ種別は「入口」で決める").
+	 *
+	 * @param string $kind
+	 * @return string
+	 */
+	private static function kind_label( $kind ) {
+		switch ( $kind ) {
+			case Post_Type::KIND_PERSON_GREETING:
+				return __( '人物挨拶', 'alumni-core' );
+			case Post_Type::KIND_TERMS:
+				return __( '規約類', 'alumni-core' );
+			case Post_Type::KIND_FOLDER:
+				// 新規作成の入口はもう提供していない(既存データの後方
+				// 互換表示のみ) — class docblock参照。
+				return __( 'フォルダ（既存データ、この画面からは新規作成できません）', 'alumni-core' );
+			default:
+				return __( '自由コンテンツ', 'alumni-core' );
+		}
+	}
+
+	/**
 	 * Saves the meta box fields. Hooked to save_post_{Post_Type::SLUG}.
 	 *
 	 * @param int      $post_id Post ID.
@@ -381,10 +388,24 @@ class Content_Meta_Box {
 			return;
 		}
 
-		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
+		// コンテンツ種別は作成時の入口だけで決まり、以後は不変
+		// （render()のコンテンツ種別欄はもう選択式ではなく、隠しフィールド
+		// で現在値をそのまま送り返すだけの表示専用フィールド — class
+		// docblock「コンテンツ種別は「入口」で決める」）。この投稿に既に
+		// 種別が保存されていれば、送信された値に関わらずそれを維持する
+		// （クラフトされたリクエストで既存投稿の種別が書き換わるのを防ぐ
+		// 意味も兼ねる）。まだ何も保存されていない(=作成時の最初の保存)場合
+		// だけ、送信値(作成時にリンクしたURLのクエリ文字列由来)を採用する。
+		$existing_kind = get_post_meta( $post_id, Post_Type::META_KIND, true );
 
-		if ( ! in_array( $kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS, Post_Type::KIND_FOLDER ), true ) ) {
-			$kind = Post_Type::KIND_FREE;
+		if ( in_array( $existing_kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS, Post_Type::KIND_FOLDER ), true ) ) {
+			$kind = $existing_kind;
+		} else {
+			$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
+
+			if ( ! in_array( $kind, array( Post_Type::KIND_PERSON_GREETING, Post_Type::KIND_TERMS, Post_Type::KIND_FOLDER ), true ) ) {
+				$kind = Post_Type::KIND_FREE;
+			}
 		}
 
 		update_post_meta( $post_id, Post_Type::META_KIND, $kind );

@@ -83,14 +83,33 @@
 		// 上部メニュー（Simple）のフライアウトが画面右端からはみ出す場合、
 		// 右へではなく左へ開くよう切り替える（.alumni-nav-flyout-left、
 		// main.css参照）。1階層目はヘッダー下に開くため対象外。
+		//
+		// パネルの実測幅を使う: この時点でパネルはCSSの:hover/is-open条件
+		// によりすでにdisplay:flexへ切り替わっている（呼び出し元の
+		// mouseenter/クリックハンドラは、いずれもCSSの疑似クラス・
+		// クラス変化と同じタイミングで発火するため）ので、
+		// getBoundingClientRect().widthで実際にレンダリングされた幅を
+		// 測れる。0（まだ描画されていない等）の場合だけ、main.cssの
+		// max-width(22em相当)に合わせた概算値へフォールバックする。
+		function estimateSubmenuWidth( item ) {
+			var submenu = item.querySelector( ':scope > .alumni-nav-submenu' );
+			if ( submenu ) {
+				var measured = submenu.getBoundingClientRect().width;
+				if ( measured > 0 ) {
+					return measured;
+				}
+			}
+			return 320; // フォールバック概算値。
+		}
+
 		function updateFlyoutDirection( item ) {
 			var isTopLevel = item.parentElement && item.parentElement.classList && item.parentElement.classList.contains( 'alumni-nav-menu' );
 			if ( isTopLevel ) {
 				return; // 1階層目は右揃え/左揃えの既存ルール(main.css)に任せる。
 			}
-			var estimatedPanelWidth = 320; // main.cssのmax-width(22em相当)に合わせた概算値。
+			var panelWidth = estimateSubmenuWidth( item );
 			var rect = item.getBoundingClientRect();
-			var wouldOverflowRight = ( rect.right + estimatedPanelWidth ) > window.innerWidth;
+			var wouldOverflowRight = ( rect.right + panelWidth ) > window.innerWidth;
 			item.classList.toggle( 'alumni-nav-flyout-left', wouldOverflowRight );
 		}
 

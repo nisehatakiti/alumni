@@ -1,7 +1,7 @@
 /* Header */
 .site-header {
 	border-bottom: 1px solid #e2e2e2;
-	padding: 1em 0;
+	padding: 1.75em 0;
 }
 
 .alumni-header-inner {
@@ -10,6 +10,36 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 1em;
+}
+
+/* ブランド領域とナビゲーション領域を、それぞれヘッダー内の約半分ずつの
+   flex基準幅(flex-basis: 0、伸長比は同じ1)で分け合う — 固定pxで「ホーム」
+   の位置を決めるのではなく、ナビ側をその半分の内側で右寄せ(justify-
+   content: flex-end)にすることで、画面幅が変わっても「ホームは中央付近
+   から始まる」配置が相対的に保たれるようにしている。 */
+.site-branding {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.main-navigation {
+	flex: 1 1 0;
+	display: flex;
+	justify-content: flex-end;
+}
+
+/* タブレット幅以下では、半分ずつに分けるとブランド領域・ナビゲーション
+   領域の双方が窮屈になるため、それぞれ全幅を使って縦に積む配置へ切り替
+   える(横に並べたまま縮めるのではなく、素直に積む)。 */
+@media (max-width: 782px) {
+	.site-branding,
+	.main-navigation {
+		flex: 1 1 100%;
+	}
+
+	.main-navigation {
+		justify-content: flex-start;
+	}
 }
 
 .site-branding .site-title {

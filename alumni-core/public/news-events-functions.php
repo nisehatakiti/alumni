@@ -148,15 +148,26 @@ if ( ! function_exists( 'alumni_core_get_events_split_by_date' ) ) {
 	 * 未設定のイベントの安全な除外や、将来の比較ロジック変更にも対応
 	 * しやすい。
 	 *
+	 * @param string|null $reference_date 基準日('Y-m-d')。省略時はWordPress
+	 *                                      のサイト日時（current_time('Y-m-d')、
+	 *                                      サイトのタイムゾーン設定を反映）。
+	 *                                      テストで「今日」を固定するためだけ
+	 *                                      の引数で、本番コードからは常に省略
+	 *                                      する（ハードコードされた日付比較で
+	 *                                      はなく、呼び出し側が明示的に基準日
+	 *                                      を渡せる形にすることで、実行時刻に
+	 *                                      依存しない決定的なテストを書ける
+	 *                                      ようにする）。
 	 * @return array{upcoming: WP_Post[], past: WP_Post[]}
 	 */
-	function alumni_core_get_events_split_by_date() {
+	function alumni_core_get_events_split_by_date( $reference_date = null ) {
 		$query = alumni_core_get_news_events_query(
 			array(
 				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by content type is the entire purpose of this query.
 					array(
-						'key'   => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::META_CONTENT_TYPE,
-						'value' => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::TYPE_EVENT,
+						'key'     => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::META_CONTENT_TYPE,
+						'value'   => \AlumniCore\Includes\Modules\NewsEvents\Post_Type::TYPE_EVENT,
+						'compare' => '=',
 					),
 				),
 				// 現実的なイベント総数を大きく超えない上限 — 全件をここで
@@ -167,18 +178,31 @@ if ( ! function_exists( 'alumni_core_get_events_split_by_date' ) ) {
 			)
 		);
 
-		$today    = current_time( 'Y-m-d' );
-		$upcoming = array();
-		$past     = array();
+		if ( ! is_string( $reference_date ) || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $reference_date ) ) {
+			$reference_date = current_time( 'Y-m-d' );
+		}
+
+		$upcoming      = array();
+		$past          = array();
+		$seen_post_ids = array(); // 同じ投稿がmeta_queryのJOIN等で複数行として
+		// 返ってきても、一覧には1回だけ現れるようにする防御的な重複排除
+		// （「今後」と「終了済み」の両方に同じイベントが入ることは、開催日
+		// で一意に分岐が決まるこの処理の性質上そもそも起こり得ない — ここで
+		// 防いでいるのは同一の一覧内での重複のみ）。
 
 		foreach ( $query->posts as $alumni_event_post ) {
+			if ( isset( $seen_post_ids[ $alumni_event_post->ID ] ) ) {
+				continue;
+			}
+			$seen_post_ids[ $alumni_event_post->ID ] = true;
+
 			$alumni_event_date = \AlumniCore\Includes\Modules\NewsEvents\Post_Type::get_event_date( $alumni_event_post );
 
 			if ( '' === $alumni_event_date ) {
 				continue; // 開催日未設定のイベントはどちらにも表示しようがない。
 			}
 
-			if ( $alumni_event_date >= $today ) {
+			if ( $alumni_event_date >= $reference_date ) {
 				$upcoming[] = array( 'post' => $alumni_event_post, 'date' => $alumni_event_date );
 			} else {
 				$past[] = array( 'post' => $alumni_event_post, 'date' => $alumni_event_date );
@@ -188,13 +212,19 @@ if ( ! function_exists( 'alumni_core_get_events_split_by_date' ) ) {
 		usort(
 			$upcoming,
 			function ( $a, $b ) {
-				return strcmp( $a['date'], $b['date'] ); // 近い順(昇順)。
+				// 近い順(昇順)。同一日に複数ある場合は投稿IDを安定した
+				// タイブレークに使う（日付だけでは同着になり得るため、
+				// 呼び出しのたびに順序が入れ替わらないようにする）。
+				$cmp = strcmp( $a['date'], $b['date'] );
+				return 0 !== $cmp ? $cmp : ( $a['post']->ID <=> $b['post']->ID );
 			}
 		);
 		usort(
 			$past,
 			function ( $a, $b ) {
-				return strcmp( $b['date'], $a['date'] ); // 新しい順(降順)。
+				// 新しい順(降順)。同日タイブレークは昇順と揃える。
+				$cmp = strcmp( $b['date'], $a['date'] );
+				return 0 !== $cmp ? $cmp : ( $a['post']->ID <=> $b['post']->ID );
 			}
 		);
 

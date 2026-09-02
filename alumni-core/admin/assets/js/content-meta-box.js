@@ -1,36 +1,15 @@
 /**
- * コンテンツのメタボックス: コンテンツ種別に応じて
- * 人物挨拶専用フィールド／規約類専用フィールドの表示/非表示を切り替える。
- * 規約類の改定履歴（複数の日付）の行の追加・削除も扱う。
+ * コンテンツのメタボックス: 規約類の改定履歴（複数の日付）の行の追加・
+ * 削除を扱う。コンテンツ種別に応じた人物挨拶専用フィールド／規約類専用
+ * フィールドの表示・非表示は、種別が作成時の入口だけで決まり以後は不変
+ * になった(コンテンツ種別のラジオボタン自体を廃止した)ため、もう
+ * クライアント側で切り替える必要がなく、PHP側(Content_Meta_Box::render())
+ * が最初から該当するブロックだけを表示状態で出力する。
  */
 ( function () {
 	'use strict';
 
 	document.addEventListener( 'DOMContentLoaded', function () {
-		var radios       = document.querySelectorAll( 'input[name="alumni_content_kind"]' );
-		var personFields = document.getElementById( 'alumni-person-greeting-fields' );
-		var termsFields  = document.getElementById( 'alumni-terms-fields' );
-
-		if ( radios.length && ( personFields || termsFields ) ) {
-			var sync = function () {
-				var selected = document.querySelector( 'input[name="alumni_content_kind"]:checked' );
-				var value     = selected ? selected.value : '';
-
-				if ( personFields ) {
-					personFields.style.display = ( 'person_greeting' === value ) ? '' : 'none';
-				}
-				if ( termsFields ) {
-					termsFields.style.display = ( 'terms' === value ) ? '' : 'none';
-				}
-			};
-
-			for ( var i = 0; i < radios.length; i++ ) {
-				radios[ i ].addEventListener( 'change', sync );
-			}
-
-			sync();
-		}
-
 		var revisionList     = document.getElementById( 'alumni-terms-revision-dates' );
 		var revisionTemplate = document.getElementById( 'alumni-terms-revision-date-row-template' );
 		var revisionAddBtn   = document.getElementById( 'alumni-terms-revision-date-add' );
