@@ -56,16 +56,21 @@ if ( ! function_exists( 'alumni_core_get_person_greetings_query' ) ) {
 	 * @return WP_Query
 	 */
 	function alumni_core_get_person_greetings_query( $args = array() ) {
-		$kind_filter = array(
-			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by kind is the entire purpose of this query.
-				array(
-					'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_KIND,
-					'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_PERSON_GREETING,
-				),
-			),
+		$kind_clause = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by kind is the entire purpose of this clause.
+			'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_KIND,
+			'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_PERSON_GREETING,
 		);
 
-		return alumni_core_get_contents_query( wp_parse_args( $kind_filter, $args ) );
+		// wp_parse_args()はキーが衝突した場合、配列を丸ごと上書きするだけ
+		// (再帰マージではない)ため、$argsに独自のmeta_query(例:
+		// alumni_core_get_person_greeting_group_members()が渡す
+		// グループID絞り込み句)が含まれていると、そちらでこの関数自身の
+		// kind絞り込み句が丸ごと消えてしまう(またはその逆)。ここは両方の
+		// 句が必ず共存するよう、meta_queryだけを明示的に配列結合する。
+		$existing_meta_query = ( isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ) ? $args['meta_query'] : array();
+		$args['meta_query']  = array_merge( array( $kind_clause ), $existing_meta_query );
+
+		return alumni_core_get_contents_query( $args );
 	}
 }
 
