@@ -812,9 +812,19 @@ function alumni_theme_get_menu_tree( $audience = null ) {
 
 /**
  * 現在表示中のURLを、ドメイン・クエリ文字列の差異に影響されにくい
- * パス単位で返す（末尾スラッシュは正規化）。alumni_theme_render_menu_items()
- * が、各メニュー項目のURLと比較して「現在ページに対応する項目」を
- * 判定するために使う。
+ * パス＋クエリ文字列単位で返す（末尾スラッシュは正規化、クエリの
+ * パラメータ順序も正規化）。alumni_theme_render_menu_items()が、各
+ * メニュー項目のURLと比較して「現在ページに対応する項目」を判定する
+ * ために使う。
+ *
+ * クエリ文字列も比較対象に含めているのは、固定リンク設定が「基本」
+ * (プレーン、?page_id=41のようなクエリ文字列ベースのURL)のサイトでは、
+ * ほぼ全てのページ・投稿・固定ページ・カスタム投稿タイプが同じパス
+ * (サイトのルート、例: /alumni/)を共有し、クエリ文字列だけで別ページを
+ * 区別するため — パスだけを比較すると、トップページを含むどのページを
+ * 表示していても、事実上すべてのメニュー項目が「現在ページ」に一致して
+ * しまい、ドロップダウンのほぼ全項目が強調表示される不具合になる
+ * （実サイトの実際のページソースで確認された不具合）。
  *
  * @return string
  */
@@ -823,9 +833,42 @@ function alumni_theme_get_current_url_path() {
 		return '';
 	}
 
-	$path = wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+	return alumni_theme_normalize_url_for_nav_comparison( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
+}
 
-	return $path ? untrailingslashit( $path ) : '';
+/**
+ * $urlを「現在ページかどうか」の比較用に正規化する: パス部分は
+ * untrailingslashitし、クエリ文字列があればパラメータをキー順に
+ * 並べ替えた上で連結する（同じページでもクエリパラメータの並び順が
+ * 異なるだけで不一致になるのを避けるため）。パスが取れない場合は
+ * 空文字を返す（呼び出し側は空文字同士を「一致」とみなさない設計に
+ * なっている — alumni_theme_render_menu_items_with_state()参照）。
+ *
+ * @param string $url REQUEST_URI、またはメニュー項目のURL(絶対URL)。
+ * @return string
+ */
+function alumni_theme_normalize_url_for_nav_comparison( $url ) {
+	$path = wp_parse_url( $url, PHP_URL_PATH );
+
+	if ( ! $path ) {
+		return '';
+	}
+
+	$normalized = untrailingslashit( $path );
+
+	$query_string = wp_parse_url( $url, PHP_URL_QUERY );
+
+	if ( $query_string ) {
+		$query_args = array();
+		wp_parse_str( $query_string, $query_args );
+
+		if ( ! empty( $query_args ) ) {
+			ksort( $query_args );
+			$normalized .= '?' . http_build_query( $query_args );
+		}
+	}
+
+	return $normalized;
 }
 
 /**
@@ -873,7 +916,7 @@ function alumni_theme_render_menu_items_with_state( array $nodes, $current_path 
 		$is_folder    = ( 'folder' === $node['type'] );
 		$has_children = (bool) $children_items;
 
-		$node_url_path = ( '' !== $current_path && ! empty( $node['url'] ) ) ? untrailingslashit( (string) wp_parse_url( $node['url'], PHP_URL_PATH ) ) : '';
+		$node_url_path = ( '' !== $current_path && ! empty( $node['url'] ) ) ? alumni_theme_normalize_url_for_nav_comparison( (string) $node['url'] ) : '';
 		$is_current    = ( '' !== $node_url_path && $node_url_path === $current_path );
 
 		if ( $is_current || $child_has_current ) {
