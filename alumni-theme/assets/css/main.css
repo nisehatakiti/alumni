@@ -982,3 +982,107 @@
 	padding: 0.75em 0;
 	font-size: 1.05em;
 }
+
+
+/* 人物挨拶グループ：歴代人物を1ページ内で直接読むためのブロック表示 */
+.alumni-person-greeting-blocks {
+	display: grid;
+	gap: 2.5rem;
+}
+
+.alumni-person-greeting-block {
+	padding: 0 0 2.5rem;
+	border-bottom: 1px solid #e1e5ea;
+}
+
+.alumni-person-greeting-block:last-child {
+	padding-bottom: 0;
+	border-bottom: none;
+}
+
+.alumni-person-greeting-block-header {
+	display: flex;
+	align-items: flex-start;
+	gap: 1.25rem;
+	margin-bottom: 1.25rem;
+}
+
+.alumni-person-greeting-block-photo {
+	flex: 0 0 auto;
+}
+
+.alumni-person-greeting-block-photo img {
+	display: block;
+	width: 160px;
+	height: 160px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+
+.alumni-person-greeting-block-profile {
+	min-width: 0;
+}
+
+.alumni-person-greeting-block-title,
+.alumni-person-greeting-block-term {
+	margin: 0;
+	color: #555;
+}
+
+.alumni-person-greeting-block-title {
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+
+.alumni-person-greeting-block-name {
+	margin: 0;
+	font-size: 1.45rem;
+	line-height: 1.35;
+}
+
+.alumni-person-greeting-block-kana {
+	display: block;
+	margin-top: 0.15rem;
+	font-size: 0.65em;
+	font-weight: 400;
+	color: #666;
+}
+
+.alumni-person-greeting-block-term {
+	margin-top: 0.4rem;
+	font-size: 0.95em;
+}
+
+.alumni-person-greeting-block-body > :first-child {
+	margin-top: 0;
+}
+
+.alumni-person-greeting-block-body > :last-child {
+	margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+	.alumni-person-greeting-block-header {
+		gap: 1rem;
+	}
+
+	.alumni-person-greeting-block-photo img {
+		width: 112px;
+		height: 112px;
+	}
+
+	.alumni-person-greeting-block-name {
+		font-size: 1.25rem;
+	}
+}
+
+@media (max-width: 420px) {
+	.alumni-person-greeting-block-header {
+		flex-direction: column;
+	}
+
+	.alumni-person-greeting-block-photo img {
+		width: 140px;
+		height: 140px;
+	}
+}
