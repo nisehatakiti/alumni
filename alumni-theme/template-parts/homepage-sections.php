@@ -27,7 +27,7 @@ $alumni_hp_order  = array( 'A', 'B', 'C', 'D', 'E', 'F' );
  *
  * @param array $alumni_hp_slot
  */
-function alumni_theme_render_homepage_grid_block( array $alumni_hp_slot ) {
+$alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 	if ( 'system' === $alumni_hp_slot['type'] ) {
 		$alumni_hp_system_key   = $alumni_hp_slot['system_key'];
 		$alumni_hp_system_label = alumni_theme_get_system_slot_label( $alumni_hp_system_key );
@@ -122,7 +122,7 @@ function alumni_theme_render_homepage_grid_block( array $alumni_hp_slot ) {
 		</div>
 		<?php
 	}
-}
+};
 
 $alumni_hp_has_visible_block = false;
 foreach ( $alumni_hp_order as $alumni_hp_cell_key ) {
@@ -152,7 +152,7 @@ if ( ! $alumni_hp_has_visible_block ) {
 		$alumni_hp_is_merged = in_array( $alumni_hp_cell_key, array( 'A', 'B', 'C' ), true ) && ! empty( $alumni_hp_merged[ $alumni_hp_cell_key ] );
 		?>
 		<section class="alumni-homepage-grid-block alumni-homepage-grid-block-<?php echo esc_attr( strtolower( $alumni_hp_cell_key ) ); ?><?php echo $alumni_hp_is_merged ? ' is-vertically-merged' : ''; ?>">
-			<?php alumni_theme_render_homepage_grid_block( $alumni_hp_slot ); ?>
+			<?php $alumni_hp_render_block( $alumni_hp_slot ); ?>
 		</section>
 	<?php endforeach; ?>
 </div>
