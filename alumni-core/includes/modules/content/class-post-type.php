@@ -249,13 +249,14 @@ class Post_Type {
 	 * for this alumni_content post — 規約類だけ真。
 	 *
 	 * Hooked to the 'use_block_editor_for_post_type' filter (Module::
-	 * register()) rather than conditionally calling remove_post_type_support()
-	 * on load-post.php/load-post-new.php (this class's earlier approach):
-	 * that relied on running before WordPress's own internal call to
-	 * use_block_editor_for_post_type() during post-new.php/post.php's own
-	 * bootstrap, which is fragile — it depends on exact hook-ordering that
-	 * isn't part of any documented contract, and doesn't cover every code
-	 * path that asks the same question (e.g. REST-preloaded editor data).
+	 * register()) rather than using remove_post_type_support() to decide
+	 * whether the block editor itself should be used. WordPress calls this
+	 * filter through its documented editor-selection path, so 規約類 can keep
+	 * the block editor while other kinds do not. The separate request-scoped
+	 * remove_post_type_support() call in maybe_hide_person_greeting_editor()
+	 * has a different purpose: it removes the classic editor UI only for
+	 * 人物挨拶 after this block-editor decision is already known, preventing
+	 * two visible 本文 input areas on that dedicated form.
 	 * 'use_block_editor_for_post_type' is the extension point WordPress
 	 * core itself provides for exactly this "block editor for some posts
 	 * of this type, not others" case, so it fires correctly and
