@@ -256,31 +256,57 @@ class Homepage_Sections {
 	 */
 	private static function normalize_slot( $slot ) {
 		if ( ! is_array( $slot ) || empty( $slot['type'] ) ) {
-			return array( 'type' => 'none' );
+			return self::with_display_options( $slot, array( 'type' => 'none' ) );
 		}
 
 		if ( 'content' === $slot['type'] ) {
 			$content_id = isset( $slot['content_id'] ) ? absint( $slot['content_id'] ) : 0;
-			return self::is_publishable_content( $content_id )
-				? array( 'type' => 'content', 'content_id' => $content_id )
-				: array( 'type' => 'none' );
+			return self::with_display_options(
+				$slot,
+				self::is_publishable_content( $content_id )
+					? array( 'type' => 'content', 'content_id' => $content_id )
+					: array( 'type' => 'none' )
+			);
 		}
 
 		if ( 'system' === $slot['type'] ) {
 			$key = isset( $slot['system_key'] ) ? (string) $slot['system_key'] : '';
-			return in_array( $key, self::system_keys(), true )
-				? array( 'type' => 'system', 'system_key' => $key )
-				: array( 'type' => 'none' );
+			return self::with_display_options(
+				$slot,
+				in_array( $key, self::system_keys(), true )
+					? array( 'type' => 'system', 'system_key' => $key )
+					: array( 'type' => 'none' )
+			);
 		}
 
 		if ( 'person_greeting_group' === $slot['type'] ) {
 			$group_id = isset( $slot['group_id'] ) ? sanitize_text_field( $slot['group_id'] ) : '';
-			return '' !== $group_id && null !== Person_Greeting_Groups::instance()->get_group( $group_id )
-				? array( 'type' => 'person_greeting_group', 'group_id' => $group_id )
-				: array( 'type' => 'none' );
+			return self::with_display_options(
+				$slot,
+				'' !== $group_id && null !== Person_Greeting_Groups::instance()->get_group( $group_id )
+					? array( 'type' => 'person_greeting_group', 'group_id' => $group_id )
+					: array( 'type' => 'none' )
+			);
 		}
 
-		return array( 'type' => 'none' );
+		return self::with_display_options( $slot, array( 'type' => 'none' ) );
+	}
+
+	/**
+	 * Every cell may optionally override its public heading and configure
+	 * how many list items system blocks should output.
+	 *
+	 * @param mixed $raw
+	 * @param array $normalized
+	 * @return array
+	 */
+	private static function with_display_options( $raw, array $normalized ) {
+		$raw = is_array( $raw ) ? $raw : array();
+
+		$normalized['heading'] = isset( $raw['heading'] ) ? sanitize_text_field( $raw['heading'] ) : '';
+		$normalized['item_count'] = isset( $raw['item_count'] ) ? max( 1, min( 10, absint( $raw['item_count'] ) ) ) : 3;
+
+		return $normalized;
 	}
 
 	/**
