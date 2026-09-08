@@ -17,10 +17,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  * 「グループごとに固定ページを自動作成し、そこにショートコードを設置
  * する」パターン。
  *
- * 公開される一覧ページは、そのグループに属する歴代の人物挨拶(公開済み
- * のみ、menu_order昇順＝歴代順)を、氏名・肩書・任期と個別挨拶ページへの
- * リンクとともに並べる — 「メニュー→人物挨拶グループ→歴代人物一覧→
- * 個別挨拶」という構造の、グループ〜個別のあいだの層。
+ * 公開されるグループページは、そのグループに属する歴代の人物挨拶
+ * （公開済みのみ、menu_order昇順＝管理画面で指定した表示順）を、
+ * 1人ずつ独立したブロックとして本文まで直接表示する。通常の閲覧導線で
+ * 個別ページへ遷移させず、「母校校長挨拶」「同窓会長挨拶」の1ページで
+ * 歴代の挨拶を完結して読める構造にする。
  */
 class Person_Greeting_Groups_Shortcode {
 
@@ -125,7 +126,12 @@ class Person_Greeting_Groups_Shortcode {
 	}
 
 	/**
-	 * Renders [alumni_person_greeting_group id="..."]: 歴代の人物挨拶一覧。
+	 * Renders [alumni_person_greeting_group id="..."].
+	 *
+	 * グループに所属する人物挨拶を、一覧リンクではなく「人物1人＝1ブロック」
+	 * として直接表示する。本文は保存済みのWordPressブロックを the_content
+	 * フィルター経由でレンダリングするため、見出し・段落・画像などのブロック
+	 * 構造を保ったまま出力される。
 	 *
 	 * @param array $atts Shortcode attributes; only 'id' is used.
 	 * @return string
@@ -148,33 +154,47 @@ class Person_Greeting_Groups_Shortcode {
 						<?php esc_html_e( '現在、この一覧に人物挨拶は登録されていません。', 'alumni-core' ); ?>
 					</p>
 				<?php else : ?>
-					<ul class="alumni-person-greeting-group-list">
+					<div class="alumni-person-greeting-blocks">
 						<?php foreach ( $members as $member ) : ?>
 							<?php
-							$name   = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_name( $member );
-							$title  = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_title( $member );
-							$tenure = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_tenure( $member );
+							$name     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_name( $member );
+							$kana     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_kana( $member );
+							$title    = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_title( $member );
+							$term     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_term( $member );
+							$photo_id = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_photo_id( $member );
 							?>
-							<li class="alumni-person-greeting-group-item">
-								<span class="alumni-person-greeting-group-title"><?php echo esc_html( $title ); ?></span>
-								<span class="alumni-person-greeting-group-name"><?php echo esc_html( $name ); ?></span>
-								<?php if ( $tenure ) : ?>
-									<span class="alumni-person-greeting-group-tenure">
-										<?php
-										printf(
-											/* translators: %s: 任期の自由記述、例「2020年〜2024年」 */
-											esc_html__( '任期：%s', 'alumni-core' ),
-											esc_html( $tenure )
-										);
-										?>
-									</span>
-								<?php endif; ?>
-								<a class="alumni-person-greeting-group-link" href="<?php echo esc_url( get_permalink( $member ) ); ?>">
-									<?php esc_html_e( '挨拶を見る', 'alumni-core' ); ?>
-								</a>
-							</li>
+							<article class="alumni-person-greeting-block" id="person-greeting-<?php echo esc_attr( $member->ID ); ?>">
+								<header class="alumni-person-greeting-block-header">
+									<?php if ( $photo_id ) : ?>
+										<div class="alumni-person-greeting-block-photo">
+											<?php echo wp_get_attachment_image( $photo_id, 'medium', false, array( 'loading' => 'lazy' ) ); ?>
+										</div>
+									<?php endif; ?>
+
+									<div class="alumni-person-greeting-block-profile">
+										<?php if ( $title ) : ?>
+											<p class="alumni-person-greeting-block-title"><?php echo esc_html( $title ); ?></p>
+										<?php endif; ?>
+
+										<?php if ( $name ) : ?>
+											<h2 class="alumni-person-greeting-block-name">
+												<?php echo esc_html( $name ); ?>
+												<?php if ( $kana ) : ?><span class="alumni-person-greeting-block-kana"><?php echo esc_html( $kana ); ?></span><?php endif; ?>
+											</h2>
+										<?php endif; ?>
+
+										<?php if ( $term ) : ?>
+											<p class="alumni-person-greeting-block-term"><?php echo esc_html( $term ); ?></p>
+										<?php endif; ?>
+									</div>
+								</header>
+
+								<div class="alumni-person-greeting-block-body">
+									<?php echo apply_filters( 'the_content', $member->post_content ); ?>
+								</div>
+							</article>
 						<?php endforeach; ?>
-					</ul>
+					</div>
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>
