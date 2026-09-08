@@ -82,30 +82,47 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 									$alumni_hp_upcoming_events = alumni_theme_get_upcoming_events( 3 );
 									$alumni_hp_past_events     = alumni_theme_get_past_events( 3 );
 									?>
-									<?php if ( $alumni_hp_upcoming_events ) : ?>
-										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '今後のイベント', 'alumni-theme' ); ?></h4>
-										<div class="alumni-homepage-slot-teaser-list">
-											<?php
-											foreach ( $alumni_hp_upcoming_events as $alumni_hp_event_post ) :
-												setup_postdata( $alumni_hp_event_post );
-												get_template_part( 'template-parts/news-event-row' );
-											endforeach;
-											wp_reset_postdata();
-											?>
-										</div>
-									<?php endif; ?>
-									<?php if ( $alumni_hp_past_events ) : ?>
-										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '終了したイベント', 'alumni-theme' ); ?></h4>
-										<div class="alumni-homepage-slot-teaser-list">
-											<?php
-											foreach ( $alumni_hp_past_events as $alumni_hp_event_post ) :
-												setup_postdata( $alumni_hp_event_post );
-												get_template_part( 'template-parts/news-event-row' );
-											endforeach;
-											wp_reset_postdata();
-											?>
-										</div>
-									<?php endif; ?>
+								<?php if ( $alumni_hp_upcoming_events ) : ?>
+									<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '今後のイベント', 'alumni-theme' ); ?></h4>
+									<div class="alumni-homepage-slot-teaser-list">
+										<?php
+										// setup_postdata()を単体で(WP_Query::the_post()の
+										// ループ外で)呼んでも、現在のWordPressではグローバル
+										// $postそのものは更新されない($id・$authordata等の
+										// 補助グローバルのみが更新される仕様で、$post自体は
+										// the_post()側が設定する仕様になっているため)。
+										// これを怠っていたため、実サイトで直前のニュース欄の
+										// wp_reset_postdata()が残した古いグローバル$post
+										// (メインクエリの投稿=WordPress既定の
+										// 「Hello world!」サンプル投稿)がそのまま
+										// the_title()/the_permalink()に表示されてしまう
+										// 不具合になっていた(実サイトでの診断で特定)。
+										global $post;
+										foreach ( $alumni_hp_upcoming_events as $alumni_hp_event_post ) :
+											$post = $alumni_hp_event_post;
+											setup_postdata( $post );
+											get_template_part( 'template-parts/news-event-row' );
+										endforeach;
+										wp_reset_postdata();
+										?>
+									</div>
+								<?php endif; ?>
+								<?php if ( $alumni_hp_past_events ) : ?>
+									<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '終了したイベント', 'alumni-theme' ); ?></h4>
+									<div class="alumni-homepage-slot-teaser-list">
+										<?php
+										// 上の「今後のイベント」と同じ理由(setup_postdata()
+										// 単体呼び出しではグローバル$postが更新されない)。
+										global $post;
+										foreach ( $alumni_hp_past_events as $alumni_hp_event_post ) :
+											$post = $alumni_hp_event_post;
+											setup_postdata( $post );
+											get_template_part( 'template-parts/news-event-row' );
+										endforeach;
+										wp_reset_postdata();
+										?>
+									</div>
+								<?php endif; ?>
 								<?php endif; ?>
 							</div>
 						<?php endif; ?>
