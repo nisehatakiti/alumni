@@ -32,16 +32,18 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 		$alumni_hp_system_key   = $alumni_hp_slot['system_key'];
 		$alumni_hp_system_label = alumni_theme_get_system_slot_label( $alumni_hp_system_key );
 		$alumni_hp_system_url   = alumni_theme_get_system_slot_url( $alumni_hp_system_key );
+		$alumni_hp_block_heading = ! empty( $alumni_hp_slot['heading'] ) ? $alumni_hp_slot['heading'] : $alumni_hp_system_label;
+		$alumni_hp_item_count = isset( $alumni_hp_slot['item_count'] ) ? max( 1, (int) $alumni_hp_slot['item_count'] ) : 3;
 
 		if ( ! $alumni_hp_system_label || ! $alumni_hp_system_url ) {
 			return;
 		}
 		?>
 		<div class="alumni-homepage-slot-system alumni-homepage-slot-system-<?php echo esc_attr( $alumni_hp_system_key ); ?>">
-			<h2 class="alumni-homepage-slot-title"><a href="<?php echo esc_url( $alumni_hp_system_url ); ?>"><?php echo esc_html( $alumni_hp_system_label ); ?></a></h2>
+			<h2 class="alumni-homepage-slot-title"><a href="<?php echo esc_url( $alumni_hp_system_url ); ?>"><?php echo esc_html( $alumni_hp_block_heading ); ?></a></h2>
 
 			<?php if ( 'news' === $alumni_hp_system_key ) : ?>
-				<?php $alumni_hp_teaser = alumni_theme_get_news_teaser( 3 ); ?>
+				<?php $alumni_hp_teaser = alumni_theme_get_news_teaser( $alumni_hp_item_count ); ?>
 				<?php if ( $alumni_hp_teaser && $alumni_hp_teaser->have_posts() ) : ?>
 					<div class="alumni-homepage-slot-teaser-list">
 						<?php while ( $alumni_hp_teaser->have_posts() ) : $alumni_hp_teaser->the_post(); ?>
@@ -50,8 +52,8 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 					</div>
 				<?php endif; ?>
 			<?php elseif ( 'events' === $alumni_hp_system_key ) : ?>
-				<?php $alumni_hp_upcoming_events = alumni_theme_get_upcoming_events( 3 ); ?>
-				<?php $alumni_hp_past_events = alumni_theme_get_past_events( 3 ); ?>
+				<?php $alumni_hp_upcoming_events = alumni_theme_get_upcoming_events( $alumni_hp_item_count ); ?>
+				<?php $alumni_hp_past_events = alumni_theme_get_past_events( $alumni_hp_item_count ); ?>
 				<?php if ( $alumni_hp_upcoming_events ) : ?>
 					<h3 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '今後のイベント', 'alumni-theme' ); ?></h3>
 					<div class="alumni-homepage-slot-teaser-list">
@@ -77,6 +79,7 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 	if ( 'person_greeting_group' === $alumni_hp_slot['type'] ) {
 		$alumni_hp_group = \AlumniCore\Includes\Person_Greeting_Groups::instance()->get_group( $alumni_hp_slot['group_id'] );
 		$alumni_hp_group_url = \AlumniCore\Includes\Person_Greeting_Groups_Shortcode::get_group_url( $alumni_hp_slot['group_id'] );
+		$alumni_hp_block_heading = ! empty( $alumni_hp_slot['heading'] ) ? $alumni_hp_slot['heading'] : ( $alumni_hp_group ? $alumni_hp_group['name'] : '' );
 
 		if ( null === $alumni_hp_group ) {
 			return;
@@ -85,7 +88,7 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 		<div class="alumni-homepage-slot-person-greeting-group">
 			<h2 class="alumni-homepage-slot-title">
 				<?php if ( $alumni_hp_group_url ) : ?>
-					<a href="<?php echo esc_url( $alumni_hp_group_url ); ?>"><?php echo esc_html( $alumni_hp_group['name'] ); ?></a>
+					<a href="<?php echo esc_url( $alumni_hp_group_url ); ?>"><?php echo esc_html( $alumni_hp_block_heading ); ?></a>
 				<?php else : ?>
 					<?php echo esc_html( $alumni_hp_group['name'] ); ?>
 				<?php endif; ?>
@@ -104,6 +107,7 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 		$alumni_hp_content_terms    = alumni_theme_get_terms( $alumni_hp_content_post );
 		$alumni_hp_content_greeting = alumni_theme_get_person_greeting( $alumni_hp_content_post );
 		$alumni_hp_content_title    = $alumni_hp_content_terms ? $alumni_hp_content_terms['display_title'] : $alumni_hp_content_post->post_title;
+		$alumni_hp_content_title    = ! empty( $alumni_hp_slot['heading'] ) ? $alumni_hp_slot['heading'] : $alumni_hp_content_title;
 		$alumni_hp_content_excerpt  = wp_trim_words( wp_strip_all_tags( $alumni_hp_content_post->post_content ), 30 );
 		?>
 		<div class="alumni-homepage-slot-content">
