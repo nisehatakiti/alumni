@@ -90,8 +90,19 @@ class Settings_Page {
 						<td>
 							<input type="number" inputmode="numeric" id="alumni_core_first_graduation_year" name="first_graduation_year" class="small-text"
 								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
-								value="<?php echo esc_attr( $settings['first_graduation_year'] ); ?>" />
+								value="<?php echo esc_attr( self::first_graduation_year_display_value( $settings ) ); ?>" />
 							<p class="description"><?php esc_html_e( '例：1950 と設定すると、1950年卒業が第1期になります。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="alumni_core_association_founded_year"><?php esc_html_e( '同窓会組織創立年（任意）', 'alumni-core' ); ?></label>
+						</th>
+						<td>
+							<input type="number" inputmode="numeric" id="alumni_core_association_founded_year" name="association_founded_year" class="small-text"
+								min="<?php echo esc_attr( Settings::MIN_YEAR ); ?>" max="<?php echo esc_attr( Settings::max_year() ); ?>"
+								value="<?php echo esc_attr( $settings['association_founded_year'] ); ?>" />
+							<p class="description"><?php esc_html_e( '同窓会という組織そのものが発足した年です。学校創立年・第1期卒業年とは別の項目で、卒業期計算には使用されません（同窓会の沿革・周年記念などに利用します）。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -164,10 +175,56 @@ class Settings_Page {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'サイトナビゲーション', 'alumni-core' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'メニューの配置', 'alumni-core' ); ?></th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( 'メニューの配置', 'alumni-core' ); ?></legend>
+								<label>
+									<input type="radio" name="nav_layout" value="<?php echo esc_attr( Settings::NAV_LAYOUT_TOP ); ?>"
+										<?php checked( $settings['nav_layout'], Settings::NAV_LAYOUT_TOP ); ?> />
+									<?php esc_html_e( '上部メニュー', 'alumni-core' ); ?>
+								</label>
+								<br />
+								<label>
+									<input type="radio" name="nav_layout" value="<?php echo esc_attr( Settings::NAV_LAYOUT_SIDE ); ?>"
+										<?php checked( $settings['nav_layout'], Settings::NAV_LAYOUT_SIDE ); ?> />
+									<?php esc_html_e( '左サイドメニュー', 'alumni-core' ); ?>
+								</label>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'サイト全体のナビゲーションを、画面上部の横並びメニューにするか、画面左の縦並びメニューにするかを選べます。将来メニュー項目が増えても、この配置設定はそのまま使えます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
 				<?php submit_button( __( '設定を保存', 'alumni-core' ) ); ?>
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * The value to show in the 第1期卒業年 input. When 第1期卒業年 has never
+	 * been explicitly saved (i.e. is still '', the "未設定" sentinel — see
+	 * Settings::sanitize_year()), the input's initial value should track
+	 * 学校創立年 instead of a hardcoded "1950", so it follows 学校創立年
+	 * if that's changed before 第1期卒業年 is ever set.
+	 *
+	 * This only affects what's shown in the form; it never writes to the
+	 * database, so an already-saved 第1期卒業年 (including one explicitly
+	 * saved as empty) is never altered by this method.
+	 *
+	 * @param array $settings Current settings, as from Settings::get_all().
+	 * @return int|string
+	 */
+	private static function first_graduation_year_display_value( array $settings ) {
+		if ( '' !== $settings['first_graduation_year'] ) {
+			return $settings['first_graduation_year'];
+		}
+
+		return $settings['school_founded_year'];
 	}
 
 	/**

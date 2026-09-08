@@ -2,11 +2,22 @@
  * 学校写真の自動切替（フェード）。固定表示や、写真が1枚しかない場合は
  * 何もしない。最初の写真はサーバー側で is-active クラスが付与済みなので、
  * JavaScriptが無効/失敗してもその1枚は表示され続ける。
+ *
+ * 切替間隔は wp_localize_script() で渡される window.alumniSchoolPhotos.intervalMs
+ * を使う（functions.php 側の 写真の切替時間 設定）。値が読み取れない場合
+ * のみ既定の5秒にフォールバックする。
  */
 ( function () {
 	'use strict';
 
-	var INTERVAL_MS = 5000;
+	var DEFAULT_INTERVAL_MS = 5000;
+
+	function getIntervalMs() {
+		var configured = window.alumniSchoolPhotos && window.alumniSchoolPhotos.intervalMs;
+		var parsed = parseInt( configured, 10 );
+
+		return ( parsed > 0 ) ? parsed : DEFAULT_INTERVAL_MS;
+	}
 
 	document.addEventListener( 'DOMContentLoaded', function () {
 		try {
@@ -44,6 +55,6 @@
 			} catch ( error ) {
 				// Ignore a single failed tick rather than breaking the page.
 			}
-		}, INTERVAL_MS );
+		}, getIntervalMs() );
 	}
 } )();

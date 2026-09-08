@@ -11,16 +11,26 @@
 	} );
 
 	function initDisplayModeToggle() {
-		var radios = document.querySelectorAll( 'input[name="school_photo_display_mode"]' );
-		var row    = document.getElementById( 'alumni-photo-featured-row' );
+		var radios      = document.querySelectorAll( 'input[name="school_photo_display_mode"]' );
+		var featuredRow = document.getElementById( 'alumni-photo-featured-row' );
+		var intervalRow = document.getElementById( 'alumni-photo-interval-row' );
 
-		if ( ! radios.length || ! row ) {
+		if ( ! radios.length || ( ! featuredRow && ! intervalRow ) ) {
 			return;
 		}
 
 		function sync() {
 			var selected = document.querySelector( 'input[name="school_photo_display_mode"]:checked' );
-			row.style.display = ( selected && 'fixed' === selected.value ) ? '' : 'none';
+			var isFixed  = !! ( selected && 'fixed' === selected.value );
+
+			// 表示画像（固定表示）は固定表示の時だけ、写真の切替時間（自動
+			// 切替）は自動切替の時だけ意味を持つので、常に逆の表示状態にする。
+			if ( featuredRow ) {
+				featuredRow.style.display = isFixed ? '' : 'none';
+			}
+			if ( intervalRow ) {
+				intervalRow.style.display = isFixed ? 'none' : '';
+			}
 		}
 
 		for ( var i = 0; i < radios.length; i++ ) {

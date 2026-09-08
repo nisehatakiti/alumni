@@ -1,6 +1,13 @@
 <?php
 /**
- * Archive template for ニュース／イベント (/news-events/).
+ * Archive template for ニュース／イベント: the combined /news-events/
+ * archive only. The ニュース単独一覧(/news/)／イベント単独一覧(/events/)
+ * are separate auto-created 固定ページ
+ * (Modules\NewsEvents\Listing_Shortcode in Alumni Core), not this
+ * archive — a hand-rolled rewrite-based split listing here previously
+ * proved unreliable in real WordPress environments, so that split moved
+ * to the same auto-created-page pattern already used for 卒業期早見表・
+ * 役員一覧.
  *
  * WordPress only ever routes here when the alumni_news_event post type
  * (and its rewrite rules) are registered, i.e. when Alumni Core is

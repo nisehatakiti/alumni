@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 	</div><!-- .alumni-container -->
 </div><!-- #content -->
+</div><!-- #page-shell -->
 
 <footer id="colophon" class="site-footer">
 	<div class="alumni-container">

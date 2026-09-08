@@ -2,10 +2,16 @@
 /**
  * The front page template.
  *
- * Kept intentionally simple for this foundation phase: a short welcome
- * area plus the standard post loop. Dedicated sections (新着情報, 会長挨拶,
- * 沿革, Alumni Voices, ...) are introduced in later phases once Core
- * provides that data.
+ * トップページに表示する内容は、すべてAlumni Core側のデータ
+ * （同窓会ロゴ・学校写真・「同窓会 > トップページ設定」で組んだ
+ * スロットベースのセクション群）が担う。WordPress標準のメインクエリの
+ * ブログ投稿ループは、このテーマの情報設計には含まれない — もし
+ * 出してしまうと、「トップページの表示設定」がまだ「最新の投稿」の
+ * ままの環境や、WordPress既定の「Hello world!」サンプル投稿が削除
+ * されないままの環境で、意図しない標準投稿がトップページ本文にそのまま
+ * 表示されてしまう（実サイトで確認された不具合の根本原因）。標準の
+ * 投稿一覧そのものは、テーマの必須テンプレートであるindex.php
+ * （ブログインデックス／アーカイブの既定テンプレート）側に残っている。
  *
  * @package Alumni_Theme
  */
@@ -29,49 +35,25 @@ get_header();
 	</section>
 
 	<?php if ( alumni_theme_core_active() ) : ?>
+		<?php get_template_part( 'template-parts/alumni-logo' ); ?>
+	<?php endif; ?>
+
+	<?php if ( alumni_theme_core_active() ) : ?>
 		<?php get_template_part( 'template-parts/school-photos' ); ?>
 	<?php endif; ?>
 
 	<?php if ( alumni_theme_core_active() ) : ?>
-		<section class="front-news-events">
-			<div class="front-news-events-header">
-				<h2><?php esc_html_e( 'お知らせ・イベント', 'alumni-theme' ); ?></h2>
-				<a class="front-news-events-more" href="<?php echo esc_url( get_post_type_archive_link( alumni_core_news_events_post_type() ) ); ?>">
-					<?php esc_html_e( 'すべて見る', 'alumni-theme' ); ?>
-				</a>
-			</div>
-
-			<?php
-			$alumni_front_news_events = alumni_theme_get_news_events( array( 'posts_per_page' => 5 ) );
-			?>
-			<?php if ( $alumni_front_news_events && $alumni_front_news_events->have_posts() ) : ?>
-				<div class="alumni-news-events-grid">
-					<?php
-					while ( $alumni_front_news_events->have_posts() ) :
-						$alumni_front_news_events->the_post();
-						get_template_part( 'template-parts/news-event-card' );
-					endwhile;
-					wp_reset_postdata();
-					?>
-				</div>
-			<?php else : ?>
-				<p><?php esc_html_e( '現在、お知らせ・イベントはありません。', 'alumni-theme' ); ?></p>
-			<?php endif; ?>
-		</section>
+		<?php
+		// トップページのセクション構成（見出し・段数・各段の表示内容）は
+		// 「同窓会 > トップページ設定」画面から管理者が設定する
+		// （docs/top-page-slot-based-layout-design.md）。初期状態では、
+		// 以前このテンプレートに直接書かれていた「お知らせ・イベント」
+		// 「同窓会情報（役員・理事紹介／卒業期早見表／規約類）」の2セクション
+		// と同じ内容が既定値として自動的に用意される — 何も設定しなければ
+		// 見た目は変わらない。
+		get_template_part( 'template-parts/homepage-sections' );
+		?>
 	<?php endif; ?>
-
-	<section class="front-posts">
-		<?php if ( have_posts() ) : ?>
-			<?php
-			while ( have_posts() ) :
-				the_post();
-				get_template_part( 'template-parts/content' );
-			endwhile;
-			?>
-		<?php else : ?>
-			<p><?php esc_html_e( '表示できるコンテンツがありません。', 'alumni-theme' ); ?></p>
-		<?php endif; ?>
-	</section>
 </main>
 
 <?php

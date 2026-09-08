@@ -51,6 +51,22 @@ class Settings {
 	const PHOTO_MODE_SLIDESHOW = 'slideshow';
 
 	/**
+	 * 写真の切替時間（自動切替モード）の許容範囲（秒）と既定値。未設定、
+	 * または範囲外／不正な値は常にこの既定値にフォールバックする。
+	 */
+	const MIN_SLIDESHOW_INTERVAL     = 1;
+	const MAX_SLIDESHOW_INTERVAL     = 60;
+	const DEFAULT_SLIDESHOW_INTERVAL = 5;
+
+	/**
+	 * ナビゲーションのレイアウト種別。将来レイアウトが増えても、既定値と
+	 * 検証ロジックがここ一箇所で揃うようにする。
+	 */
+	const NAV_LAYOUT_TOP     = 'top';
+	const NAV_LAYOUT_SIDE    = 'side';
+	const DEFAULT_NAV_LAYOUT = self::NAV_LAYOUT_TOP;
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Settings|null
@@ -97,6 +113,10 @@ class Settings {
 			// overwritten by this default.
 			'school_founded_year'        => 1950,
 			'first_graduation_year'      => '',
+			// 学校創立年・第1期卒業年とは完全に別概念（同窓会という組織の
+			// 創立年）。卒業期計算には一切使用しない — 沿革・周年計算用途
+			// のみ。未設定時は安全に空値として扱う。
+			'association_founded_year'   => '',
 			'color_feature_enabled'      => false,
 			'color_cycle'                => 1,
 			'colors'                     => array( 1 => '#cc0000' ),
@@ -107,6 +127,12 @@ class Settings {
 			'school_photo_ids'           => array(),
 			'school_photo_display_mode'  => self::PHOTO_MODE_FIXED,
 			'school_photo_featured_id'   => 0,
+			// 自動切替（スライドショー）モードでのみ使用され、固定表示では
+			// 無視される。
+			'school_photo_slideshow_interval' => self::DEFAULT_SLIDESHOW_INTERVAL,
+			// 上部メニュー／左サイドメニューの切替。将来、メニュー管理機能が
+			// 拡張されてもこの1フィールドの意味は変わらない設計にしている。
+			'nav_layout'                       => self::DEFAULT_NAV_LAYOUT,
 		);
 	}
 
@@ -238,8 +264,9 @@ class Settings {
 		$sanitized = array(
 			'association_name'     => isset( $raw['association_name'] ) ? sanitize_text_field( wp_unslash( $raw['association_name'] ) ) : $fallback['association_name'],
 			'school_name'           => isset( $raw['school_name'] ) ? sanitize_text_field( wp_unslash( $raw['school_name'] ) ) : $fallback['school_name'],
-			'school_founded_year'   => $this->sanitize_year( isset( $raw['school_founded_year'] ) ? $raw['school_founded_year'] : '' ),
-			'first_graduation_year' => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
+			'school_founded_year'      => $this->sanitize_year( isset( $raw['school_founded_year'] ) ? $raw['school_founded_year'] : '' ),
+			'first_graduation_year'    => $this->sanitize_year( isset( $raw['first_graduation_year'] ) ? $raw['first_graduation_year'] : '' ),
+			'association_founded_year' => $this->sanitize_year( isset( $raw['association_founded_year'] ) ? $raw['association_founded_year'] : '' ),
 			'color_feature_enabled' => ! empty( $raw['color_feature_enabled'] ),
 			'color_cycle'           => isset( $raw['color_cycle'] ) ? min( self::MAX_COLOR_CYCLE, max( 1, absint( $raw['color_cycle'] ) ) ) : $fallback['color_cycle'],
 			// array_key_exists() (not isset()) so a genuinely missing key
@@ -250,9 +277,11 @@ class Settings {
 			'school_emblem_id'      => array_key_exists( 'school_emblem_id', $raw ) ? self::sanitize_attachment_id( $raw['school_emblem_id'] ) : $fallback['school_emblem_id'],
 			'alumni_logo_id'        => array_key_exists( 'alumni_logo_id', $raw ) ? self::sanitize_attachment_id( $raw['alumni_logo_id'] ) : $fallback['alumni_logo_id'],
 			// Not part of the 基本設定 form — always carried over as-is.
-			'school_photo_ids'          => $fallback['school_photo_ids'],
-			'school_photo_display_mode' => $fallback['school_photo_display_mode'],
-			'school_photo_featured_id'  => $fallback['school_photo_featured_id'],
+			'school_photo_ids'                => $fallback['school_photo_ids'],
+			'school_photo_display_mode'       => $fallback['school_photo_display_mode'],
+			'school_photo_featured_id'        => $fallback['school_photo_featured_id'],
+			'school_photo_slideshow_interval' => $fallback['school_photo_slideshow_interval'],
+			'nav_layout'            => isset( $raw['nav_layout'] ) ? self::sanitize_nav_layout( $raw['nav_layout'] ) : $fallback['nav_layout'],
 		);
 
 		$cycle  = $sanitized['color_cycle'];
@@ -391,5 +420,48 @@ class Settings {
 	 */
 	public static function sanitize_display_mode( $raw ) {
 		return self::PHOTO_MODE_SLIDESHOW === $raw ? self::PHOTO_MODE_SLIDESHOW : self::PHOTO_MODE_FIXED;
+	}
+
+	/**
+	 * Validates a 写真の切替時間（秒）submission: integers only, clamped to
+	 * [MIN_SLIDESHOW_INTERVAL, MAX_SLIDESHOW_INTERVAL]. Anything empty,
+	 * non-numeric, or non-integer (e.g. "5.5") falls back to
+	 * self::DEFAULT_SLIDESHOW_INTERVAL rather than being silently truncated
+	 * or rejected outright — this setting is only ever cosmetic (a
+	 * slideshow timing), so a safe default is preferable to blocking save.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return int An integer within the allowed range.
+	 */
+	public static function sanitize_slideshow_interval( $raw ) {
+		if ( '' === $raw || null === $raw || ! is_numeric( $raw ) ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		if ( (string) (int) $raw !== (string) ( $raw + 0 ) ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		$seconds = (int) $raw;
+
+		if ( $seconds < self::MIN_SLIDESHOW_INTERVAL || $seconds > self::MAX_SLIDESHOW_INTERVAL ) {
+			return self::DEFAULT_SLIDESHOW_INTERVAL;
+		}
+
+		return $seconds;
+	}
+
+	/**
+	 * Validates a nav_layout submission, defaulting to
+	 * self::DEFAULT_NAV_LAYOUT for anything unrecognized (including a
+	 * value from a future/older version of this setting) — this only ever
+	 * controls a cosmetic layout choice, so a safe default is preferable
+	 * to blocking save.
+	 *
+	 * @param mixed $raw Raw form value.
+	 * @return string self::NAV_LAYOUT_TOP or self::NAV_LAYOUT_SIDE.
+	 */
+	public static function sanitize_nav_layout( $raw ) {
+		return self::NAV_LAYOUT_SIDE === $raw ? self::NAV_LAYOUT_SIDE : self::NAV_LAYOUT_TOP;
 	}
 }

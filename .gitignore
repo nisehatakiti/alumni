@@ -1,0 +1,5 @@
+# Release ZIPs are build artifacts, reproducible via
+# scripts/build-release-zips.sh — not committed to the repo.
+/dist/
+
+.DS_Store

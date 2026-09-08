@@ -10,6 +10,13 @@ namespace AlumniCore\Admin;
 use AlumniCore\Admin\Pages\Dashboard_Page;
 use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
+use AlumniCore\Admin\Pages\Officers_Page;
+use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
+use AlumniCore\Admin\Pages\Terms_Page;
+use AlumniCore\Admin\Pages\Homepage_Page;
+use AlumniCore\Admin\Pages\Menu_Page;
+use AlumniCore\Admin\Pages\Org_Chart_Page;
+use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -56,6 +63,48 @@ class Admin {
 	private $school_photos_page;
 
 	/**
+	 * 役員・理事紹介 screen handler.
+	 *
+	 * @var Officers_Page
+	 */
+	private $officers_page;
+
+	/**
+	 * 卒業期早見表 screen handler.
+	 *
+	 * @var Graduation_Lookup_Page
+	 */
+	private $graduation_lookup_page;
+
+	/**
+	 * 規約類 screen handler.
+	 *
+	 * @var Terms_Page
+	 */
+	private $terms_page;
+
+	/**
+	 * トップページ設定 screen handler.
+	 *
+	 * @var Homepage_Page
+	 */
+	private $homepage_page;
+
+	/**
+	 * メニュー構成 screen handler.
+	 *
+	 * @var Menu_Page
+	 */
+	private $menu_page;
+
+	/**
+	 * 同窓会組織図 screen handler.
+	 *
+	 * @var Org_Chart_Page
+	 */
+	private $org_chart_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -72,17 +121,51 @@ class Admin {
 	private $school_photos_hook = '';
 
 	/**
+	 * Hook suffix for 役員・理事紹介, as returned by add_submenu_page().
+	 * Used to scope its admin JS to just this screen.
+	 *
+	 * @var string
+	 */
+	private $officers_hook = '';
+
+	/**
 	 * Registers WordPress hooks.
 	 */
 	public function run() {
-		$this->dashboard_page     = new Dashboard_Page();
-		$this->settings_page      = new Settings_Page();
-		$this->school_photos_page = new School_Photos_Page();
+		$this->dashboard_page         = new Dashboard_Page();
+		$this->settings_page          = new Settings_Page();
+		$this->school_photos_page     = new School_Photos_Page();
+		$this->officers_page          = new Officers_Page();
+		$this->graduation_lookup_page = new Graduation_Lookup_Page();
+		$this->terms_page             = new Terms_Page();
+		$this->homepage_page           = new Homepage_Page();
+		$this->menu_page                = new Menu_Page();
+		$this->org_chart_page           = new Org_Chart_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_homepage_section', array( $this->homepage_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_delete_homepage_section', array( $this->homepage_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_homepage_section', array( $this->homepage_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_save_homepage_sections', array( $this->homepage_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_create_menu_folder', array( $this->menu_page, 'handle_create_folder' ) );
+		add_action( 'admin_post_alumni_core_create_menu_content', array( $this->menu_page, 'handle_create_content' ) );
+		add_action( 'admin_post_alumni_core_update_menu_item', array( $this->menu_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_menu_item', array( $this->menu_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_menu_item', array( $this->menu_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_indent_menu_item', array( $this->menu_page, 'handle_indent' ) );
+		add_action( 'admin_post_alumni_core_outdent_menu_item', array( $this->menu_page, 'handle_outdent' ) );
+		add_action( 'admin_post_alumni_core_apply_standard_menu_preset', array( $this->menu_page, 'handle_apply_standard_preset' ) );
+		add_action( 'admin_post_alumni_core_create_org_chart_node', array( $this->org_chart_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_update_org_chart_node', array( $this->org_chart_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_org_chart_node', array( $this->org_chart_page, 'handle_move' ) );
+		add_action( 'admin_post_alumni_core_reparent_org_chart_node', array( $this->org_chart_page, 'handle_reparent' ) );
 	}
 
 	/**
@@ -117,6 +200,26 @@ class Admin {
 			array( $this->settings_page, 'render' )
 		);
 
+		// 卒業期早見表 is placed right after 基本設定 (its actual data
+		// source — 学校創立年／第1期卒業年／卒業期カラー all live there),
+		// deliberately NOT adjacent to the コンテンツ / 人物挨拶 entries
+		// below. 卒業期早見表 has no relationship to 人物挨拶: it's an
+		// independent, always-available system page (see
+		// Graduation_Lookup_Shortcode), not "a kind of content" — this
+		// menu ordering, and the flat (non-indented) labels on the コンテ
+		// ンツ shortcuts further down, both exist so the admin screen
+		// doesn't visually suggest a parent/child relationship that
+		// doesn't exist in the data or the URL structure (/graduation-lookup/
+		// vs /contents/...  are completely independent).
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '卒業期早見表', 'alumni-core' ),
+			__( '卒業期早見表', 'alumni-core' ),
+			self::CAPABILITY,
+			Graduation_Lookup_Page::SLUG,
+			array( $this->graduation_lookup_page, 'render' )
+		);
+
 		$this->school_photos_hook = add_submenu_page(
 			self::MENU_SLUG,
 			__( '学校写真', 'alumni-core' ),
@@ -124,6 +227,98 @@ class Admin {
 			self::CAPABILITY,
 			School_Photos_Page::SLUG,
 			array( $this->school_photos_page, 'render' )
+		);
+
+		$this->officers_hook = add_submenu_page(
+			self::MENU_SLUG,
+			__( '役員・理事紹介', 'alumni-core' ),
+			__( '役員・理事紹介', 'alumni-core' ),
+			self::CAPABILITY,
+			Officers_Page::SLUG,
+			array( $this->officers_page, 'render' )
+		);
+
+		// WordPress already adds a generic 「すべてのコンテンツ」/「新規追加」
+		// pair for the alumni_content CPT (via its show_in_menu => self::MENU_SLUG),
+		// but nothing there hints that this single CPT is how 校長挨拶・
+		// 会長挨拶 etc. (人物挨拶) or 沿革・お問い合わせ等 (自由コンテンツ)
+		// get created. These two shortcuts link straight to the 新規追加
+		// screen with the intended種別 pre-selected — see
+		// Content_Meta_Box::render()'s use of $_GET[Content_Post_Type::QUERY_VAR_KIND].
+		// No new post type or admin screen is introduced: both still save
+		// through the same alumni_content CPT + _alumni_content_kind meta.
+		// Labels are flat siblings (no tree-drawing indentation) — they
+		// relate only to "すべてのコンテンツ" above them, not to 卒業期早見表.
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '人物挨拶を追加', 'alumni-core' ),
+			__( '＋ 人物挨拶を追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '自由コンテンツを追加', 'alumni-core' ),
+			__( '＋ 自由コンテンツを追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
+		);
+
+		// 規約類の新規作成も他の2つと同じ「入口」パターンの専用クイック
+		// リンクを持つ — これがないと、WordPressが自動追加する汎用の
+		// 「コンテンツ > 新規追加」（種別クエリ文字列なし）から規約類を
+		// 作ろうとした際、Content_Post_Type::maybe_use_block_editor()
+		// が種別を判別できずブロックエディターを無効化したままにしてしまい
+		// （本文が入力できない不具合の根本原因だった）、後から「規約類」を
+		// 選び直す手段（種別ラジオボタン）ももう存在しないため、規約類だけ
+		// 専用の入口がないと詰んでしまう。
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '規約類を追加', 'alumni-core' ),
+			__( '＋ 規約類を追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
+		);
+
+		// 一覧そのもの（既存投稿の管理・並び順確認用）は、他のコンテンツと
+		// 混ざらない専用の一覧screen（Terms_Page）として引き続き持つ —
+		// 同窓会規約・会則・個人情報保護方針などを他のコンテンツと一緒くた
+		// にせず、まとめて見渡せるようにするため。
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '規約類', 'alumni-core' ),
+			__( '規約類', 'alumni-core' ),
+			self::CAPABILITY,
+			Terms_Page::SLUG,
+			array( $this->terms_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'トップページ設定', 'alumni-core' ),
+			__( 'トップページ設定', 'alumni-core' ),
+			self::CAPABILITY,
+			Homepage_Page::SLUG,
+			array( $this->homepage_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( 'メニュー構成', 'alumni-core' ),
+			__( 'メニュー構成', 'alumni-core' ),
+			self::CAPABILITY,
+			Menu_Page::SLUG,
+			array( $this->menu_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '同窓会組織図', 'alumni-core' ),
+			__( '同窓会組織図', 'alumni-core' ),
+			self::CAPABILITY,
+			Org_Chart_Page::SLUG,
+			array( $this->org_chart_page, 'render' )
 		);
 
 		/**
@@ -166,6 +361,19 @@ class Admin {
 
 		$is_settings_page      = $this->settings_hook === $hook_suffix;
 		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
+		$is_officers_page      = $this->officers_hook === $hook_suffix;
+
+		if ( $is_officers_page ) {
+			// No wp.media() here: 役員・理事紹介 only has text/number/select
+			// fields (リンク先コンテンツ is a <select>, not an image picker).
+			wp_enqueue_script(
+				'alumni-core-officers-admin',
+				ALUMNI_CORE_URL . 'admin/assets/js/officers-admin.js',
+				array(),
+				ALUMNI_CORE_VERSION,
+				true
+			);
+		}
 
 		if ( ! $is_settings_page && ! $is_school_photos_page ) {
 			return;

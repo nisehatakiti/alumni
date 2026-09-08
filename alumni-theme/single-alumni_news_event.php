@@ -38,6 +38,19 @@ while ( have_posts() ) :
 				<?php if ( ! $alumni_news_event_is_event && $alumni_news_event_date ) : ?>
 					<time class="alumni-news-event-date"><?php echo esc_html( $alumni_news_event_date ); ?></time>
 				<?php endif; ?>
+
+				<?php $alumni_updated_at = alumni_theme_get_updated_at(); ?>
+				<?php if ( $alumni_updated_at ) : ?>
+					<p class="alumni-updated-at">
+						<?php
+						printf(
+							/* translators: %s: formatted update date, e.g. "2026年9月1日" */
+							esc_html__( '更新日：%s', 'alumni-theme' ),
+							esc_html( $alumni_updated_at )
+						);
+						?>
+					</p>
+				<?php endif; ?>
 			</header>
 
 			<?php if ( has_post_thumbnail() ) : ?>

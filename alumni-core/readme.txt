@@ -1,5 +1,5 @@
 === Alumni Core ===
-Contributors: alumni-project
+Contributors: nisehatakiti
 Tags: alumni, education, community
 Requires at least: 5.9
 Tested up to: 6.6
