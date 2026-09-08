@@ -236,6 +236,20 @@ class Menu_Structure {
 		$director_list_id = self::find_or_create_officer_list_by_name( __( '理事一覧', 'alumni-core' ) );
 		$this->ensure_child_ref( $officers_folder_id, self::REF_OFFICER_LIST, $director_list_id, $created, $skipped );
 
+		// 人物挨拶グループ・役員一覧の公開ページは、通常はadmin_initフック
+		// (Person_Greeting_Groups_Shortcode::maybe_create_pages()/
+		// Officers_Shortcode::maybe_create_pages())で遅延作成される設計だが、
+		// このプリセット適用自体がwp-admin上の操作(admin-post.php経由)である
+		// ことを利用し、ここで即座に作成してしまう — 「標準メニューを設定」
+		// ボタンを押した直後から、公開ナビにリンクが正しく表示される
+		// (ページが無いためresolve_item()がnullを返し、項目が消えたまま
+		// に見える)ことを保証するため。admin_initの発火タイミングに依存
+		// させない(実サイトで、admin_initがこの機能追加後にまだ一度も
+		// 走っていない状態が続き、人物挨拶グループの項目だけナビに出ない
+		// 不具合が実際に発生したため)。
+		Person_Greeting_Groups_Shortcode::maybe_create_pages();
+		Officers_Shortcode::maybe_create_pages();
+
 		foreach (
 			array(
 				Homepage_Sections::SYSTEM_TERMS_INDEX,
