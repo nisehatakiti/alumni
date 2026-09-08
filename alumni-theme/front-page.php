@@ -2,10 +2,16 @@
 /**
  * The front page template.
  *
- * Kept intentionally simple for this foundation phase: a short welcome
- * area plus the standard post loop. Dedicated sections (新着情報, 会長挨拶,
- * 沿革, Alumni Voices, ...) are introduced in later phases once Core
- * provides that data.
+ * トップページに表示する内容は、すべてAlumni Core側のデータ
+ * （同窓会ロゴ・学校写真・「同窓会 > トップページ設定」で組んだ
+ * スロットベースのセクション群）が担う。WordPress標準のメインクエリの
+ * ブログ投稿ループは、このテーマの情報設計には含まれない — もし
+ * 出してしまうと、「トップページの表示設定」がまだ「最新の投稿」の
+ * ままの環境や、WordPress既定の「Hello world!」サンプル投稿が削除
+ * されないままの環境で、意図しない標準投稿がトップページ本文にそのまま
+ * 表示されてしまう（実サイトで確認された不具合の根本原因）。標準の
+ * 投稿一覧そのものは、テーマの必須テンプレートであるindex.php
+ * （ブログインデックス／アーカイブの既定テンプレート）側に残っている。
  *
  * @package Alumni_Theme
  */
@@ -48,19 +54,6 @@ get_header();
 		get_template_part( 'template-parts/homepage-sections' );
 		?>
 	<?php endif; ?>
-
-	<section class="front-posts">
-		<?php if ( have_posts() ) : ?>
-			<?php
-			while ( have_posts() ) :
-				the_post();
-				get_template_part( 'template-parts/content' );
-			endwhile;
-			?>
-		<?php else : ?>
-			<p><?php esc_html_e( '表示できるコンテンツがありません。', 'alumni-theme' ); ?></p>
-		<?php endif; ?>
-	</section>
 </main>
 
 <?php

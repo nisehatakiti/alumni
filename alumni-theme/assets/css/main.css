@@ -200,30 +200,44 @@
 	padding: 0.4em 0.5em;
 }
 
-/* 現在表示中のページ、およびその祖先(現在ページが配下にある
-   フォルダ/コンテンツ項目)を、通常状態と視覚的にはっきり区別する
-   （反転表示：背景色+白文字）。alumni_theme_render_menu_items_with_state()
-   がli要素に付与する.alumni-nav-item-current／
-   .alumni-nav-item-current-ancestorが起点 — リンク・フォルダの
-   開閉トグル・子を持たない空フォルダのspan、いずれの項目種別でも
-   同じ見た目になるようまとめて指定する。 */
-.alumni-nav-item-current > a,
-.alumni-nav-item-current > .alumni-nav-drilldown-toggle,
-.alumni-nav-item-current > .alumni-nav-empty-folder,
+/* 通常状態のメニュー項目は背景なしの単純なテキストリンクのまま
+   （ボタンのような塗りつぶし・強い角丸は付けない）。hover／現在表示中の
+   ページ／その祖先(現在ページが配下にあるフォルダ/コンテンツ項目)は、
+   「選択状態が分かる程度」の控えめな表現に留める — 以前は反転表示
+   （背景色#2c5aa0の塗りつぶし+白文字+角丸）にしていたが、ドロップダウンを
+   開くと複数項目が同時に(現在ページ自身+その祖先の階層すべてが)この
+   状態になり得るため、塗りつぶしのままだと「青いボタンが並んでいる」
+   ように見えて煩わしいという指摘を受け、背景の塗りつぶしをやめて
+   文字色+下線相当の表現へ変更した(実際のbox-heightに影響しないよう
+   borderではなくinset box-shadowで下線を表現し、トップレベル項目の
+   高さ統一を崩さない)。 */
+.alumni-nav-menu a:hover,
+.alumni-nav-menu .alumni-nav-drilldown-toggle:hover,
+.alumni-nav-menu .alumni-nav-drilldown-caret:hover {
+	color: #2c5aa0;
+	background: rgba(44, 90, 160, 0.08);
+}
+
 .alumni-nav-item-current-ancestor > a,
 .alumni-nav-item-current-ancestor > .alumni-nav-drilldown-toggle,
 .alumni-nav-item-current-ancestor > .alumni-nav-empty-folder {
-	background: #2c5aa0;
-	color: #fff;
-	border-radius: 0.3em;
+	color: #2c5aa0;
+	font-weight: 700;
+}
+
+.alumni-nav-item-current > a,
+.alumni-nav-item-current > .alumni-nav-drilldown-toggle,
+.alumni-nav-item-current > .alumni-nav-empty-folder {
+	color: #2c5aa0;
+	font-weight: 700;
+	box-shadow: inset 0 -2px 0 #2c5aa0;
 }
 
 .alumni-nav-item-current > a:hover,
 .alumni-nav-item-current > .alumni-nav-drilldown-toggle:hover,
 .alumni-nav-item-current-ancestor > a:hover,
 .alumni-nav-item-current-ancestor > .alumni-nav-drilldown-toggle:hover {
-	background: #244a85;
-	color: #fff;
+	background: rgba(44, 90, 160, 0.08);
 }
 
 .main-navigation .alumni-nav-submenu {
