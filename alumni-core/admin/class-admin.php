@@ -149,10 +149,7 @@ class Admin {
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
-		add_action( 'admin_post_alumni_core_create_homepage_section', array( $this->homepage_page, 'handle_create' ) );
-		add_action( 'admin_post_alumni_core_delete_homepage_section', array( $this->homepage_page, 'handle_delete' ) );
-		add_action( 'admin_post_alumni_core_move_homepage_section', array( $this->homepage_page, 'handle_move' ) );
-		add_action( 'admin_post_alumni_core_save_homepage_sections', array( $this->homepage_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_homepage_grid', array( $this->homepage_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_menu_folder', array( $this->menu_page, 'handle_create_folder' ) );
 		add_action( 'admin_post_alumni_core_create_menu_content', array( $this->menu_page, 'handle_create_content' ) );
 		add_action( 'admin_post_alumni_core_update_menu_item', array( $this->menu_page, 'handle_update' ) );
