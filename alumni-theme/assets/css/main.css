@@ -982,3 +982,52 @@
 	padding: 0.75em 0;
 	font-size: 1.05em;
 }
+
+
+/* Homepage Grid V2: fixed 3 columns × 2 rows. Core controls only block
+   assignments and vertical merges; this Theme owns the responsive layout. */
+.alumni-homepage-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-rows: auto auto;
+	gap: 1.5em;
+	margin-bottom: 2em;
+}
+
+.alumni-homepage-grid-block {
+	min-width: 0;
+}
+
+.alumni-homepage-grid-block-a { grid-column: 1; grid-row: 1; }
+.alumni-homepage-grid-block-b { grid-column: 2; grid-row: 1; }
+.alumni-homepage-grid-block-c { grid-column: 3; grid-row: 1; }
+.alumni-homepage-grid-block-d { grid-column: 1; grid-row: 2; }
+.alumni-homepage-grid-block-e { grid-column: 2; grid-row: 2; }
+.alumni-homepage-grid-block-f { grid-column: 3; grid-row: 2; }
+
+.alumni-homepage-grid-block-a.is-vertically-merged,
+.alumni-homepage-grid-block-b.is-vertically-merged,
+.alumni-homepage-grid-block-c.is-vertically-merged {
+	grid-row: 1 / span 2;
+}
+
+@media (max-width: 760px) {
+	.alumni-homepage-grid {
+		grid-template-columns: 1fr;
+		grid-template-rows: none;
+	}
+
+	.alumni-homepage-grid-block,
+	.alumni-homepage-grid-block-a,
+	.alumni-homepage-grid-block-b,
+	.alumni-homepage-grid-block-c,
+	.alumni-homepage-grid-block-d,
+	.alumni-homepage-grid-block-e,
+	.alumni-homepage-grid-block-f,
+	.alumni-homepage-grid-block-a.is-vertically-merged,
+	.alumni-homepage-grid-block-b.is-vertically-merged,
+	.alumni-homepage-grid-block-c.is-vertically-merged {
+		grid-column: auto;
+		grid-row: auto;
+	}
+}
