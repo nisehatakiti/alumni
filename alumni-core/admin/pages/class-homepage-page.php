@@ -67,8 +67,23 @@ class Homepage_Page {
 
 							<label>
 								<?php esc_html_e( '表示内容', 'alumni-core' ); ?><br />
-								<?php $this->render_slot_select( "cells[{$cell_key}]", $slot ); ?>
+								<?php $this->render_slot_select( "cells[{$cell_key}][value]", $slot ); ?>
 							</label>
+
+							<p>
+								<label>
+									<?php esc_html_e( '見出し（任意）', 'alumni-core' ); ?><br />
+									<input type="text" class="widefat" name="cells[<?php echo esc_attr( $cell_key ); ?>][heading]" value="<?php echo esc_attr( isset( $slot['heading'] ) ? $slot['heading'] : '' ); ?>" />
+								</label>
+							</p>
+
+							<p>
+								<label>
+									<?php esc_html_e( '表示件数', 'alumni-core' ); ?><br />
+									<input type="number" min="1" max="10" name="cells[<?php echo esc_attr( $cell_key ); ?>][item_count]" value="<?php echo esc_attr( isset( $slot['item_count'] ) ? (int) $slot['item_count'] : 3 ); ?>" />
+								</label>
+								<span class="description"><?php esc_html_e( 'ニュース・イベント等の一覧ブロックに使用します。', 'alumni-core' ); ?></span>
+							</p>
 
 							<?php if ( $top_cell ) : ?>
 								<p class="alumni-homepage-grid-merge">
@@ -181,7 +196,11 @@ class Homepage_Page {
 
 		$cells = array();
 		foreach ( Homepage_Sections::cell_keys() as $cell_key ) {
-			$cells[ $cell_key ] = self::parse_slot_value( isset( $raw_cells[ $cell_key ] ) ? (string) $raw_cells[ $cell_key ] : 'none' );
+			$cell_data = isset( $raw_cells[ $cell_key ] ) && is_array( $raw_cells[ $cell_key ] ) ? $raw_cells[ $cell_key ] : array();
+			$slot = self::parse_slot_value( isset( $cell_data['value'] ) ? (string) $cell_data['value'] : 'none' );
+			$slot['heading'] = isset( $cell_data['heading'] ) ? sanitize_text_field( $cell_data['heading'] ) : '';
+			$slot['item_count'] = isset( $cell_data['item_count'] ) ? absint( $cell_data['item_count'] ) : 3;
+			$cells[ $cell_key ] = $slot;
 		}
 
 		$merged = array();
