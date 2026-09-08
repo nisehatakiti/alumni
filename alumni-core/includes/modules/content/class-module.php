@@ -52,6 +52,13 @@ class Module {
 		// (Post_Type::maybe_use_block_editor()参照)。
 		add_filter( 'use_block_editor_for_post_type', array( Post_Type::class, 'maybe_use_block_editor' ), 10, 2 );
 
+		// 人物挨拶は専用フォーム内の「本文」だけを入力箇所にする。規約類は
+		// 上のフィルターでブロックエディターを使い続けるため、CPT全体では
+		// editor supportを残したまま、人物挨拶の編集リクエストだけで
+		// WordPress標準エディターを外す。
+		add_action( 'load-post.php', array( Post_Type::class, 'maybe_hide_person_greeting_editor' ) );
+		add_action( 'load-post-new.php', array( Post_Type::class, 'maybe_hide_person_greeting_editor' ) );
+
 		$meta_box = new Content_Meta_Box();
 		add_action( 'add_meta_boxes', array( $meta_box, 'register' ) );
 		add_action( 'admin_enqueue_scripts', array( $meta_box, 'enqueue_assets' ) );
