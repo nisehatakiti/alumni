@@ -928,12 +928,12 @@ function alumni_theme_render_menu_items_with_state( array $nodes, $current_path 
  *
  * @return array[]
  */
-function alumni_theme_get_homepage_sections() {
+function alumni_theme_get_homepage_grid() {
 	if ( ! alumni_theme_core_active() ) {
 		return array();
 	}
 
-	return alumni_core_get_homepage_sections();
+	return function_exists( 'alumni_core_get_homepage_grid' ) ? alumni_core_get_homepage_grid() : array();
 }
 
 /**

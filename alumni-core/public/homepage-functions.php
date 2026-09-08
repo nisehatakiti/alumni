@@ -30,7 +30,18 @@ if ( ! function_exists( 'alumni_core_get_homepage_sections' ) ) {
 	 * )
 	 */
 	function alumni_core_get_homepage_sections() {
-		return \AlumniCore\Includes\Homepage_Sections::instance()->get_all();
+		return \AlumniCore\Includes\Homepage_Sections::instance()->get_grid();
+	}
+}
+
+if ( ! function_exists( 'alumni_core_get_homepage_grid' ) ) {
+	/**
+	 * Fixed 3×2 Homepage Grid.
+	 *
+	 * @return array
+	 */
+	function alumni_core_get_homepage_grid() {
+		return \AlumniCore\Includes\Homepage_Sections::instance()->get_grid();
 	}
 }
 

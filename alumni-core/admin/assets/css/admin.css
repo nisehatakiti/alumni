@@ -301,3 +301,52 @@
 	max-width: 480px;
 	margin-bottom: 2em;
 }
+
+
+/* トップページ設定 V2: 固定3×2 Homepage Grid。A〜Fをそのまま視覚的に
+   並べ、管理者がセル単位で表示内容を選べるようにする。 */
+.alumni-homepage-grid-admin {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(220px, 1fr));
+	gap: 1em;
+	max-width: 1180px;
+	margin-top: 1.5em;
+}
+
+.alumni-homepage-grid-cell {
+	min-width: 0;
+	margin: 0;
+	padding: 1em;
+	border: 1px solid #c3c4c7;
+	background: #fff;
+}
+
+.alumni-homepage-grid-cell legend {
+	font-weight: 600;
+	padding: 0 0.25em;
+}
+
+.alumni-homepage-grid-cell select {
+	width: 100%;
+	max-width: 100%;
+}
+
+.alumni-homepage-grid-merge {
+	margin: 1em 0 0;
+}
+
+.alumni-homepage-grid-cell.is-merged-child {
+	background: #f6f7f7;
+}
+
+@media (max-width: 900px) {
+	.alumni-homepage-grid-admin {
+		grid-template-columns: repeat(2, minmax(220px, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.alumni-homepage-grid-admin {
+		grid-template-columns: 1fr;
+	}
+}
