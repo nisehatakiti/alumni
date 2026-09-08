@@ -90,7 +90,7 @@ $alumni_hp_render_block = static function( array $alumni_hp_slot ) {
 				<?php if ( $alumni_hp_group_url ) : ?>
 					<a href="<?php echo esc_url( $alumni_hp_group_url ); ?>"><?php echo esc_html( $alumni_hp_block_heading ); ?></a>
 				<?php else : ?>
-					<?php echo esc_html( $alumni_hp_group['name'] ); ?>
+					<?php echo esc_html( $alumni_hp_block_heading ); ?>
 				<?php endif; ?>
 			</h2>
 		</div>
