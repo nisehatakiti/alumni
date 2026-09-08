@@ -61,12 +61,6 @@ if ( ! function_exists( 'alumni_core_get_person_greetings_query' ) ) {
 			'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_PERSON_GREETING,
 		);
 
-		// wp_parse_args()はキーが衝突した場合、配列を丸ごと上書きするだけ
-		// (再帰マージではない)ため、$argsに独自のmeta_query(例:
-		// alumni_core_get_person_greeting_group_members()が渡す
-		// グループID絞り込み句)が含まれていると、そちらでこの関数自身の
-		// kind絞り込み句が丸ごと消えてしまう(またはその逆)。ここは両方の
-		// 句が必ず共存するよう、meta_queryだけを明示的に配列結合する。
 		$existing_meta_query = ( isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ) ? $args['meta_query'] : array();
 		$args['meta_query']  = array_merge( array( $kind_clause ), $existing_meta_query );
 
@@ -76,11 +70,12 @@ if ( ! function_exists( 'alumni_core_get_person_greetings_query' ) ) {
 
 if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
 	/**
-	 * 指定した人物挨拶グループ（Person_Greeting_Groups）に属する、公開済み
-	 * 人物挨拶コンテンツを歴代順(menu_order昇順、任期を管理する場合の並び順
-	 * と同じ列を規約類の表示順と同様に流用)で返す。
+	 * 指定した人物挨拶グループに属する公開済み人物挨拶を返す。
 	 *
-	 * @param string $group_id
+	 * 表示順は管理画面で指定した menu_order の昇順とし、
+	 * 同一 menu_order の場合は投稿 ID の昇順で安定的に並べる。
+	 *
+	 * @param string $group_id グループID。
 	 * @return WP_Post[]
 	 */
 	function alumni_core_get_person_greeting_group_members( $group_id ) {
@@ -97,8 +92,10 @@ if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
 					),
 				),
 				'posts_per_page' => -1,
-				'orderby'        => 'menu_order',
-				'order'          => 'ASC',
+				'orderby'        => array(
+					'menu_order' => 'ASC',
+					'ID'         => 'ASC',
+				),
 			)
 		);
 
@@ -107,14 +104,6 @@ if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
 }
 
 if ( ! function_exists( 'alumni_core_get_content' ) ) {
-	/**
-	 * A single published コンテンツ post, or null if $id doesn't resolve to
-	 * one (wrong post type, unpublished, or deleted) — themes never need
-	 * to check the post type themselves.
-	 *
-	 * @param int $id Post ID.
-	 * @return WP_Post|null
-	 */
 	function alumni_core_get_content( $id ) {
 		$post = get_post( (int) $id );
 
@@ -127,11 +116,6 @@ if ( ! function_exists( 'alumni_core_get_content' ) ) {
 }
 
 if ( ! function_exists( 'alumni_core_get_content_url' ) ) {
-	/**
-	 * @param int $id Post ID.
-	 * @return string Permalink, or '' when the content doesn't exist / isn't
-	 *                 published.
-	 */
 	function alumni_core_get_content_url( $id ) {
 		$post = alumni_core_get_content( $id );
 
@@ -140,30 +124,12 @@ if ( ! function_exists( 'alumni_core_get_content_url' ) ) {
 }
 
 if ( ! function_exists( 'alumni_core_is_person_greeting' ) ) {
-	/**
-	 * @param int|WP_Post|null $post Post ID or object.
-	 * @return bool
-	 */
 	function alumni_core_is_person_greeting( $post = null ) {
 		return \AlumniCore\Includes\Modules\Content\Post_Type::is_person_greeting( $post );
 	}
 }
 
 if ( ! function_exists( 'alumni_core_get_person_greeting' ) ) {
-	/**
-	 * Every field a theme needs to render a 人物挨拶 card/page, gathered
-	 * into one array — so the theme never has to know this is stored as a
-	 * CPT with several postmeta keys.
-	 *
-	 * @param int|WP_Post|null $post Post ID or object.
-	 * @return array{
-	 *     id:int, content_name:string, name:string, kana:string,
-	 *     title:string, term:int|string, photo_id:int, body:string,
-	 *     status:string, created_at:string, updated_at:string
-	 * }|null Null when $post doesn't resolve to a 人物挨拶 コンテンツ post
-	 *         (any post_status — published-only filtering is the caller's
-	 *         responsibility via alumni_core_get_person_greetings_query()).
-	 */
 	function alumni_core_get_person_greeting( $post = null ) {
 		$post = get_post( $post );
 
@@ -188,27 +154,15 @@ if ( ! function_exists( 'alumni_core_get_person_greeting' ) ) {
 }
 
 if ( ! function_exists( 'alumni_core_is_terms' ) ) {
-	/**
-	 * @param int|WP_Post|null $post Post ID or object.
-	 * @return bool
-	 */
 	function alumni_core_is_terms( $post = null ) {
 		return \AlumniCore\Includes\Modules\Content\Post_Type::is_terms( $post );
 	}
 }
 
 if ( ! function_exists( 'alumni_core_get_terms_query' ) ) {
-	/**
-	 * Runs a WP_Query for published 規約類 コンテンツ only, ordered by
-	 * 表示順 (menu_order, ascending) — the order an admin sets in
-	 * Admin\Pages\Terms_Page / the 規約類 fields of Content_Meta_Box.
-	 *
-	 * @param array $args Extra/overriding WP_Query args.
-	 * @return WP_Query
-	 */
 	function alumni_core_get_terms_query( $args = array() ) {
 		$defaults = array(
-			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- filtering by kind is the entire purpose of this query.
+			'meta_query' => array(
 				array(
 					'key'   => \AlumniCore\Includes\Modules\Content\Post_Type::META_KIND,
 					'value' => \AlumniCore\Includes\Modules\Content\Post_Type::KIND_TERMS,
@@ -223,17 +177,6 @@ if ( ! function_exists( 'alumni_core_get_terms_query' ) ) {
 }
 
 if ( ! function_exists( 'alumni_core_get_terms' ) ) {
-	/**
-	 * Every field a theme needs to render a 規約類 card/page, gathered
-	 * into one array.
-	 *
-	 * @param int|WP_Post|null $post Post ID or object.
-	 * @return array{
-	 *     id:int, content_name:string, display_title:string,
-	 *     effective_date:string, revised_date:string, body:string,
-	 *     status:string, menu_order:int
-	 * }|null Null when $post doesn't resolve to a 規約類 コンテンツ post.
-	 */
 	function alumni_core_get_terms( $post = null ) {
 		$post = get_post( $post );
 
@@ -242,17 +185,17 @@ if ( ! function_exists( 'alumni_core_get_terms' ) ) {
 		}
 
 		return array(
-			'id'              => $post->ID,
-			'content_name'    => $post->post_title,
-			'display_title'   => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_display_title( $post ),
-			'effective_date'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_effective_date( $post ),
-			'revised_date'    => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revised_date( $post ),
-			'revision_dates'  => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revision_dates( $post ),
+			'id'                => $post->ID,
+			'content_name'      => $post->post_title,
+			'display_title'     => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_display_title( $post ),
+			'effective_date'    => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_effective_date( $post ),
+			'revised_date'      => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revised_date( $post ),
+			'revision_dates'    => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_revision_dates( $post ),
 			'last_revised_date' => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_last_revised_date( $post ),
-			'font_size'       => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_font_size( $post ),
-			'body'            => $post->post_content,
-			'status'          => $post->post_status,
-			'menu_order'      => (int) $post->menu_order,
+			'font_size'         => \AlumniCore\Includes\Modules\Content\Post_Type::get_terms_font_size( $post ),
+			'body'              => $post->post_content,
+			'status'            => $post->post_status,
+			'menu_order'        => (int) $post->menu_order,
 		);
 	}
 }
