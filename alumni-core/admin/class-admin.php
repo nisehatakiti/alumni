@@ -252,7 +252,7 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '人物挨拶を追加', 'alumni-core' ),
-			__( '＋ 人物挨拶を追加', 'alumni-core' ),
+			__( '人物挨拶を追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
 		);
@@ -260,31 +260,12 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '自由コンテンツを追加', 'alumni-core' ),
-			__( '＋ 自由コンテンツを追加', 'alumni-core' ),
+			__( '自由コンテンツを追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
 		);
 
-		// 規約類の新規作成も他の2つと同じ「入口」パターンの専用クイック
-		// リンクを持つ — これがないと、WordPressが自動追加する汎用の
-		// 「コンテンツ > 新規追加」（種別クエリ文字列なし）から規約類を
-		// 作ろうとした際、Content_Post_Type::maybe_use_block_editor()
-		// が種別を判別できずブロックエディターを無効化したままにしてしまい
-		// （本文が入力できない不具合の根本原因だった）、後から「規約類」を
-		// 選び直す手段（種別ラジオボタン）ももう存在しないため、規約類だけ
-		// 専用の入口がないと詰んでしまう。
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '規約類を追加', 'alumni-core' ),
-			__( '＋ 規約類を追加', 'alumni-core' ),
-			self::CAPABILITY,
-			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
-		);
-
-		// 一覧そのもの（既存投稿の管理・並び順確認用）は、他のコンテンツと
-		// 混ざらない専用の一覧screen（Terms_Page）として引き続き持つ —
-		// 同窓会規約・会則・個人情報保護方針などを他のコンテンツと一緒くた
-		// にせず、まとめて見渡せるようにするため。
+		// 規約類一覧を先に配置し、その直下に新規作成入口を配置する。
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '規約類', 'alumni-core' ),
@@ -292,6 +273,14 @@ class Admin {
 			self::CAPABILITY,
 			Terms_Page::SLUG,
 			array( $this->terms_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '規約類を追加', 'alumni-core' ),
+			__( '規約類を追加', 'alumni-core' ),
+			self::CAPABILITY,
+			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
 		);
 
 		add_submenu_page(
