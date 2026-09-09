@@ -59,6 +59,7 @@ class Homepage_Sections {
 	const SYSTEM_GRADUATION_LOOKUP  = 'graduation_lookup';
 	const SYSTEM_ORG_CHART          = 'org_chart';
 	const SYSTEM_SCHOOL_PHOTOS      = 'school_photos';
+	const SLOT_PERSON_GREETING_GROUP = 'person_greeting_group';
 
 	/**
 	 * Singleton instance.
@@ -305,6 +306,18 @@ class Homepage_Sections {
 				? array(
 					'type'       => 'content',
 					'content_id' => $content_id,
+				)
+				: array( 'type' => 'none' );
+		}
+
+		if ( self::SLOT_PERSON_GREETING_GROUP === $slot['type'] ) {
+			$group_id = isset( $slot['group_id'] ) ? (string) $slot['group_id'] : '';
+			$group    = \AlumniCore\Includes\Person_Greeting_Groups::instance()->get_group( $group_id );
+
+			return $group
+				? array(
+					'type'     => self::SLOT_PERSON_GREETING_GROUP,
+					'group_id' => $group_id,
 				)
 				: array( 'type' => 'none' );
 		}
