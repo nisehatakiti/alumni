@@ -65,6 +65,7 @@ final class Plugin {
 
 		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
 		\AlumniCore\Includes\Modules\Content\Module::register();
+		\AlumniCore\Includes\Modules\Forms\Module::register();
 		\AlumniCore\Includes\Graduation_Lookup_Shortcode::register();
 		\AlumniCore\Includes\Officers_Shortcode::register();
 		\AlumniCore\Includes\Terms_Listing_Shortcode::register();
@@ -126,6 +127,11 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-admin-columns.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-required-fields.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-module.php';
+
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-meta-box.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-public.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-module.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/content-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/officers-functions.php';
