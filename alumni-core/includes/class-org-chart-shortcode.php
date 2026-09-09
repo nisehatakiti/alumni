@@ -130,21 +130,19 @@ class Org_Chart_Shortcode {
 					line-height: 1.5;
 				}
 
-				/* 子階層全体の縦線・子ノードへの横線は「罫線でつなぐ」がONの時だけ表示 */
+				/*
+				 * 子ノードは「└」型で接続する。
+				 *
+				 * 各子ノード自身が、親から下りてくる縦線と自分へ向かう横線を
+				 * 描画する方式にすることで、最後の子ノードでは横線の位置より
+				 * 下へ罫線が伸びない。
+				 *
+				 * 兄弟ノードが複数ある場合だけ、最後以外のノードの縦線を
+				 * ノード末尾まで伸ばして次の兄弟へ連結する。
+				 */
 				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list {
-					position: relative;
 					margin: 0 0 0 1.25rem;
 					padding: 0 0 0 1.5rem;
-				}
-
-				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list::before {
-					content: "";
-					position: absolute;
-					top: 0;
-					bottom: 1.05em;
-					left: 0;
-					border-left: 1px solid currentColor;
-					opacity: 0.45;
 				}
 
 				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node {
@@ -152,6 +150,7 @@ class Org_Chart_Shortcode {
 					padding: 0.35em 0;
 				}
 
+				/* 子ノードへ向かう横線 */
 				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::before {
 					content: "";
 					position: absolute;
@@ -160,6 +159,23 @@ class Org_Chart_Shortcode {
 					width: 1.5rem;
 					border-top: 1px solid currentColor;
 					opacity: 0.45;
+				}
+
+				/* 親から横線の位置までの縦線 */
+				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::after {
+					content: "";
+					position: absolute;
+					top: 0;
+					left: -1.5rem;
+					height: 1.45em;
+					border-left: 1px solid currentColor;
+					opacity: 0.45;
+				}
+
+				/* 次の兄弟がある場合だけ縦線を下へつなぐ */
+				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node:not(:last-child)::after {
+					bottom: 0;
+					height: auto;
 				}
 
 				/* 「箱で囲む」がONの時だけノードを枠線で表示 */
