@@ -74,6 +74,7 @@ final class Plugin {
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
+			add_action( 'admin_init', array( '\AlumniCore\Includes\Person_Greeting_Groups', 'maybe_ensure_standard_groups' ), 5 );
 			( new \AlumniCore\Admin\Admin() )->run();
 		}
 	}
