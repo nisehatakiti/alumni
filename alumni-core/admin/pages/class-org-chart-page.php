@@ -35,6 +35,7 @@ class Org_Chart_Page {
 	const NONCE_ACTION_DELETE  = 'alumni_core_delete_org_chart_node';
 	const NONCE_ACTION_MOVE    = 'alumni_core_move_org_chart_node';
 	const NONCE_ACTION_REPARENT = 'alumni_core_reparent_org_chart_node';
+	const NONCE_ACTION_SAVE_DISPLAY = 'alumni_core_save_org_chart_display_settings';
 
 	/**
 	 * Renders the screen: the node edit screen when ?node= is present and
@@ -73,6 +74,18 @@ class Org_Chart_Page {
 			<?php endif; ?>
 
 			<p><?php esc_html_e( '「会長→副会長→委員会」のような、同窓会組織そのものの親子構造をここで管理します。これはメニュー構成（サイトナビゲーション）とは別のデータです。公開ページへの掲載は「同窓会 > メニュー構成」で「同窓会組織図」をシステムページとして配置してください。', 'alumni-core' ); ?></p>
+
+			<?php $display_settings = \AlumniCore\Includes\Org_Chart_Shortcode::get_display_settings(); ?>
+			<h2><?php esc_html_e( '公開時の表示設定', 'alumni-core' ); ?></h2>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="alumni_core_save_org_chart_display_settings" />
+				<?php wp_nonce_field( self::NONCE_ACTION_SAVE_DISPLAY ); ?>
+				<p>
+					<label><input type="checkbox" name="show_connectors" value="1" <?php checked( $display_settings['show_connectors'] ); ?> /> <?php esc_html_e( '罫線でつなぐ', 'alumni-core' ); ?></label><br />
+					<label><input type="checkbox" name="show_boxes" value="1" <?php checked( $display_settings['show_boxes'] ); ?> /> <?php esc_html_e( '各ノードを箱で囲む', 'alumni-core' ); ?></label>
+				</p>
+				<?php submit_button( __( '表示設定を保存', 'alumni-core' ), 'secondary', 'submit', false ); ?>
+			</form>
 
 			<div class="alumni-org-chart-tree">
 				<?php
@@ -243,6 +256,28 @@ class Org_Chart_Page {
 				$this->render_parent_option_rows( $children, $exclude_ids, $depth + 1 );
 			}
 		}
+	}
+
+	/**
+	 * Handles public display settings.
+	 */
+	public function handle_save_display_settings() {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+
+		check_admin_referer( self::NONCE_ACTION_SAVE_DISPLAY );
+
+		update_option(
+			\AlumniCore\Includes\Org_Chart_Shortcode::OPTION_DISPLAY_SETTINGS,
+			array(
+				'show_connectors' => isset( $_POST['show_connectors'] ),
+				'show_boxes'      => isset( $_POST['show_boxes'] ),
+			)
+		);
+
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	/**
