@@ -58,7 +58,7 @@ class Post_Type {
 	 * extracted into a standalone plugin, WordPress can simply use its own menu.
 	 */
 	private static function menu_parent() {
-		$default = class_exists( '\\AlumniCore\\Admin\\Admin' ) ? \\AlumniCore\\Admin\\Admin::MENU_SLUG : true;
+		$default = class_exists( '\\AlumniCore\\Admin\\Admin' ) ? \AlumniCore\Admin\Admin::MENU_SLUG : true;
 		return apply_filters( 'alumni_forms_menu_parent', $default );
 	}
 
