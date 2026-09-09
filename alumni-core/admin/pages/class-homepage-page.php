@@ -130,17 +130,26 @@ class Homepage_Page {
 
 						<p class="alumni-homepage-section-actions">
 							<?php if ( 0 !== $position ) : ?>
-								<?php $this->render_move_form( $section['section_id'], 'up', __( '↑ 上へ', 'alumni-core' ) ); ?>
+								<?php $this->render_move_button( $section['section_id'], 'up', __( '↑ 上へ', 'alumni-core' ) ); ?>
 							<?php endif; ?>
 							<?php if ( $position < count( $sections ) - 1 ) : ?>
-								<?php $this->render_move_form( $section['section_id'], 'down', __( '↓ 下へ', 'alumni-core' ) ); ?>
+								<?php $this->render_move_button( $section['section_id'], 'down', __( '↓ 下へ', 'alumni-core' ) ); ?>
 							<?php endif; ?>
-							<?php $this->render_delete_form( $section['section_id'] ); ?>
+							<?php $this->render_delete_button( $section['section_id'] ); ?>
 						</p>
 					<?php endforeach; ?>
 
 					<?php submit_button( __( 'すべてのセクションを保存', 'alumni-core' ) ); ?>
 				</form>
+
+				<?php
+				// 並び替え／削除フォームは一括保存フォームの外に配置する。
+				// HTMLでは form 要素の入れ子は許可されないため、各操作用フォームは
+				// 独立させ、セクション内のボタンから form 属性で送信先を指定する。
+				foreach ( $sections as $section ) {
+					$this->render_section_action_forms( $section['section_id'] );
+				}
+				?>
 			<?php endif; ?>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -153,32 +162,63 @@ class Homepage_Page {
 	}
 
 	/**
+	 * セクション内に表示する並び替えボタン。
+	 *
+	 * ボタン本体は一括保存フォームの中に置くが、form 属性で外側の独立した
+	 * 操作用フォームを送信するため、form の入れ子を作らない。
+	 *
 	 * @param string $section_id
 	 * @param string $direction 'up' or 'down'.
 	 * @param string $label
 	 */
-	private function render_move_form( $section_id, $direction, $label ) {
+	private function render_move_button( $section_id, $direction, $label ) {
+		$form_id = 'alumni-homepage-move-' . sanitize_html_class( $section_id . '-' . $direction );
 		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-homepage-move-form">
-			<input type="hidden" name="action" value="alumni_core_move_homepage_section" />
-			<input type="hidden" name="section_id" value="<?php echo esc_attr( $section_id ); ?>" />
-			<input type="hidden" name="direction" value="<?php echo esc_attr( $direction ); ?>" />
-			<?php wp_nonce_field( self::NONCE_ACTION_MOVE ); ?>
-			<button type="submit" class="button"><?php echo esc_html( $label ); ?></button>
-		</form>
+		<button type="submit" class="button" form="<?php echo esc_attr( $form_id ); ?>"><?php echo esc_html( $label ); ?></button>
 		<?php
 	}
 
 	/**
+	 * セクション内に表示する削除ボタン。
+	 *
 	 * @param string $section_id
 	 */
-	private function render_delete_form( $section_id ) {
+	private function render_delete_button( $section_id ) {
+		$form_id = 'alumni-homepage-delete-' . sanitize_html_class( $section_id );
 		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-homepage-delete-form" onsubmit="return confirm('<?php echo esc_js( __( 'このセクションを削除します。よろしいですか？', 'alumni-core' ) ); ?>');">
+		<button type="submit" class="button button-link-delete" form="<?php echo esc_attr( $form_id ); ?>" onclick="return confirm('<?php echo esc_js( __( 'このセクションを削除します。よろしいですか？', 'alumni-core' ) ); ?>');"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
+		<?php
+	}
+
+	/**
+	 * セクション操作用の独立フォームを描画する。
+	 *
+	 * 一括保存フォームの外側に配置し、対応するボタンから form 属性で送信する。
+	 *
+	 * @param string $section_id
+	 */
+	private function render_section_action_forms( $section_id ) {
+		$section_id = sanitize_key( $section_id );
+		$up_form_id = 'alumni-homepage-move-' . sanitize_html_class( $section_id . '-up' );
+		$down_form_id = 'alumni-homepage-move-' . sanitize_html_class( $section_id . '-down' );
+		$delete_form_id = 'alumni-homepage-delete-' . sanitize_html_class( $section_id );
+		?>
+		<form id="<?php echo esc_attr( $up_form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-homepage-move-form" hidden>
+			<input type="hidden" name="action" value="alumni_core_move_homepage_section" />
+			<input type="hidden" name="section_id" value="<?php echo esc_attr( $section_id ); ?>" />
+			<input type="hidden" name="direction" value="up" />
+			<?php wp_nonce_field( self::NONCE_ACTION_MOVE ); ?>
+		</form>
+		<form id="<?php echo esc_attr( $down_form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-homepage-move-form" hidden>
+			<input type="hidden" name="action" value="alumni_core_move_homepage_section" />
+			<input type="hidden" name="section_id" value="<?php echo esc_attr( $section_id ); ?>" />
+			<input type="hidden" name="direction" value="down" />
+			<?php wp_nonce_field( self::NONCE_ACTION_MOVE ); ?>
+		</form>
+		<form id="<?php echo esc_attr( $delete_form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-homepage-delete-form" hidden>
 			<input type="hidden" name="action" value="alumni_core_delete_homepage_section" />
 			<input type="hidden" name="section_id" value="<?php echo esc_attr( $section_id ); ?>" />
 			<?php wp_nonce_field( self::NONCE_ACTION_DELETE ); ?>
-			<button type="submit" class="button button-link-delete"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
 		</form>
 		<?php
 	}
