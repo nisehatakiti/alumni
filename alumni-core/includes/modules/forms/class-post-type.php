@@ -53,6 +53,15 @@ class Post_Type {
 		);
 	}
 
+	/**
+	 * Keep the form engine independent from the Alumni admin shell. When it is
+	 * extracted into a standalone plugin, WordPress can simply use its own menu.
+	 */
+	private static function menu_parent() {
+		$default = class_exists( '\\AlumniCore\\Admin\\Admin' ) ? \\AlumniCore\\Admin\\Admin::MENU_SLUG : true;
+		return apply_filters( 'alumni_forms_menu_parent', $default );
+	}
+
 	public static function get_description( $post_id ) {
 		return (string) get_post_meta( $post_id, self::META_DESCRIPTION, true );
 	}
