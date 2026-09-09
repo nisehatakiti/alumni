@@ -168,15 +168,6 @@ class Org_Chart_Shortcode {
 					border-radius: 0.25rem;
 				}
 
-				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::before {
-					content: "";
-					position: absolute;
-					top: 1.45em;
-					left: -1.5rem;
-					width: 1.5rem;
-					border-top: 1px solid currentColor;
-					opacity: 0.45;
-				}
 			</style>
 			<?php if ( empty( $tree ) ) : ?>
 				<p class="alumni-notice">
@@ -188,6 +179,23 @@ class Org_Chart_Shortcode {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Returns normalized public display settings.
+	 * Defaults preserve the existing public appearance: connectors on,
+	 * node boxes off.
+	 *
+	 * @return array
+	 */
+	public static function get_display_settings() {
+		$saved = get_option( self::OPTION_DISPLAY_SETTINGS, array() );
+		$saved = is_array( $saved ) ? $saved : array();
+
+		return array(
+			'show_connectors' => ! isset( $saved['show_connectors'] ) || (bool) $saved['show_connectors'],
+			'show_boxes'      => ! empty( $saved['show_boxes'] ),
+		);
 	}
 
 	/**
