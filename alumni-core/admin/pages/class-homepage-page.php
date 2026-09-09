@@ -19,11 +19,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * トップページは「テーマが用意したスロットに、管理者がコンテンツを選ぶ」
  * 方式（docs/top-page-slot-based-layout-design.md）。この画面はセクション
- * （見出し・段数・各段のスロット）の管理を一括で行う:
+ * （見出し・表示数・表示方向・各スロット）の管理を一括で行う:
  *
  *  - セクションの追加／削除／並び替えは、それぞれ即時実行の小さな
  *    フォーム（Officers_Pageの一覧作成／削除と同じパターン）。
- *  - 見出し・段数・各スロットの内容は、全セクションをまとめて1つの
+ *  - 見出し・表示数・表示方向・各スロットの内容は、全セクションをまとめて1つの
  *    フォームで保存する（セクション同士の並び順を保ったまま一括更新する
  *    ほうが分かりやすいため）。
  */
@@ -61,7 +61,7 @@ class Homepage_Page {
 				</div>
 			<?php endif; ?>
 
-			<p><?php esc_html_e( 'トップページは複数の「セクション」で構成されます。各セクションは1〜3段のレイアウトを選び、各段に表示するコンテンツを選びます。実際の見た目（カードの形など）はテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
+			<p><?php esc_html_e( 'トップページは複数の「セクション」で構成されます。各セクションごとに表示するコンテンツ数（1〜3件）と、横並び／縦並びの表示方向を選びます。実際の見た目（カードの形など）はテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
 
 			<?php if ( empty( $sections ) ) : ?>
 				<p class="description"><?php esc_html_e( 'まだセクションがありません。下のボタンから追加してください。', 'alumni-core' ); ?></p>
@@ -91,21 +91,32 @@ class Homepage_Page {
 
 							<p>
 								<label>
-									<?php esc_html_e( '段数', 'alumni-core' ); ?><br />
+									<?php esc_html_e( '表示数', 'alumni-core' ); ?><br />
 									<select name="sections[<?php echo esc_attr( $section['section_id'] ); ?>][columns]">
 										<?php for ( $columns = Homepage_Sections::MIN_COLUMNS; $columns <= Homepage_Sections::MAX_COLUMNS; $columns++ ) : ?>
 											<option value="<?php echo esc_attr( $columns ); ?>" <?php selected( $columns, $section['columns'] ); ?>>
 												<?php
 												printf(
-													/* translators: %d: number of columns */
-													esc_html__( '%d段', 'alumni-core' ),
+													/* translators: %d: number of slots */
+													esc_html__( '%d件', 'alumni-core' ),
 													$columns
 												);
 												?>
 											</option>
 										<?php endfor; ?>
 									</select>
-									<p class="description"><?php esc_html_e( '段数を変更して保存すると、増えた段は未設定、減った段は削除されます。', 'alumni-core' ); ?></p>
+									<p class="description"><?php esc_html_e( '表示数を変更して保存すると、増えた項目は未設定、減った項目は削除されます。', 'alumni-core' ); ?></p>
+								</label>
+							</p>
+
+							<p>
+								<label>
+									<?php esc_html_e( '表示方向', 'alumni-core' ); ?><br />
+									<select name="sections[<?php echo esc_attr( $section['section_id'] ); ?>][layout]">
+										<option value="<?php echo esc_attr( Homepage_Sections::LAYOUT_HORIZONTAL ); ?>" <?php selected( Homepage_Sections::LAYOUT_HORIZONTAL, isset( $section['layout'] ) ? $section['layout'] : Homepage_Sections::LAYOUT_HORIZONTAL ); ?>><?php esc_html_e( '横並び', 'alumni-core' ); ?></option>
+										<option value="<?php echo esc_attr( Homepage_Sections::LAYOUT_VERTICAL ); ?>" <?php selected( Homepage_Sections::LAYOUT_VERTICAL, isset( $section['layout'] ) ? $section['layout'] : Homepage_Sections::LAYOUT_HORIZONTAL ); ?>><?php esc_html_e( '縦並び', 'alumni-core' ); ?></option>
+									</select>
+									<p class="description"><?php esc_html_e( '横並びは表示数に応じて横方向に配置し、縦並びは表示数に関係なく上から順に1件ずつ表示します。', 'alumni-core' ); ?></p>
 								</label>
 							</p>
 
@@ -115,8 +126,8 @@ class Homepage_Page {
 										<label>
 											<?php
 											printf(
-												/* translators: %d: 1-based slot (column) position */
-												esc_html__( '%d段目', 'alumni-core' ),
+												/* translators: %d: 1-based slot position */
+												esc_html__( '%d件目', 'alumni-core' ),
 												(int) $slot_index + 1
 											);
 											?>
@@ -389,8 +400,9 @@ class Homepage_Page {
 
 			$heading = isset( $data['heading'] ) ? sanitize_text_field( $data['heading'] ) : '';
 			$columns = isset( $data['columns'] ) ? absint( $data['columns'] ) : Homepage_Sections::MIN_COLUMNS;
+			$layout  = isset( $data['layout'] ) ? sanitize_key( $data['layout'] ) : Homepage_Sections::LAYOUT_HORIZONTAL;
 
-			$updated = $sections->update_section_meta( $section_id, $heading, $columns );
+			$updated = $sections->update_section_meta( $section_id, $heading, $columns, $layout );
 
 			if ( null === $updated ) {
 				continue;
