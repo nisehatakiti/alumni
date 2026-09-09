@@ -420,6 +420,23 @@ function alumni_theme_get_content( $id ) {
 	return alumni_core_get_content( $id );
 }
 
+
+/**
+ * Returns the public URL for a 人物挨拶グループ, or an empty string when
+ * Core is inactive or the group page is unavailable.
+ *
+ * @param string $group_id
+ * @return string
+ */
+function alumni_theme_get_person_greeting_group_url( $group_id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	return alumni_core_get_person_greeting_group_url( $group_id );
+}
+
+
 /**
  * @param int $id Post ID.
  * @return string Permalink, or '' when Core is inactive or the content
