@@ -93,7 +93,7 @@ class Org_Chart_Shortcode {
 
 	/**
 	 * Renders [alumni_org_chart]: the full tree, root-first, as nested
-	 * lists. An empty tree (組織図が未登録) shows a notice instead of an
+	 * lists connected with ruled lines. An empty tree (組織図が未登録) shows a notice instead of an
 	 * empty list — never an error.
 	 *
 	 * @return string
@@ -104,6 +104,59 @@ class Org_Chart_Shortcode {
 		ob_start();
 		?>
 		<div class="alumni-org-chart">
+			<style>
+				/* 同窓会組織図: 親子関係を罫線でつなぐツリー表示 */
+				.alumni-org-chart .alumni-org-chart-list {
+					list-style: none;
+					margin: 0;
+					padding: 0;
+				}
+
+				.alumni-org-chart .alumni-org-chart-node {
+					list-style: none;
+					margin: 0;
+					padding: 0;
+				}
+
+				.alumni-org-chart .alumni-org-chart-node-name {
+					display: inline-block;
+					padding: 0.35em 0.75em;
+					line-height: 1.5;
+				}
+
+				/* 子階層全体の縦線 */
+				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list {
+					position: relative;
+					margin: 0 0 0 1.25rem;
+					padding: 0 0 0 1.5rem;
+				}
+
+				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list::before {
+					content: "";
+					position: absolute;
+					top: 0;
+					bottom: 1.05em;
+					left: 0;
+					border-left: 1px solid currentColor;
+					opacity: 0.45;
+				}
+
+				/* 各子ノードへ伸びる横線 */
+				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node {
+					position: relative;
+					padding: 0.35em 0;
+				}
+
+				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::before {
+					content: "";
+					position: absolute;
+					top: 1.45em;
+					left: -1.5rem;
+					width: 1.5rem;
+					border-top: 1px solid currentColor;
+					opacity: 0.45;
+				}
+			</style>
 			<?php if ( empty( $tree ) ) : ?>
 				<p class="alumni-notice">
 					<?php esc_html_e( '現在、組織図は登録されていません。', 'alumni-core' ); ?>
