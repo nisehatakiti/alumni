@@ -148,7 +148,9 @@ class Person_Greeting_Groups_Page {
 		check_admin_referer( self::NONCE_ACTION_UPDATE );
 		$group_id = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-		Person_Greeting_Groups::instance()->update_group( $group_id, $name );
+		if ( Person_Greeting_Groups::instance()->update_group( $group_id, $name ) ) {
+			Person_Greeting_Groups_Shortcode::sync_group_page_title( $group_id, sanitize_text_field( $name ) );
+		}
 		$this->redirect( array( 'updated' => 'true' ) );
 	}
 
