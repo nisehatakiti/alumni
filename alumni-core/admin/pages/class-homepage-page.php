@@ -10,6 +10,7 @@ namespace AlumniCore\Admin\Pages;
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Homepage_Sections;
 use AlumniCore\Includes\Content_Hierarchy;
+use AlumniCore\Includes\Person_Greeting_Groups;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -253,6 +254,8 @@ class Homepage_Page {
 			$current_value = 'system:' . $current_slot['system_key'];
 		} elseif ( 'content' === $current_slot['type'] ) {
 			$current_value = 'content:' . $current_slot['content_id'];
+		} elseif ( Homepage_Sections::SLOT_PERSON_GREETING_GROUP === $current_slot['type'] ) {
+			$current_value = 'person_greeting_group:' . $current_slot['group_id'];
 		}
 		?>
 		<select name="<?php echo esc_attr( $name ); ?>">
@@ -263,6 +266,15 @@ class Homepage_Page {
 					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</optgroup>
+			<?php $person_greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
+			<?php if ( ! empty( $person_greeting_groups ) ) : ?>
+				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
+					<?php foreach ( $person_greeting_groups as $person_greeting_group ) : ?>
+						<?php $value = 'person_greeting_group:' . $person_greeting_group['group_id']; ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $person_greeting_group['name'] ); ?></option>
+					<?php endforeach; ?>
+				</optgroup>
+			<?php endif; ?>
 			<?php
 			$audience_labels = array(
 				Content_Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
@@ -440,6 +452,13 @@ class Homepage_Page {
 			return array(
 				'type'       => 'system',
 				'system_key' => substr( $raw_value, strlen( 'system:' ) ),
+			);
+		}
+
+		if ( 0 === strpos( $raw_value, 'person_greeting_group:' ) ) {
+			return array(
+				'type'     => Homepage_Sections::SLOT_PERSON_GREETING_GROUP,
+				'group_id' => substr( $raw_value, strlen( 'person_greeting_group:' ) ),
 			);
 		}
 
