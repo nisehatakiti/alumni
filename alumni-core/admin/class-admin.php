@@ -298,7 +298,7 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '規約類を追加', 'alumni-core' ),
-			__( '＋ 規約類を追加', 'alumni-core' ),
+			__( '規約類を追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
 		);
