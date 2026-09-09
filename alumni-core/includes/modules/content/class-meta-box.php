@@ -140,6 +140,7 @@ class Content_Meta_Box {
 		$effective_date = Post_Type::get_terms_effective_date( $post );
 		$revision_dates = Post_Type::get_terms_revision_dates( $post );
 		$font_size      = Post_Type::get_terms_font_size( $post );
+		$font_color     = Post_Type::get_terms_font_color( $post );
 		$audience       = Post_Type::get_audience( $post );
 
 		// 「＋母校校長挨拶を追加」「＋同窓会長挨拶を追加」等、特定の人物挨拶
@@ -246,6 +247,15 @@ class Content_Meta_Box {
 						<option value="<?php echo esc_attr( Post_Type::TERMS_FONT_LARGE ); ?>" <?php selected( Post_Type::TERMS_FONT_LARGE, $font_size ); ?>><?php esc_html_e( '大', 'alumni-core' ); ?></option>
 					</select>
 					<p class="description"><?php esc_html_e( '本文（下のブロックエディター）の段落ごとの文字サイズ・太字は個別に指定できます。ここでの指定は、段落ごとに個別指定していない部分の既定値、および実際のサイズはテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
+				</p>
+				<p>
+					<label for="alumni_terms_font_color"><strong><?php esc_html_e( '本文全体の既定の文字色', 'alumni-core' ); ?></strong></label><br />
+					<input type="color" id="alumni_terms_font_color" name="alumni_terms_font_color" value="<?php echo esc_attr( $font_color ? $font_color : '#222222' ); ?>" />
+					<label><input type="checkbox" name="alumni_terms_use_theme_font_color" value="1" <?php checked( '' === $font_color ); ?> /> <?php esc_html_e( 'テーマの標準色を使用する', 'alumni-core' ); ?></label>
+					<p class="description"><?php esc_html_e( 'チェックを外すと、選択した色を規約本文全体の既定色として使用します。段落や見出しなどを個別に色付けしたい場合は、上のブロックエディターで設定できます。', 'alumni-core' ); ?></p>
+				</p>
+				<p class="description">
+					<?php esc_html_e( '罫線は本文のブロックエディターから「区切り」ブロックを任意の位置に追加して試用してください。太さ・色・種類などの専用UIは、実際の使い勝手を確認してから次段階で固定します。', 'alumni-core' ); ?>
 				</p>
 				<p>
 					<label for="alumni_terms_menu_order"><strong><?php esc_html_e( '表示順（任意）', 'alumni-core' ); ?></strong></label><br />
@@ -428,6 +438,8 @@ class Content_Meta_Box {
 			$display_title  = isset( $_POST['alumni_terms_display_title'] ) ? sanitize_text_field( wp_unslash( $_POST['alumni_terms_display_title'] ) ) : '';
 			$effective_date = isset( $_POST['alumni_terms_effective_date'] ) ? self::sanitize_date( wp_unslash( $_POST['alumni_terms_effective_date'] ) ) : '';
 			$font_size      = isset( $_POST['alumni_terms_font_size'] ) ? sanitize_key( wp_unslash( $_POST['alumni_terms_font_size'] ) ) : Post_Type::TERMS_FONT_MEDIUM;
+			$use_theme_font_color = isset( $_POST['alumni_terms_use_theme_font_color'] );
+			$font_color     = $use_theme_font_color ? '' : ( isset( $_POST['alumni_terms_font_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['alumni_terms_font_color'] ) ) : '' );
 
 			if ( ! in_array( $font_size, array( Post_Type::TERMS_FONT_SMALL, Post_Type::TERMS_FONT_LARGE ), true ) ) {
 				$font_size = Post_Type::TERMS_FONT_MEDIUM;
@@ -469,6 +481,12 @@ class Content_Meta_Box {
 
 			update_post_meta( $post_id, Post_Type::META_TERMS_FONT_SIZE, $font_size );
 
+			if ( $font_color ) {
+				update_post_meta( $post_id, Post_Type::META_TERMS_FONT_COLOR, $font_color );
+			} else {
+				delete_post_meta( $post_id, Post_Type::META_TERMS_FONT_COLOR );
+			}
+
 			// Switched to 規約類 (or was already): the 人物挨拶専用 fields no
 			// longer apply.
 			self::clear_person_greeting_meta( $post_id );
@@ -508,6 +526,7 @@ class Content_Meta_Box {
 		delete_post_meta( $post_id, Post_Type::META_TERMS_REVISED_DATE );
 		delete_post_meta( $post_id, Post_Type::META_TERMS_REVISION_DATES );
 		delete_post_meta( $post_id, Post_Type::META_TERMS_FONT_SIZE );
+		delete_post_meta( $post_id, Post_Type::META_TERMS_FONT_COLOR );
 	}
 
 	/**

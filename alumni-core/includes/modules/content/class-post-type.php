@@ -131,6 +131,13 @@ class Post_Type {
 	 */
 	const META_TERMS_FONT_SIZE = '_alumni_terms_font_size';
 
+	/**
+	 * Optional default text color for the whole terms body. Per-block colors
+	 * remain available through WordPress's block editor; this value is the
+	 * convenient page-wide default.
+	 */
+	const META_TERMS_FONT_COLOR = '_alumni_terms_font_color';
+
 	const TERMS_FONT_SMALL  = 'small';
 	const TERMS_FONT_MEDIUM = 'medium';
 	const TERMS_FONT_LARGE  = 'large';
@@ -527,6 +534,26 @@ class Post_Type {
 		$post = get_post( $post );
 
 		return $post ? (string) get_post_meta( $post->ID, self::META_TERMS_REVISED_DATE, true ) : '';
+	}
+
+	/**
+	 * Returns the optional default text color for the whole terms body as a
+	 * normalized #rrggbb value, or an empty string when the theme default
+	 * should be used.
+	 *
+	 * @param int|\\WP_Post|null $post Post ID or object.
+	 * @return string
+	 */
+	public static function get_terms_font_color( $post = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return '';
+		}
+
+		$color = sanitize_hex_color( get_post_meta( $post->ID, self::META_TERMS_FONT_COLOR, true ) );
+
+		return $color ? $color : '';
 	}
 
 	/**

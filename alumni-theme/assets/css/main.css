@@ -851,6 +851,32 @@
 	font-size: 1.25em;
 }
 
+/* 規約本文内の「区切り」ブロック。WordPress標準ブロックをそのまま
+   使うことで任意位置への挿入を可能にし、ここでは規約文書として見やすい
+   余白と線幅を与える。ブロック側の色指定がある場合はその指定を優先する。 */
+.alumni-content-entry .entry-content .wp-block-separator {
+	max-width: none;
+	width: 100%;
+	margin: 1.5em 0;
+	border: 0;
+	border-top: 1px solid currentColor;
+	color: #7a7a7a;
+}
+
+.alumni-content-entry .entry-content .wp-block-separator.is-style-wide {
+	width: 100%;
+}
+
+.alumni-content-entry .entry-content .wp-block-separator.is-style-dots {
+	border-top: 0;
+	text-align: center;
+	line-height: 1;
+}
+
+.alumni-content-entry .entry-content .wp-block-separator.is-style-dots::before {
+	letter-spacing: 0.75em;
+}
+
 /* 更新日時（自由コンテンツ・人物挨拶・規約類・ニュース・イベント・
    役員一覧、共通のスタイル） */
 .alumni-updated-at,

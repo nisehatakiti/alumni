@@ -139,7 +139,13 @@ while ( have_posts() ) :
 				$alumni_entry_content_class .= ' terms-font-' . $alumni_terms['font_size'];
 			}
 			?>
-			<div class="<?php echo esc_attr( $alumni_entry_content_class ); ?>">
+			<?php
+			$alumni_entry_content_style = '';
+			if ( $alumni_terms && ! empty( $alumni_terms['font_color'] ) ) {
+				$alumni_entry_content_style = 'color:' . sanitize_hex_color( $alumni_terms['font_color'] ) . ';';
+			}
+			?>
+			<div class="<?php echo esc_attr( $alumni_entry_content_class ); ?>"<?php echo $alumni_entry_content_style ? ' style="' . esc_attr( $alumni_entry_content_style ) . '"' : ''; ?>>
 				<?php the_content(); ?>
 			</div>
 
