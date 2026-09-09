@@ -301,3 +301,40 @@
 	max-width: 480px;
 	margin-bottom: 2em;
 }
+
+
+/* 人物挨拶グループ内のドラッグ＆ドロップ並び替え */
+.alumni-person-greeting-order-group {
+	max-width: 760px;
+	margin: 24px 0;
+	padding: 16px 20px;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+}
+.alumni-person-greeting-sortable {
+	margin: 12px 0 0;
+}
+.alumni-person-greeting-sortable-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	margin: 0 0 8px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	cursor: move;
+}
+.alumni-person-greeting-sortable-item.is-dragging {
+	opacity: .45;
+}
+.alumni-person-greeting-drag-handle {
+	font-size: 18px;
+	color: #646970;
+}
+.alumni-person-greeting-sortable-name {
+	font-weight: 600;
+}
+.alumni-person-greeting-sortable-title {
+	margin-left: auto;
+	color: #646970;
+}
