@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ALUMNI_THEME_VERSION', '0.1.0' );
+define( 'ALUMNI_THEME_VERSION', '0.1.1' );
 define( 'ALUMNI_THEME_DIR', get_template_directory() );
 define( 'ALUMNI_THEME_URI', get_template_directory_uri() );
 
@@ -463,6 +463,54 @@ function alumni_theme_get_terms( $post = null ) {
 	}
 
 	return alumni_core_get_terms( $post );
+}
+
+/**
+ * Image HTML for a コンテンツ card on the homepage.
+ *
+ * 人物挨拶はCoreで管理している人物写真を優先し、それ以外は投稿の
+ * アイキャッチ画像が設定されている場合に表示する。画像がないコンテンツは
+ * 従来どおりテキストだけで表示される。
+ *
+ * @param int|WP_Post|null $post Content post.
+ * @return string Safe image HTML, or ''.
+ */
+function alumni_theme_get_content_card_image_html( $post = null ) {
+	if ( ! alumni_theme_core_active() ) {
+		return '';
+	}
+
+	$post = get_post( $post );
+
+	if ( ! $post ) {
+		return '';
+	}
+
+	$greeting = alumni_theme_get_person_greeting( $post );
+	if ( $greeting && ! empty( $greeting['photo_id'] ) ) {
+		return (string) wp_get_attachment_image(
+			(int) $greeting['photo_id'],
+			'large',
+			false,
+			array(
+				'class'   => 'alumni-homepage-slot-content-image-img',
+				'loading' => 'lazy',
+			)
+		);
+	}
+
+	if ( has_post_thumbnail( $post ) ) {
+		return (string) get_the_post_thumbnail(
+			$post,
+			'large',
+			array(
+				'class'   => 'alumni-homepage-slot-content-image-img',
+				'loading' => 'lazy',
+			)
+		);
+	}
+
+	return '';
 }
 
 /**
