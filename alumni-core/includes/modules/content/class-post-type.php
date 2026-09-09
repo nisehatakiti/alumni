@@ -537,14 +537,6 @@ class Post_Type {
 	}
 
 	/**
-	 * 本文の文字サイズの意味（small/medium/large）— 実際のピクセル数は
-	 * Theme側が決める（class docblock参照）。不正・未設定は
-	 * TERMS_FONT_MEDIUMにフォールバックする。
-	 *
-	 * @param int|\WP_Post|null $post Post ID or object.
-	 * @return string
-	 */
-	/**
 	 * Returns the optional default text color for the whole terms body as a
 	 * normalized #rrggbb value, or an empty string when the theme default
 	 * should be used.
@@ -564,6 +556,14 @@ class Post_Type {
 		return $color ? $color : '';
 	}
 
+	/**
+	 * 本文の文字サイズの意味（small/medium/large）— 実際のピクセル数は
+	 * Theme側が決める（class docblock参照）。不正・未設定は
+	 * TERMS_FONT_MEDIUMにフォールバックする。
+	 *
+	 * @param int|\WP_Post|null $post Post ID or object.
+	 * @return string
+	 */
 	public static function get_terms_font_size( $post = null ) {
 		$post = get_post( $post );
 
