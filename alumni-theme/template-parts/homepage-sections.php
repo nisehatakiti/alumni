@@ -86,8 +86,10 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '今後のイベント', 'alumni-theme' ); ?></h4>
 										<div class="alumni-homepage-slot-teaser-list">
 											<?php
+											global $post;
 											foreach ( $alumni_hp_upcoming_events as $alumni_hp_event_post ) :
-												setup_postdata( $alumni_hp_event_post );
+												$post = $alumni_hp_event_post;
+												setup_postdata( $post );
 												get_template_part( 'template-parts/news-event-row' );
 											endforeach;
 											wp_reset_postdata();
@@ -98,8 +100,10 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 										<h4 class="alumni-homepage-slot-teaser-heading"><?php esc_html_e( '終了したイベント', 'alumni-theme' ); ?></h4>
 										<div class="alumni-homepage-slot-teaser-list">
 											<?php
+											global $post;
 											foreach ( $alumni_hp_past_events as $alumni_hp_event_post ) :
-												setup_postdata( $alumni_hp_event_post );
+												$post = $alumni_hp_event_post;
+												setup_postdata( $post );
 												get_template_part( 'template-parts/news-event-row' );
 											endforeach;
 											wp_reset_postdata();
@@ -117,12 +121,18 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 						?>
 						<?php if ( $alumni_hp_content_post ) : ?>
 							<?php
-							$alumni_hp_content_terms    = alumni_theme_get_terms( $alumni_hp_content_post );
-							$alumni_hp_content_greeting = alumni_theme_get_person_greeting( $alumni_hp_content_post );
-							$alumni_hp_content_title    = $alumni_hp_content_terms ? $alumni_hp_content_terms['display_title'] : $alumni_hp_content_post->post_title;
-							$alumni_hp_content_excerpt  = wp_trim_words( wp_strip_all_tags( $alumni_hp_content_post->post_content ), 30 );
+							$alumni_hp_content_terms      = alumni_theme_get_terms( $alumni_hp_content_post );
+							$alumni_hp_content_greeting   = alumni_theme_get_person_greeting( $alumni_hp_content_post );
+							$alumni_hp_content_image_html = alumni_theme_get_content_card_image_html( $alumni_hp_content_post );
+							$alumni_hp_content_title      = $alumni_hp_content_terms ? $alumni_hp_content_terms['display_title'] : $alumni_hp_content_post->post_title;
+							$alumni_hp_content_excerpt    = wp_trim_words( wp_strip_all_tags( $alumni_hp_content_post->post_content ), 30 );
 							?>
 							<div class="alumni-homepage-slot-content">
+								<?php if ( $alumni_hp_content_image_html ) : ?>
+									<a class="alumni-homepage-slot-content-image" href="<?php echo esc_url( alumni_theme_get_content_url( $alumni_hp_content_post->ID ) ); ?>">
+										<?php echo $alumni_hp_content_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Safe HTML from wp_get_attachment_image(). ?>
+									</a>
+								<?php endif; ?>
 								<h3 class="alumni-homepage-slot-title">
 									<a href="<?php echo esc_url( alumni_theme_get_content_url( $alumni_hp_content_post->ID ) ); ?>"><?php echo esc_html( $alumni_hp_content_title ); ?></a>
 								</h3>
