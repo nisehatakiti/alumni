@@ -28,6 +28,8 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-module.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-module.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-post-type.php';
+		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-module.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officer-lists.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
@@ -64,6 +66,7 @@ class Activator {
 		// still needs this flush.
 		\AlumniCore\Includes\Modules\NewsEvents\Post_Type::register();
 		\AlumniCore\Includes\Modules\Content\Post_Type::register();
+		\AlumniCore\Includes\Modules\Forms\Post_Type::register();
 
 		flush_rewrite_rules();
 
@@ -77,6 +80,10 @@ class Activator {
 		update_option(
 			\AlumniCore\Includes\Modules\Content\Module::REWRITE_FLUSHED_OPTION,
 			\AlumniCore\Includes\Modules\Content\Module::REWRITE_VERSION
+		);
+		update_option(
+			\AlumniCore\Includes\Modules\Forms\Module::REWRITE_FLUSHED_OPTION,
+			\AlumniCore\Includes\Modules\Forms\Module::REWRITE_VERSION
 		);
 	}
 }
