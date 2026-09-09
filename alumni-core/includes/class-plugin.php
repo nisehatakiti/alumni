@@ -112,6 +112,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-menu-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-person-greeting-order-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-shortcode.php';
