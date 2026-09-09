@@ -16,7 +16,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * 「スロットベースのレイアウト」（docs/top-page-slot-based-layout-design.md
  * 他）の実装。トップページはセクションの並びで構成され、各セクションは
- * 1〜3段のスロットを持ち、各スロットに表示コンテンツを割り当てる。
+ * 1〜3件のスロットを持ち、各スロットに表示コンテンツを割り当てる。
+ * セクションごとに横並び／縦並びの表示方向も保持する。
  *
  * 重要な分離:
  *   - このクラス（Core）が持つのは「どのスロットに何を表示するか」という
@@ -44,6 +45,9 @@ class Homepage_Sections {
 
 	const MIN_COLUMNS = 1;
 	const MAX_COLUMNS = 3;
+
+	const LAYOUT_HORIZONTAL = 'horizontal';
+	const LAYOUT_VERTICAL   = 'vertical';
 
 	/**
 	 * type=systemのスロットが参照できる機能キー一覧。
@@ -191,6 +195,7 @@ class Homepage_Sections {
 				'order'      => 1,
 				'heading'    => __( 'お知らせ・イベント', 'alumni-core' ),
 				'columns'    => 2,
+				'layout'     => self::LAYOUT_HORIZONTAL,
 				'slots'      => array(
 					array(
 						'type'       => 'system',
@@ -207,6 +212,7 @@ class Homepage_Sections {
 				'order'      => 2,
 				'heading'    => __( '同窓会情報', 'alumni-core' ),
 				'columns'    => 3,
+				'layout'     => self::LAYOUT_HORIZONTAL,
 				'slots'      => array(
 					array(
 						'type'       => 'system',
@@ -255,6 +261,9 @@ class Homepage_Sections {
 		$columns = isset( $section['columns'] ) ? (int) $section['columns'] : self::MIN_COLUMNS;
 		$columns = max( self::MIN_COLUMNS, min( self::MAX_COLUMNS, $columns ) );
 
+		$layout = isset( $section['layout'] ) ? (string) $section['layout'] : self::LAYOUT_HORIZONTAL;
+		$layout = in_array( $layout, array( self::LAYOUT_HORIZONTAL, self::LAYOUT_VERTICAL ), true ) ? $layout : self::LAYOUT_HORIZONTAL;
+
 		$slots = ( isset( $section['slots'] ) && is_array( $section['slots'] ) ) ? array_values( $section['slots'] ) : array();
 
 		while ( count( $slots ) < $columns ) {
@@ -268,6 +277,7 @@ class Homepage_Sections {
 			'order'      => isset( $section['order'] ) ? (int) $section['order'] : 0,
 			'heading'    => isset( $section['heading'] ) ? (string) $section['heading'] : '',
 			'columns'    => $columns,
+			'layout'     => $layout,
 			'slots'      => $slots,
 		);
 	}
@@ -355,6 +365,7 @@ class Homepage_Sections {
 			'order'      => count( $sections ) + 1,
 			'heading'    => '',
 			'columns'    => self::MIN_COLUMNS,
+			'layout'     => self::LAYOUT_HORIZONTAL,
 			'slots'      => array( array( 'type' => 'none' ) ),
 		);
 
@@ -388,21 +399,21 @@ class Homepage_Sections {
 	}
 
 	/**
-	 * Updates a section's 見出し・段数. Changing 段数 pads/truncates its
-	 * slots to match, preserving whatever was already assigned to the
-	 * slots that remain.
-	 *
-	 * @param string $section_id
-	 * @param string $heading Raw, sanitized here. May be empty (見出しなし
-	 *                          は許容される).
-	 * @param mixed  $columns Raw, clamped to [MIN_COLUMNS,MAX_COLUMNS].
-	 * @return array|null The updated section, or null if $section_id
-	 *                      doesn't exist.
-	 */
-	public function update_section_meta( $section_id, $heading, $columns ) {
+	 * Updates a section's 見出し・表示数・表示方向. Changing 表示数 pads/truncates
+ * its slots to match, preserving whatever was already assigned to the slots
+ * that remain.
+ *
+ * @param string $section_id
+ * @param string $heading Raw, sanitized here. May be empty (見出しなしも許容).
+ * @param mixed  $columns Raw, clamped to [MIN_COLUMNS,MAX_COLUMNS].
+ * @param mixed  $layout Raw layout direction, normalized to horizontal/vertical.
+ * @return array|null The updated section, or null if $section_id doesn't exist.
+ */
+	public function update_section_meta( $section_id, $heading, $columns, $layout = self::LAYOUT_HORIZONTAL ) {
 		$sections = $this->get_all();
 		$found    = null;
 		$columns  = max( self::MIN_COLUMNS, min( self::MAX_COLUMNS, (int) $columns ) );
+		$layout   = in_array( (string) $layout, array( self::LAYOUT_HORIZONTAL, self::LAYOUT_VERTICAL ), true ) ? (string) $layout : self::LAYOUT_HORIZONTAL;
 
 		foreach ( $sections as &$section ) {
 			if ( $section['section_id'] !== $section_id ) {
@@ -411,6 +422,7 @@ class Homepage_Sections {
 
 			$section['heading'] = sanitize_text_field( $heading );
 			$section['columns'] = $columns;
+			$section['layout']  = $layout;
 
 			$slots = $section['slots'];
 			while ( count( $slots ) < $columns ) {
