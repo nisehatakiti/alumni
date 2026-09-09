@@ -17,6 +17,11 @@ class Post_Type {
 	const META_DESCRIPTION        = '_alumni_form_description';
 	const META_RECIPIENT_EMAIL    = '_alumni_form_recipient_email';
 	const META_MAIL_SUBJECT       = '_alumni_form_mail_subject';
+	const META_FROM_NAME          = '_alumni_form_from_name';
+	const META_FROM_EMAIL         = '_alumni_form_from_email';
+	const META_REPLY_TO_MODE      = '_alumni_form_reply_to_mode';
+	const META_REPLY_TO_EMAIL     = '_alumni_form_reply_to_email';
+	const META_REPLY_TO_FIELD     = '_alumni_form_reply_to_field';
 	const META_SUCCESS_MESSAGE    = '_alumni_form_success_message';
 	const META_AUTO_REPLY_ENABLED = '_alumni_form_auto_reply_enabled';
 	const META_FIELDS             = '_alumni_form_fields';
@@ -73,6 +78,27 @@ class Post_Type {
 	public static function get_mail_subject( $post_id ) {
 		$subject = sanitize_text_field( (string) get_post_meta( $post_id, self::META_MAIL_SUBJECT, true ) );
 		return $subject ? $subject : sprintf( '[%s] %s', get_bloginfo( 'name' ), get_the_title( $post_id ) );
+	}
+
+	public static function get_from_name( $post_id ) {
+		return sanitize_text_field( (string) get_post_meta( $post_id, self::META_FROM_NAME, true ) );
+	}
+
+	public static function get_from_email( $post_id ) {
+		return sanitize_email( (string) get_post_meta( $post_id, self::META_FROM_EMAIL, true ) );
+	}
+
+	public static function get_reply_to_mode( $post_id ) {
+		$mode = (string) get_post_meta( $post_id, self::META_REPLY_TO_MODE, true );
+		return in_array( $mode, array( 'none', 'fixed', 'field' ), true ) ? $mode : 'field';
+	}
+
+	public static function get_reply_to_email( $post_id ) {
+		return sanitize_email( (string) get_post_meta( $post_id, self::META_REPLY_TO_EMAIL, true ) );
+	}
+
+	public static function get_reply_to_field( $post_id ) {
+		return sanitize_key( (string) get_post_meta( $post_id, self::META_REPLY_TO_FIELD, true ) );
 	}
 
 	public static function get_success_message( $post_id ) {
