@@ -102,6 +102,26 @@ class Person_Greeting_Groups_Shortcode {
 	}
 
 	/**
+	 * Keeps the auto-managed page title in sync with a renamed group while
+	 * deliberately preserving its existing slug/URL for compatibility.
+	 *
+	 * @param string $group_id
+	 * @param string $name
+	 */
+	public static function sync_group_page_title( $group_id, $name ) {
+		$page_id = (int) get_option( self::PAGE_ID_OPTION_PREFIX . $group_id, 0 );
+
+		if ( $page_id && 'page' === get_post_type( $page_id ) ) {
+			wp_update_post(
+				array(
+					'ID'         => $page_id,
+					'post_title' => $name,
+				)
+			);
+		}
+	}
+
+	/**
 	 * The public URL of one グループ's own page, or '' when the group
 	 * doesn't exist or its page hasn't been created yet.
 	 *

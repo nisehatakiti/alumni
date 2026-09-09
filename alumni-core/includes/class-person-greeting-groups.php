@@ -37,6 +37,15 @@ class Person_Greeting_Groups {
 	const OPTION_NAME = 'alumni_core_person_greeting_groups';
 
 	/**
+	 * Built-in groups that make the standard 人物挨拶 flow usable without
+	 * requiring the separate メニュー構成 preset to be applied first.
+	 */
+	const STANDARD_GROUP_NAMES = array(
+		'母校校長挨拶',
+		'同窓会長挨拶',
+	);
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Person_Greeting_Groups|null
@@ -67,6 +76,18 @@ class Person_Greeting_Groups {
 	private function __construct() {}
 
 	/**
+	 * Ensures the standard groups exist. Safe on every admin request and
+	 * intentionally non-destructive: existing groups are never renamed,
+	 * reordered, or removed.
+	 */
+	public static function maybe_ensure_standard_groups() {
+		$instance = self::instance();
+		foreach ( self::STANDARD_GROUP_NAMES as $name ) {
+			$instance->create_group( $name );
+		}
+	}
+
+	/**
 	 * Every group, in display order.
 	 *
 	 * @return array[] Each: array('group_id'=>string,'name'=>string,'order'=>int).
@@ -77,10 +98,11 @@ class Person_Greeting_Groups {
 			$groups       = is_array( $saved ) ? array_values( $saved ) : array();
 			$this->groups = array_map( array( __CLASS__, 'normalize_group' ), $groups );
 
-			usort(
+				usort(
 				$this->groups,
 				function ( $a, $b ) {
-					return $a['order'] <=> $b['order'];
+					$order_compare = $a['order'] <=> $b['order'];
+					return 0 !== $order_compare ? $order_compare : strcmp( $a['group_id'], $b['group_id'] );
 				}
 			);
 		}
@@ -129,7 +151,8 @@ class Person_Greeting_Groups {
 		usort(
 			$this->groups,
 			function ( $a, $b ) {
-				return $a['order'] <=> $b['order'];
+				$order_compare = $a['order'] <=> $b['order'];
+				return 0 !== $order_compare ? $order_compare : strcmp( $a['group_id'], $b['group_id'] );
 			}
 		);
 
@@ -167,4 +190,151 @@ class Person_Greeting_Groups {
 
 		return $new_group['group_id'];
 	}
+
+	/**
+	 * Renames one group. Empty names are rejected.
+	 *
+	 * @param string $group_id
+	 * @param string $name
+	 * @return bool
+	 */
+	public function update_group( $group_id, $name ) {
+		$group_id = sanitize_text_field( $group_id );
+		$name     = sanitize_text_field( $name );
+
+		if ( '' === $group_id || '' === $name ) {
+			return false;
+		}
+
+		$groups  = $this->get_all();
+		$changed = false;
+
+		foreach ( $groups as &$group ) {
+			if ( $group['group_id'] === $group_id ) {
+				$group['name'] = $name;
+				$changed = true;
+				break;
+			}
+		}
+		unset( $group );
+
+		if ( $changed ) {
+			$this->save_groups( $groups );
+		}
+
+		return $changed;
+	}
+
+	/**
+	 * Returns the number of person greetings assigned to one group.
+	 *
+	 * @param string $group_id
+	 * @return int
+	 */
+	public function count_members( $group_id ) {
+		$group_id = sanitize_text_field( $group_id );
+
+		if ( '' === $group_id ) {
+			return 0;
+		}
+
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'alumni_content',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array(
+						'key'   => '_alumni_content_kind',
+						'value' => 'person_greeting',
+					),
+					array(
+						'key'   => '_alumni_person_greeting_group_id',
+						'value' => $group_id,
+					),
+				),
+			)
+		);
+
+		return (int) $query->found_posts;
+	}
+
+	/**
+	 * Deletes a group only when no person greeting is assigned to it.
+	 *
+	 * @param string $group_id
+	 * @return bool
+	 */
+	public function delete_group( $group_id ) {
+		$group_id = sanitize_text_field( $group_id );
+
+		if ( '' === $group_id || 0 < $this->count_members( $group_id ) ) {
+			return false;
+		}
+
+		$groups = $this->get_all();
+		$next   = array();
+
+		foreach ( $groups as $group ) {
+			if ( $group['group_id'] !== $group_id ) {
+				$next[] = $group;
+			}
+		}
+
+		if ( count( $next ) === count( $groups ) ) {
+			return false;
+		}
+
+		foreach ( $next as $index => &$group ) {
+			$group['order'] = $index + 1;
+		}
+		unset( $group );
+
+		$this->save_groups( $next );
+		return true;
+	}
+
+	/**
+	 * Moves a group one position up or down.
+	 *
+	 * @param string $group_id
+	 * @param string $direction up|down
+	 * @return bool
+	 */
+	public function move_group( $group_id, $direction ) {
+		$groups = $this->get_all();
+		$index  = null;
+
+		foreach ( $groups as $key => $group ) {
+			if ( $group['group_id'] === $group_id ) {
+				$index = $key;
+				break;
+			}
+		}
+
+		if ( null === $index ) {
+			return false;
+		}
+
+		$target = 'up' === $direction ? $index - 1 : ( 'down' === $direction ? $index + 1 : $index );
+
+		if ( $target < 0 || $target >= count( $groups ) || $target === $index ) {
+			return false;
+		}
+
+		$swap = $groups[ $index ];
+		$groups[ $index ] = $groups[ $target ];
+		$groups[ $target ] = $swap;
+
+		foreach ( $groups as $key => &$group ) {
+			$group['order'] = $key + 1;
+		}
+		unset( $group );
+
+		$this->save_groups( $groups );
+		return true;
+	}
+
 }

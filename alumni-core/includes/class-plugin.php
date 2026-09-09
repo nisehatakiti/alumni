@@ -74,6 +74,7 @@ final class Plugin {
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
+			add_action( 'admin_init', array( '\AlumniCore\Includes\Person_Greeting_Groups', 'maybe_ensure_standard_groups' ), 5 );
 			( new \AlumniCore\Admin\Admin() )->run();
 		}
 	}
@@ -111,6 +112,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-menu-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-person-greeting-groups-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-shortcode.php';
