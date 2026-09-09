@@ -129,6 +129,47 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 							</div>
 						<?php endif; ?>
 
+					<?php elseif ( 'person_greeting_group' === $alumni_hp_slot['type'] ) : ?>
+
+						<?php
+						$alumni_hp_group_members = function_exists( 'alumni_core_get_person_greeting_group_members' )
+							? alumni_core_get_person_greeting_group_members( $alumni_hp_slot['group_id'] )
+							: array();
+						$alumni_hp_content_post  = ! empty( $alumni_hp_group_members ) ? $alumni_hp_group_members[0] : null;
+						$alumni_hp_group_url     = alumni_theme_get_person_greeting_group_url( $alumni_hp_slot['group_id'] );
+						?>
+
+						<?php if ( $alumni_hp_content_post && $alumni_hp_group_url ) : ?>
+							<?php
+							$alumni_hp_content_terms      = alumni_theme_get_terms( $alumni_hp_content_post );
+							$alumni_hp_content_greeting   = alumni_theme_get_person_greeting( $alumni_hp_content_post );
+							$alumni_hp_content_image_html = alumni_theme_get_content_card_image_html( $alumni_hp_content_post );
+							$alumni_hp_content_title      = $alumni_hp_content_terms ? $alumni_hp_content_terms['display_title'] : $alumni_hp_content_post->post_title;
+							$alumni_hp_content_excerpt    = wp_trim_words( wp_strip_all_tags( $alumni_hp_content_post->post_content ), 30 );
+							?>
+							<div class="alumni-homepage-slot-content">
+								<?php if ( $alumni_hp_content_image_html ) : ?>
+									<a class="alumni-homepage-slot-content-image" href="<?php echo esc_url( $alumni_hp_group_url ); ?>">
+										<?php echo $alumni_hp_content_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Safe HTML from wp_get_attachment_image(). ?>
+									</a>
+								<?php endif; ?>
+								<h3 class="alumni-homepage-slot-title">
+									<a href="<?php echo esc_url( $alumni_hp_group_url ); ?>"><?php echo esc_html( $alumni_hp_content_title ); ?></a>
+								</h3>
+								<?php if ( $alumni_hp_content_greeting && $alumni_hp_content_greeting['name'] ) : ?>
+									<p class="alumni-homepage-slot-content-person">
+										<?php echo esc_html( $alumni_hp_content_greeting['name'] ); ?>
+										<?php if ( $alumni_hp_content_greeting['title'] ) : ?>
+											（<?php echo esc_html( $alumni_hp_content_greeting['title'] ); ?>）
+										<?php endif; ?>
+									</p>
+								<?php endif; ?>
+								<?php if ( $alumni_hp_content_excerpt ) : ?>
+									<p class="alumni-homepage-slot-content-excerpt"><?php echo esc_html( $alumni_hp_content_excerpt ); ?></p>
+								<?php endif; ?>
+							</div>
+						<?php endif; ?>
+
 					<?php elseif ( 'content' === $alumni_hp_slot['type'] ) : ?>
 
 						<?php
