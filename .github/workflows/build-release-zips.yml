@@ -51,6 +51,15 @@ jobs:
                   )
 
               print(f"Verified {zip_path}: {required_path}")
+
+          core_zip = Path("dist/alumni-core.zip")
+          with zipfile.ZipFile(core_zip) as archive:
+              shortcode = archive.read("alumni-core/includes/class-org-chart-shortcode.php").decode("utf-8")
+
+          if "function get_display_settings()" not in shortcode:
+              raise SystemExit("alumni-core.zip is missing Org_Chart_Shortcode::get_display_settings()")
+
+          print("Verified alumni-core.zip: Org_Chart_Shortcode::get_display_settings()")
           PY
 
       - name: Write build manifest
