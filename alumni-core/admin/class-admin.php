@@ -16,6 +16,7 @@ use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Admin\Pages\Menu_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Page;
+use AlumniCore\Admin\Pages\Person_Greeting_Groups_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -105,6 +106,13 @@ class Admin {
 	private $org_chart_page;
 
 	/**
+	 * 人物挨拶グループ screen handler.
+	 *
+	 * @var Person_Greeting_Groups_Page
+	 */
+	private $person_greeting_groups_page;
+
+	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
 	 *
@@ -141,6 +149,7 @@ class Admin {
 		$this->homepage_page           = new Homepage_Page();
 		$this->menu_page                = new Menu_Page();
 		$this->org_chart_page           = new Org_Chart_Page();
+		$this->person_greeting_groups_page = new Person_Greeting_Groups_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -166,6 +175,10 @@ class Admin {
 		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_move_org_chart_node', array( $this->org_chart_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_reparent_org_chart_node', array( $this->org_chart_page, 'handle_reparent' ) );
+		add_action( 'admin_post_alumni_core_create_person_greeting_group', array( $this->person_greeting_groups_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_update_person_greeting_group', array( $this->person_greeting_groups_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_person_greeting_group', array( $this->person_greeting_groups_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_move_person_greeting_group', array( $this->person_greeting_groups_page, 'handle_move' ) );
 	}
 
 	/**
@@ -236,6 +249,15 @@ class Admin {
 			self::CAPABILITY,
 			Officers_Page::SLUG,
 			array( $this->officers_page, 'render' )
+		);
+
+		add_submenu_page(
+			self::MENU_SLUG,
+			__( '人物挨拶グループ', 'alumni-core' ),
+			__( '人物挨拶グループ', 'alumni-core' ),
+			self::CAPABILITY,
+			Person_Greeting_Groups_Page::SLUG,
+			array( $this->person_greeting_groups_page, 'render' )
 		);
 
 		// WordPress already adds a generic 「すべてのコンテンツ」/「新規追加」
