@@ -508,8 +508,17 @@
 	margin: 0 0 0.5em;
 }
 
+/* トップページのコンテンツ画像は、一覧の補助情報として表示する。
+   元画像を切り取ったり、コンテンツ幅いっぱいまで無理に拡大したりせず、
+   元の縦横比を維持したまま、最大幅・最大高さの範囲に収める。
+   縦長・横長のどちらでも全体を見せるため、object-fit: contain を使う。 */
 .alumni-homepage-slot-content-image {
-	display: block;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-start;
+	width: 100%;
+	max-width: 480px;
+	max-height: 240px;
 	margin: 0 0 0.75em;
 	color: inherit;
 	text-decoration: none;
@@ -517,9 +526,11 @@
 
 .alumni-homepage-slot-content-image-img {
 	display: block;
-	width: 100%;
-	max-height: 260px;
-	object-fit: cover;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 240px;
+	object-fit: contain;
 	border-radius: 4px;
 }
 
