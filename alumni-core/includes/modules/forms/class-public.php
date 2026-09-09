@@ -85,12 +85,14 @@ class Public_Form {
 		<div class="alumni-form-field alumni-form-field-<?php echo esc_attr($type); ?>" style="--alumni-form-width:<?php echo esc_attr(self::field_width($field)); ?>%;--alumni-form-gap-share:<?php echo esc_attr(max(0, $row_count - 1)); ?>;">
 			<?php if('checkbox'!==$type): ?><label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if($required): ?><span class="alumni-form-required"> <?php esc_html_e('必須','alumni-core'); ?></span><?php endif; ?></label><?php endif; ?>
 			<?php if(!empty($field['help_text'])): ?><div class="alumni-form-help"><?php echo esc_html($field['help_text']); ?></div><?php endif; ?>
-			<?php if('textarea'===$type): ?><textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?>></textarea>
+			<?php if('textarea'===$type): ?><textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($key); ?>" rows="<?php echo esc_attr(self::field_textarea_rows($field)); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?>></textarea>
 			<?php elseif('select'===$type): ?><select id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($key); ?>"<?php echo $required?' required':''; ?>><option value=""><?php esc_html_e('選択してください','alumni-core'); ?></option><?php foreach($options as $option): ?><option value="<?php echo esc_attr($option); ?>"><?php echo esc_html($option); ?></option><?php endforeach; ?></select>
 			<?php elseif('radio'===$type): foreach($options as $n=>$option): ?><label><input type="radio" name="<?php echo esc_attr($key); ?>" value="<?php echo esc_attr($option); ?>"<?php echo $required&&0===$n?' required':''; ?> /> <?php echo esc_html($option); ?></label><?php endforeach;
 			elseif('checkbox'===$type): ?><label><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($key); ?>" value="1"<?php echo $required?' required':''; ?> /> <?php echo esc_html($field['label']); ?><?php if($required): ?><span class="alumni-form-required"> <?php esc_html_e('必須','alumni-core'); ?></span><?php endif; ?></label>
+			<?php elseif('email'===$type): ?><input id="<?php echo esc_attr($id); ?>" type="email" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?> />
+				<?php if(self::is_email_confirmation_enabled($field)): $confirm_id=$id.'-confirm'; $confirm_key='alumni_form_field['.$field['key'].'__confirm]'; $confirm_label=self::email_confirmation_label($field); ?><div class="alumni-form-email-confirm"><label for="<?php echo esc_attr($confirm_id); ?>"><?php echo esc_html($confirm_label); ?><?php if($required): ?><span class="alumni-form-required"> <?php esc_html_e('必須','alumni-core'); ?></span><?php endif; ?></label><input id="<?php echo esc_attr($confirm_id); ?>" type="email" name="<?php echo esc_attr($confirm_key); ?>" autocomplete="email"<?php echo $required?' required':''; ?> /></div><?php endif; ?>
 			<?php elseif('file'===$type): $accept=self::file_accept_attribute($field); ?><input id="<?php echo esc_attr($id); ?>" type="file" name="<?php echo esc_attr($file_key); ?>"<?php echo $accept?' accept="'.esc_attr($accept).'"':''; ?><?php echo $required?' required':''; ?> /><?php if(self::field_max_file_size_mb($field)): ?><div class="alumni-form-help"><?php echo esc_html(sprintf(__('最大 %d MB','alumni-core'),self::field_max_file_size_mb($field))); ?></div><?php endif; ?>
-			<?php else: ?><input id="<?php echo esc_attr($id); ?>" type="<?php echo esc_attr(in_array($type,array('email','tel','number'),true)?$type:'text'); ?>" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?> /><?php endif; ?>
+			<?php else: ?><input id="<?php echo esc_attr($id); ?>" type="<?php echo esc_attr(in_array($type,array('tel','number'),true)?$type:'text'); ?>" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?> /><?php endif; ?>
 		</div><?php
 	}
 	public static function handle_submit() {
@@ -114,6 +116,12 @@ class Public_Form {
 				$values[]=array('label'=>$field['label'],'value'=>sanitize_file_name(basename($uploaded['file'])));continue;
 			}
 			$raw=isset($input[$key])?$input[$key]:''; if(is_array($raw)){$errors=true;continue;} $raw=is_string($raw)?trim($raw):'';
+			if('email'===$field['type']&&self::is_email_confirmation_enabled($field)){
+				$confirm_key=$key.'__confirm'; $confirm=isset($input[$confirm_key])?$input[$confirm_key]:'';
+				if(is_array($confirm)){$errors=true;$error_code='email_confirm';continue;}
+				$confirm=is_string($confirm)?trim($confirm):'';
+				if(''!==$raw&&(''===$confirm||$raw!==$confirm)){$errors=true;$error_code='email_confirm';continue;}
+			}
 			if(!empty($field['required'])&&''===$raw){$errors=true;continue;}
 			if(''!==$raw){
 				$len=self::string_length($raw);$min=self::field_min_length($field);$max=self::field_max_length($field);
@@ -141,11 +149,14 @@ class Public_Form {
 	private static function allowed_mimes($extensions){$all=wp_get_mime_types();$allowed=array();foreach($all as $pattern=>$mime)foreach(preg_split('/\|/',$pattern) as $ext)if(in_array(strtolower($ext),$extensions,true))$allowed[$pattern]=$mime;return $allowed;}
 	private static function file_accept_attribute($field){$ext=self::allowed_extensions($field);return $ext?implode(',',array_map(function($x){return '.'.$x;},$ext)):'';}
 	private static function field_max_file_size_mb($field){return max(1,isset($field['max_file_size_mb'])?absint($field['max_file_size_mb']):5);}
+	private static function field_textarea_rows($field){$rows=isset($field['textarea_rows'])?absint($field['textarea_rows']):4;return max(2,min(50,$rows));}
+	private static function is_email_confirmation_enabled($field){return 'email'===($field['type']??'')&&!empty($field['email_confirm']);}
+	private static function email_confirmation_label($field){$label=isset($field['email_confirm_label'])?sanitize_text_field((string)$field['email_confirm_label']):'';return $label?$label:sprintf(__('%s（確認）','alumni-core'),(string)($field['label']??__('メールアドレス','alumni-core')));}
 	private static function field_min_length($field){return isset($field['min_length'])?max(0,absint($field['min_length'])):0;}
 	private static function field_max_length($field){$max=isset($field['max_length'])?max(0,absint($field['max_length'])):0;$min=self::field_min_length($field);return $max&&$max<$min?$min:$max;}
 	private static function length_attributes($min,$max){$s='';if($min)$s.=' minlength="'.esc_attr($min).'"';if($max)$s.=' maxlength="'.esc_attr($max).'"';return $s;}
 	private static function string_length($value){return function_exists('mb_strlen')?mb_strlen($value):strlen($value);}
 	private static function cleanup_files($files){foreach($files as $file)if(is_string($file)&&$file&&file_exists($file))@unlink($file);}
-	private static function error_message($error){$map=array('file'=>__('添付ファイルを確認して、もう一度送信してください。','alumni-core'),'mail'=>__('メール送信に失敗しました。時間をおいてもう一度お試しください。','alumni-core'),'security'=>__('送信を確認できませんでした。もう一度お試しください。','alumni-core'));return $map[$error]??__('入力内容を確認して、もう一度送信してください。','alumni-core');}
+	private static function error_message($error){$map=array('file'=>__('添付ファイルを確認して、もう一度送信してください。','alumni-core'),'mail'=>__('メール送信に失敗しました。時間をおいてもう一度お試しください。','alumni-core'),'security'=>__('送信を確認できませんでした。もう一度お試しください。','alumni-core'),'email_confirm'=>__('メールアドレスと確認用メールアドレスが一致しません。','alumni-core'));return $map[$error]??__('入力内容を確認して、もう一度送信してください。','alumni-core');}
 	private static function redirect($url,$error){wp_safe_redirect(add_query_arg('alumni_form_error',sanitize_key($error),$url));exit;}
 }
