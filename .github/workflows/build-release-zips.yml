@@ -1,0 +1,56 @@
+name: Build Release ZIPs
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-release-zips:
+    name: Build WordPress release ZIPs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show source revision
+        run: |
+          echo "Branch/ref: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Build release ZIPs
+        run: |
+          chmod +x scripts/build-release-zips.sh
+          scripts/build-release-zips.sh dist
+
+      - name: Verify release ZIP contents
+        run: |
+          test -f dist/alumni-core.zip
+          test -f dist/alumni-theme.zip
+          unzip -l dist/alumni-core.zip | grep -q '^.*alumni-core/alumni-core.php$'
+          unzip -l dist/alumni-theme.zip | grep -q '^.*alumni-theme/style.css$'
+
+      - name: Write build manifest
+        run: |
+          {
+            echo "Repository: ${{ github.repository }}"
+            echo "Ref: ${{ github.ref_name }}"
+            echo "Commit: ${{ github.sha }}"
+            echo "Workflow run: ${{ github.run_id }}"
+            echo "Built at UTC: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          } > dist/BUILD-INFO.txt
+
+      - name: Upload release ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: alumni-release-zips-${{ github.ref_name }}-${{ github.sha }}
+          path: |
+            dist/alumni-core.zip
+            dist/alumni-theme.zip
+            dist/BUILD-INFO.txt
+          if-no-files-found: error
+          retention-days: 30
