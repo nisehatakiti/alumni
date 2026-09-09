@@ -434,6 +434,59 @@ function alumni_theme_get_content_url( $id ) {
 }
 
 /**
+ * トップページのコンテンツスロットで実際に表示する投稿とリンク先を解決する。
+ *
+ * 人物挨拶が歴代グループに属している場合は、管理画面でスロットに指定した
+ * 個別投稿そのものではなく、そのグループの表示順(menu_order)先頭の人物を
+ * 代表として表示する。リンク先も個別挨拶ではなくグループの歴代一覧ページ
+ * にするため、会長交代・校長交代時は人物の並び順だけを更新すればトップ
+ * ページの代表表示も自動的に切り替わる。
+ *
+ * グループ未設定の人物挨拶、および自由コンテンツ・規約類などは従来どおり
+ * 指定された投稿自身を表示し、その個別ページへリンクする。
+ *
+ * @param int $id Configured alumni_content post ID.
+ * @return array{post:WP_Post,url:string}|null
+ */
+function alumni_theme_resolve_homepage_slot_content( $id ) {
+	$post = alumni_theme_get_content( $id );
+
+	if ( ! $post ) {
+		return null;
+	}
+
+	$url      = alumni_theme_get_content_url( $post->ID );
+	$greeting = alumni_theme_get_person_greeting( $post );
+
+	if ( ! $greeting || empty( $greeting['group_id'] ) ) {
+		return array(
+			'post' => $post,
+			'url'  => $url,
+		);
+	}
+
+	$members = function_exists( 'alumni_core_get_person_greeting_group_members' )
+		? alumni_core_get_person_greeting_group_members( $greeting['group_id'] )
+		: array();
+
+	if ( empty( $members ) ) {
+		return array(
+			'post' => $post,
+			'url'  => $url,
+		);
+	}
+
+	$group_url = function_exists( 'alumni_core_get_person_greeting_group_url' )
+		? alumni_core_get_person_greeting_group_url( $greeting['group_id'] )
+		: '';
+
+	return array(
+		'post' => $members[0],
+		'url'  => $group_url ? $group_url : alumni_theme_get_content_url( $members[0]->ID ),
+	);
+}
+
+/**
  * Every field needed to render a 人物挨拶 card/page (name, kana, title,
  * term, photo ID, body, ...), or null when Core is inactive or $post
  * isn't a 人物挨拶 コンテンツ post.
