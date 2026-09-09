@@ -196,7 +196,7 @@ class Post_Type {
 				// Content_Meta_Box UI as before (no block editor shown to
 				// them — same reasoning as alumni_news_event never having
 				// one).
-				'supports'     => array( 'title', 'editor' ),
+				'supports'     => array( 'title', 'editor', 'thumbnail' ),
 				'has_archive'  => false,
 				'rewrite'      => array(
 					'slug'       => 'contents',
