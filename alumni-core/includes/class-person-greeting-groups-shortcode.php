@@ -115,7 +115,29 @@ class Person_Greeting_Groups_Shortcode {
 			return '';
 		}
 
-		$page_id = (int) get_option( self::PAGE_ID_OPTION_PREFIX . $group_id, 0 );
+		$option  = self::PAGE_ID_OPTION_PREFIX . $group_id;
+		$page_id = (int) get_option( $option, 0 );
+
+		// 旧実装や手動作成済みのグループページでは、ページ自体は存在して
+		// ショートコードも正常に表示できるのに、対応する page ID option が
+		// 未保存のことがある。その場合トップページだけが URL を取得できず、
+		// 人物挨拶グループのスロットが丸ごと空になる。
+		//
+		// get_group_url() は公開側の唯一のURL解決口なので、ここで既存ページを
+		// slug から復旧して option を補完する。管理画面に一度入り直さないと
+		// リンクが直らない状態を作らないための自己修復処理。
+		if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
+			$slug = sanitize_title( $group['name'] );
+
+			if ( '' !== $slug ) {
+				$existing = get_page_by_path( $slug, OBJECT, 'page' );
+
+				if ( $existing instanceof \WP_Post ) {
+					$page_id = (int) $existing->ID;
+					update_option( $option, $page_id );
+				}
+			}
+		}
 
 		if ( ! $page_id || 'page' !== get_post_type( $page_id ) ) {
 			return '';
