@@ -29,10 +29,29 @@ jobs:
 
       - name: Verify release ZIP contents
         run: |
-          test -f dist/alumni-core.zip
-          test -f dist/alumni-theme.zip
-          unzip -l dist/alumni-core.zip | grep -q '^.*alumni-core/alumni-core.php$'
-          unzip -l dist/alumni-theme.zip | grep -q '^.*alumni-theme/style.css$'
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          checks = {
+              Path("dist/alumni-core.zip"): "alumni-core/alumni-core.php",
+              Path("dist/alumni-theme.zip"): "alumni-theme/style.css",
+          }
+
+          for zip_path, required_path in checks.items():
+              if not zip_path.is_file():
+                  raise SystemExit(f"Missing build output: {zip_path}")
+
+              with zipfile.ZipFile(zip_path) as archive:
+                  names = archive.namelist()
+
+              if required_path not in names:
+                  raise SystemExit(
+                      f"{zip_path} does not contain required path: {required_path}"
+                  )
+
+              print(f"Verified {zip_path}: {required_path}")
+          PY
 
       - name: Write build manifest
         run: |
