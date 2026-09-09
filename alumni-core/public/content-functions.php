@@ -106,6 +106,19 @@ if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
 	}
 }
 
+
+if ( ! function_exists( 'alumni_core_get_person_greeting_group_url' ) ) {
+	/**
+	 * Returns the public URL for a person greeting group page.
+	 *
+	 * @param string $group_id
+	 * @return string
+	 */
+	function alumni_core_get_person_greeting_group_url( $group_id ) {
+		return \AlumniCore\Includes\Person_Greeting_Groups_Shortcode::get_group_url( (string) $group_id );
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_content' ) ) {
 	/**
 	 * A single published コンテンツ post, or null if $id doesn't resolve to
