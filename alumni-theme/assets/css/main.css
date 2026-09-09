@@ -875,6 +875,33 @@
 	color: #555;
 }
 
+/* 人物挨拶グループ（歴代表示） */
+.alumni-person-greeting-group-item {
+	margin: 0 0 2.5em;
+	padding: 0 0 2.5em;
+	border-bottom: 1px solid #e2e2e2;
+}
+
+.alumni-person-greeting-group-item:last-child {
+	margin-bottom: 0;
+	padding-bottom: 0;
+	border-bottom: 0;
+}
+
+.alumni-person-greeting-group-member-title {
+	margin: 0 0 0.75em;
+	font-size: 1.35em;
+}
+
+.alumni-person-greeting-group-tenure {
+	margin: 0 0 0.75em;
+	color: #555;
+}
+
+.alumni-person-greeting-group-body {
+	margin-top: 1em;
+}
+
 /* コンテンツ（規約類） */
 .alumni-terms-meta {
 	margin-bottom: 1.5em;

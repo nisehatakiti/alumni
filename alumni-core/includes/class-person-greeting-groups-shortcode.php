@@ -125,7 +125,12 @@ class Person_Greeting_Groups_Shortcode {
 	}
 
 	/**
-	 * Renders [alumni_person_greeting_group id="..."]: 歴代の人物挨拶一覧。
+	 * Renders [alumni_person_greeting_group id="..."]: one page containing
+	 * every published greeting in the selected group.
+	 *
+	 * The group page is the public destination for the category itself.
+	 * Individual alumni_content greeting URLs are redirected here by the
+	 * Content module, with an anchor to the corresponding member.
 	 *
 	 * @param array $atts Shortcode attributes; only 'id' is used.
 	 * @return string
@@ -148,37 +153,65 @@ class Person_Greeting_Groups_Shortcode {
 						<?php esc_html_e( '現在、この一覧に人物挨拶は登録されていません。', 'alumni-core' ); ?>
 					</p>
 				<?php else : ?>
-					<ul class="alumni-person-greeting-group-list">
-						<?php foreach ( $members as $member ) : ?>
-							<?php
-							$name   = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_name( $member );
-							$title  = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_title( $member );
-							$tenure = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_tenure( $member );
-							?>
-							<li class="alumni-person-greeting-group-item">
-								<span class="alumni-person-greeting-group-title"><?php echo esc_html( $title ); ?></span>
-								<span class="alumni-person-greeting-group-name"><?php echo esc_html( $name ); ?></span>
-								<?php if ( $tenure ) : ?>
-									<span class="alumni-person-greeting-group-tenure">
-										<?php
-										printf(
-											/* translators: %s: 任期の自由記述、例「2020年〜2024年」 */
-											esc_html__( '任期：%s', 'alumni-core' ),
-											esc_html( $tenure )
-										);
-										?>
-									</span>
+					<?php foreach ( $members as $member ) : ?>
+						<?php
+						$name     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_name( $member );
+						$kana     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_kana( $member );
+						$title    = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_title( $member );
+						$term     = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_term( $member );
+						$tenure   = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_tenure( $member );
+						$photo_id = \AlumniCore\Includes\Modules\Content\Post_Type::get_person_photo_id( $member );
+						?>
+						<article id="<?php echo esc_attr( 'person-greeting-' . $member->ID ); ?>" class="alumni-person-greeting-group-item">
+							<?php if ( $title ) : ?>
+								<h2 class="alumni-person-greeting-group-member-title"><?php echo esc_html( $title ); ?></h2>
+							<?php endif; ?>
+
+							<?php if ( $photo_id ) : ?>
+								<div class="alumni-person-photo">
+									<?php echo wp_get_attachment_image( $photo_id, 'medium' ); ?>
+								</div>
+							<?php endif; ?>
+
+							<p class="alumni-person-name">
+								<?php echo esc_html( $name ); ?>
+								<?php if ( $kana ) : ?>
+									<span class="alumni-person-kana">（<?php echo esc_html( $kana ); ?>）</span>
 								<?php endif; ?>
-								<a class="alumni-person-greeting-group-link" href="<?php echo esc_url( get_permalink( $member ) ); ?>">
-									<?php esc_html_e( '挨拶を見る', 'alumni-core' ); ?>
-								</a>
-							</li>
-						<?php endforeach; ?>
-					</ul>
+							</p>
+
+							<?php if ( $tenure ) : ?>
+								<p class="alumni-person-greeting-group-tenure">
+									<?php
+									printf(
+										/* translators: %s: 任期の自由記述、例「2020年〜2024年」 */
+										esc_html__( '任期：%s', 'alumni-core' ),
+										esc_html( $tenure )
+									);
+									?>
+								</p>
+							<?php elseif ( $term ) : ?>
+								<p class="alumni-person-term">
+									<?php
+									printf(
+										/* translators: %d: graduation term (期) */
+										esc_html__( '第%d期', 'alumni-core' ),
+										(int) $term
+									);
+									?>
+								</p>
+							<?php endif; ?>
+
+							<div class="alumni-person-greeting-group-body entry-content">
+								<?php echo apply_filters( 'the_content', $member->post_content ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the_content handles post HTML. ?>
+							</div>
+						</article>
+					<?php endforeach; ?>
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();
 	}
+
 }
