@@ -43,6 +43,7 @@ if ( $alumni_core_delete_user_data ) {
 	delete_option( 'alumni_core_officer_lists_updated_at' );
 	delete_option( 'alumni_core_org_chart' );
 	delete_option( 'alumni_core_org_chart_page_id' );
+	delete_option( 'alumni_core_org_chart_display_settings' );
 	delete_option( 'alumni_core_person_greeting_groups' );
 	delete_option( 'alumni_core_school_photos_page_id' );
 	// Person_Greeting_Groups_Shortcode::PAGE_ID_OPTION_PREFIXの各グループ別
