@@ -35,6 +35,7 @@ class Module {
 	 */
 	public static function register() {
 		add_action( 'init', array( Post_Type::class, 'register' ) );
+		add_action( 'template_redirect', array( __CLASS__, 'redirect_person_greeting_to_group' ) );
 
 		if ( ! is_admin() ) {
 			return;
@@ -75,6 +76,41 @@ class Module {
 		$required_fields = new Content_Required_Fields();
 		add_filter( 'wp_insert_post_data', array( $required_fields, 'enforce' ), 10, 2 );
 		add_action( 'admin_notices', array( $required_fields, 'render_notice' ) );
+	}
+
+
+	/**
+	 * Keeps a person greeting group as the single public destination.
+	 *
+	 * Historical members remain separate posts for editing and ordering, but
+	 * visitors should see the group's consolidated page. A direct old/member
+	 * URL therefore lands on the same group page and jumps to that member.
+	 */
+	public static function redirect_person_greeting_to_group() {
+		if ( is_admin() || ! is_singular( Post_Type::SLUG ) ) {
+			return;
+		}
+
+		$post_id = get_queried_object_id();
+
+		if ( ! Post_Type::is_person_greeting( $post_id ) ) {
+			return;
+		}
+
+		$group_id = Post_Type::get_person_greeting_group_id( $post_id );
+
+		if ( '' === $group_id ) {
+			return;
+		}
+
+		$group_url = \AlumniCore\Includes\Person_Greeting_Groups_Shortcode::get_group_url( $group_id );
+
+		if ( '' === $group_url ) {
+			return;
+		}
+
+		wp_safe_redirect( $group_url . '#person-greeting-' . $post_id, 302 );
+		exit;
 	}
 
 	/**
