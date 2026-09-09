@@ -30,6 +30,11 @@ class Meta_Box {
 		$description = Post_Type::get_description( $post->ID );
 		$recipient   = Post_Type::get_recipient_email( $post->ID );
 		$subject     = Post_Type::get_mail_subject( $post->ID );
+		$from_name   = Post_Type::get_from_name( $post->ID );
+		$from_email  = Post_Type::get_from_email( $post->ID );
+		$reply_mode  = Post_Type::get_reply_to_mode( $post->ID );
+		$reply_email = Post_Type::get_reply_to_email( $post->ID );
+		$reply_field = Post_Type::get_reply_to_field( $post->ID );
 		$success     = Post_Type::get_success_message( $post->ID );
 		$auto_reply  = Post_Type::is_auto_reply_enabled( $post->ID );
 		$fields      = Post_Type::get_fields( $post->ID );
@@ -57,6 +62,17 @@ class Meta_Box {
 				<input id="alumni_form_mail_subject" name="alumni_form_mail_subject" type="text" class="regular-text" value="<?php echo esc_attr( $subject ); ?>" />
 			</p>
 		</div>
+		<hr />
+		<h3><?php esc_html_e( 'メール送信設定', 'alumni-core' ); ?></h3>
+		<div class="alumni-form-admin-grid">
+			<p><label for="alumni_form_from_name"><strong><?php esc_html_e( '差出人名（From Name）', 'alumni-core' ); ?></strong></label><input id="alumni_form_from_name" name="alumni_form_from_name" type="text" value="<?php echo esc_attr( $from_name ); ?>" /><span class="description"><?php esc_html_e( '空欄の場合はWordPressの既定設定を使用します。', 'alumni-core' ); ?></span></p>
+			<p><label for="alumni_form_from_email"><strong><?php esc_html_e( '差出人メールアドレス（From Email）', 'alumni-core' ); ?></strong></label><input id="alumni_form_from_email" name="alumni_form_from_email" type="email" value="<?php echo esc_attr( $from_email ); ?>" /><span class="description"><?php esc_html_e( 'サイトと同じドメインのメールアドレスを推奨します。', 'alumni-core' ); ?></span></p>
+		</div>
+		<div class="alumni-form-admin-grid">
+			<p><label for="alumni_form_reply_to_mode"><strong><?php esc_html_e( '返信先（Reply-To）', 'alumni-core' ); ?></strong></label><select id="alumni_form_reply_to_mode" name="alumni_form_reply_to_mode"><option value="none" <?php selected( $reply_mode, 'none' ); ?>><?php esc_html_e( '指定しない', 'alumni-core' ); ?></option><option value="fixed" <?php selected( $reply_mode, 'fixed' ); ?>><?php esc_html_e( '固定メールアドレス', 'alumni-core' ); ?></option><option value="field" <?php selected( $reply_mode, 'field' ); ?>><?php esc_html_e( 'フォームのメールアドレス項目', 'alumni-core' ); ?></option></select></p>
+			<p><label for="alumni_form_reply_to_email"><strong><?php esc_html_e( '固定返信先メールアドレス', 'alumni-core' ); ?></strong></label><input id="alumni_form_reply_to_email" name="alumni_form_reply_to_email" type="email" value="<?php echo esc_attr( $reply_email ); ?>" /></p>
+		</div>
+		<p><label for="alumni_form_reply_to_field"><strong><?php esc_html_e( '返信先に使用するメールアドレス項目', 'alumni-core' ); ?></strong></label><select id="alumni_form_reply_to_field" name="alumni_form_reply_to_field"><option value=""><?php esc_html_e( '自動選択（最初のメールアドレス項目）', 'alumni-core' ); ?></option><?php foreach ( $fields as $field ) : if ( 'email' !== $field['type'] ) continue; ?><option value="<?php echo esc_attr( $field['key'] ); ?>" <?php selected( $reply_field, $field['key'] ); ?>><?php echo esc_html( $field['label'] ); ?></option><?php endforeach; ?></select><span class="description"><?php esc_html_e( 'Reply-Toを「フォームのメールアドレス項目」にした場合のみ使用します。', 'alumni-core' ); ?></span></p>
 		<p>
 			<label for="alumni_form_success_message"><strong><?php esc_html_e( '送信完了メッセージ', 'alumni-core' ); ?></strong></label><br />
 			<textarea id="alumni_form_success_message" name="alumni_form_success_message" rows="3" class="large-text"><?php echo esc_textarea( $success ); ?></textarea>
@@ -140,12 +156,22 @@ class Meta_Box {
 		$map = array(
 			'alumni_form_description' => Post_Type::META_DESCRIPTION,
 			'alumni_form_mail_subject' => Post_Type::META_MAIL_SUBJECT,
+			'alumni_form_from_name' => Post_Type::META_FROM_NAME,
 			'alumni_form_success_message' => Post_Type::META_SUCCESS_MESSAGE,
 		);
 		foreach ( $map as $input => $meta ) {
 			$value = isset( $_POST[$input] ) ? wp_unslash( $_POST[$input] ) : '';
 			update_post_meta( $post_id, $meta, 'alumni_form_description' === $input || 'alumni_form_success_message' === $input ? sanitize_textarea_field( $value ) : sanitize_text_field( $value ) );
 		}
+		$from_email = isset( $_POST['alumni_form_from_email'] ) ? sanitize_email( wp_unslash( $_POST['alumni_form_from_email'] ) ) : '';
+		if ( $from_email && is_email( $from_email ) ) update_post_meta( $post_id, Post_Type::META_FROM_EMAIL, $from_email ); else delete_post_meta( $post_id, Post_Type::META_FROM_EMAIL );
+		$reply_mode = isset( $_POST['alumni_form_reply_to_mode'] ) ? sanitize_key( wp_unslash( $_POST['alumni_form_reply_to_mode'] ) ) : 'field';
+		if ( ! in_array( $reply_mode, array( 'none', 'fixed', 'field' ), true ) ) $reply_mode = 'field';
+		update_post_meta( $post_id, Post_Type::META_REPLY_TO_MODE, $reply_mode );
+		$reply_email = isset( $_POST['alumni_form_reply_to_email'] ) ? sanitize_email( wp_unslash( $_POST['alumni_form_reply_to_email'] ) ) : '';
+		if ( $reply_email && is_email( $reply_email ) ) update_post_meta( $post_id, Post_Type::META_REPLY_TO_EMAIL, $reply_email ); else delete_post_meta( $post_id, Post_Type::META_REPLY_TO_EMAIL );
+		$reply_field = isset( $_POST['alumni_form_reply_to_field'] ) ? sanitize_key( wp_unslash( $_POST['alumni_form_reply_to_field'] ) ) : '';
+		update_post_meta( $post_id, Post_Type::META_REPLY_TO_FIELD, $reply_field );
 		update_post_meta( $post_id, Post_Type::META_AUTO_REPLY_ENABLED, isset( $_POST['alumni_form_auto_reply_enabled'] ) ? '1' : '0' );
 
 		$raw = isset( $_POST['alumni_form_fields'] ) && is_array( $_POST['alumni_form_fields'] ) ? wp_unslash( $_POST['alumni_form_fields'] ) : array();
