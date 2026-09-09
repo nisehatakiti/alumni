@@ -31,6 +31,11 @@ class Org_Chart_Shortcode {
 	const SHORTCODE  = 'alumni_org_chart';
 
 	/**
+	 * Option name storing public display settings.
+	 */
+	const OPTION_DISPLAY_SETTINGS = 'alumni_core_org_chart_display_settings';
+
+	/**
 	 * Registers hooks. Safe to call unconditionally — the page-creation
 	 * check is gated internally to is_admin().
 	 */
@@ -99,11 +104,12 @@ class Org_Chart_Shortcode {
 	 * @return string
 	 */
 	public static function render_shortcode() {
-		$tree = Org_Chart::instance()->get_tree();
+		$tree     = Org_Chart::instance()->get_tree();
+		$settings = self::get_display_settings();
 
 		ob_start();
 		?>
-		<div class="alumni-org-chart">
+		<div class="alumni-org-chart<?php echo $settings['show_connectors'] ? ' alumni-org-chart--connectors' : ''; ?><?php echo $settings['show_boxes'] ? ' alumni-org-chart--boxes' : ''; ?>">
 			<style>
 				/* 同窓会組織図: 親子関係を罫線でつなぐツリー表示 */
 				.alumni-org-chart .alumni-org-chart-list {
@@ -124,14 +130,14 @@ class Org_Chart_Shortcode {
 					line-height: 1.5;
 				}
 
-				/* 子階層全体の縦線 */
+				/* 子階層全体の縦線・子ノードへの横線は「罫線でつなぐ」がONの時だけ表示 */
 				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list {
 					position: relative;
 					margin: 0 0 0 1.25rem;
 					padding: 0 0 0 1.5rem;
 				}
 
-				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list::before {
+				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list::before {
 					content: "";
 					position: absolute;
 					top: 0;
@@ -141,10 +147,25 @@ class Org_Chart_Shortcode {
 					opacity: 0.45;
 				}
 
-				/* 各子ノードへ伸びる横線 */
 				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node {
 					position: relative;
 					padding: 0.35em 0;
+				}
+
+				.alumni-org-chart--connectors .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::before {
+					content: "";
+					position: absolute;
+					top: 1.45em;
+					left: -1.5rem;
+					width: 1.5rem;
+					border-top: 1px solid currentColor;
+					opacity: 0.45;
+				}
+
+				/* 「箱で囲む」がONの時だけノードを枠線で表示 */
+				.alumni-org-chart--boxes .alumni-org-chart-node-name {
+					border: 1px solid currentColor;
+					border-radius: 0.25rem;
 				}
 
 				.alumni-org-chart .alumni-org-chart-node > .alumni-org-chart-list > .alumni-org-chart-node::before {
