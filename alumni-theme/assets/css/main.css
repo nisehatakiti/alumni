@@ -481,6 +481,23 @@
 	margin-bottom: 2em;
 }
 
+/* 連続する「縦並び」セクションは、セクション単位で右方向へ展開する。
+   横並びセクションはテンプレート側でこのグループの外に出るため、必ず
+   次の行から全幅で始まり、その後の縦並びセクションは新しいグループとして
+   再び右方向へ並ぶ。 */
+.alumni-homepage-vertical-group {
+	display: flex;
+	align-items: flex-start;
+	gap: 2em;
+	margin-bottom: 2em;
+}
+
+.alumni-homepage-vertical-group .alumni-homepage-section {
+	flex: 1 1 0;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
 .alumni-homepage-section-heading {
 	margin-bottom: 0.75em;
 }
@@ -502,6 +519,17 @@
 /* 縦並びでは表示数が2件・3件でも1列のまま、上から順に表示する。 */
 .alumni-homepage-section-layout-vertical .alumni-homepage-section-grid {
 	grid-template-columns: 1fr;
+}
+
+@media (max-width: 782px) {
+	.alumni-homepage-vertical-group {
+		flex-direction: column;
+		gap: 1.5em;
+	}
+
+	.alumni-homepage-vertical-group .alumni-homepage-section {
+		width: 100%;
+	}
 }
 
 .alumni-homepage-slot-title {
