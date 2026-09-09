@@ -2,23 +2,11 @@
 #
 # Builds WordPress-installable ZIPs for Alumni Core and Alumni Theme.
 #
-# Copies alumni-core/ and alumni-theme/ into a clean staging directory
-# (stripping dev-only files such as .gitkeep), then zips each with the
-# plugin/theme folder itself as the top-level entry, e.g.:
-#
-#   alumni-core.zip
-#   └ alumni-core/
-#      ├ alumni-core.php
-#      ├ includes/
-#      ├ admin/
-#      └ public/
-#
-# This is the format WordPress expects from
-# "プラグイン > 新規追加 > プラグインのアップロード" /
-# "外観 > テーマ > 新規追加 > テーマのアップロード".
-#
 # Usage: scripts/build-release-zips.sh [output-dir]
 #   output-dir defaults to ./dist
+#
+# Uses Python's standard-library zipfile module so the build does not depend
+# on the runner having an external `zip` command installed.
 
 set -euo pipefail
 
@@ -44,14 +32,37 @@ build_zip() {
 	mkdir -p "$stage"
 	cp -a "$src"/. "$stage"/
 
-	# Strip VCS/dev-only files that shouldn't ship in the release (e.g.
-	# .gitkeep placeholders for otherwise-empty asset directories).
+	# Strip VCS/dev-only files that should not ship in the release.
 	find "$stage" -type f \( -name ".gitkeep" -o -name ".DS_Store" -o -name ".git*" \) -delete
 
 	rm -f "$zip_path"
-	( cd "$work_dir" && zip -rq -X "$zip_path" "$slug" )
 
-	echo "built: $zip_path"
+	# Python is available on GitHub-hosted Ubuntu runners and zipfile is part
+	# of the standard library, avoiding a dependency on the external zip CLI.
+	python3 - "$work_dir" "$slug" "$zip_path" <<'PY'
+import os
+import sys
+import zipfile
+
+work_dir, slug, zip_path = sys.argv[1:]
+source_root = os.path.join(work_dir, slug)
+
+with zipfile.ZipFile(
+    zip_path,
+    "w",
+    compression=zipfile.ZIP_DEFLATED,
+    compresslevel=9,
+) as archive:
+    for root, dirs, files in os.walk(source_root):
+        dirs.sort()
+        files.sort()
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            arcname = os.path.relpath(full_path, work_dir)
+            archive.write(full_path, arcname)
+
+print(f"built: {zip_path}")
+PY
 }
 
 build_zip "alumni-core"
