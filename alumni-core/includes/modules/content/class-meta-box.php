@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * コンテンツ種別 (free/person_greeting/terms/folder), 本文 (plain textarea,
  * saved to post_content — for every kind except 規約類), and —
  * kind-specific — 氏名／ふりがな／肩書／人物挨拶グループ／任期／卒業期／
- * 顔写真／グループ内表示順 (人物挨拶) or 公開タイトル／施行日／改定履歴／文字サイズ／表示順
+ * 顔写真 (人物挨拶) or 公開タイトル／施行日／改定履歴／文字サイズ／表示順
  * (規約類).
  *
  * 'editor' support (see Post_Type::register()) is enabled for the block
@@ -205,11 +205,6 @@ class Content_Meta_Box {
 				<p>
 					<strong><?php esc_html_e( '顔写真（任意）', 'alumni-core' ); ?></strong><br />
 					<?php $this->render_photo_picker( $photo_id ); ?>
-				</p>
-				<p>
-					<label for="alumni_person_greeting_menu_order"><strong><?php esc_html_e( 'グループ内の表示順', 'alumni-core' ); ?></strong></label><br />
-					<input type="number" inputmode="numeric" min="1" step="1" id="alumni_person_greeting_menu_order" name="alumni_person_greeting_menu_order" class="small-text" value="<?php echo esc_attr( $post->menu_order > 0 ? $post->menu_order : '' ); ?>" placeholder="1" />
-					<p class="description"><?php esc_html_e( '小さい数字ほど先に表示されます。トップページでは、このグループで一番上の人物が代表として表示されます。例：現会長を1、前会長を2、前々会長を3。', 'alumni-core' ); ?></p>
 				</p>
 			</div>
 
@@ -576,9 +571,6 @@ class Content_Meta_Box {
 			$data['menu_order'] = max( 0, (int) wp_unslash( $_POST['alumni_terms_menu_order'] ) );
 		}
 
-		if ( Post_Type::KIND_PERSON_GREETING === $kind && isset( $_POST['alumni_person_greeting_menu_order'] ) ) {
-			$data['menu_order'] = max( 0, (int) wp_unslash( $_POST['alumni_person_greeting_menu_order'] ) );
-		}
 
 		return $data;
 	}
