@@ -106,6 +106,18 @@ if ( ! function_exists( 'alumni_core_get_person_greeting_group_members' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_person_greeting_group_url' ) ) {
+	/**
+	 * 人物挨拶グループの歴代一覧ページURLを返す。
+	 *
+	 * @param string $group_id
+	 * @return string
+	 */
+	function alumni_core_get_person_greeting_group_url( $group_id ) {
+		return \AlumniCore\Includes\Person_Greeting_Groups_Shortcode::get_group_url( (string) $group_id );
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_content' ) ) {
 	/**
 	 * A single published コンテンツ post, or null if $id doesn't resolve to
@@ -158,7 +170,7 @@ if ( ! function_exists( 'alumni_core_get_person_greeting' ) ) {
 	 * @param int|WP_Post|null $post Post ID or object.
 	 * @return array{
 	 *     id:int, content_name:string, name:string, kana:string,
-	 *     title:string, term:int|string, photo_id:int, body:string,
+	 *     title:string, term:int|string, group_id:string, photo_id:int, body:string,
 	 *     status:string, created_at:string, updated_at:string
 	 * }|null Null when $post doesn't resolve to a 人物挨拶 コンテンツ post
 	 *         (any post_status — published-only filtering is the caller's
