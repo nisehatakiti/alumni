@@ -45,6 +45,10 @@ class Public_Form {
 				<?php
 					$row = array();
 					foreach ( $fields as $field ) {
+						if ( $row && self::row_width_total( $row ) + self::field_width( $field ) > 100 ) {
+							self::render_row( $row );
+							$row = array();
+						}
 						$row[] = $field;
 						if ( ! empty( $field['row_end'] ) || self::row_width_total( $row ) >= 100 ) {
 							self::render_row( $row );
@@ -57,13 +61,12 @@ class Public_Form {
 				<p class="alumni-form-actions"><button type="submit"><?php esc_html_e('送信する','alumni-core'); ?></button></p>
 			</form>
 		</div>
-		<style>.alumni-form-row{display:flex;flex-wrap:wrap;gap:1rem;margin:0 0 1.25rem}.alumni-form-field{width:calc(var(--alumni-form-width) - (1rem * (var(--alumni-form-columns) - 1) / var(--alumni-form-columns)));box-sizing:border-box;margin:0;min-width:0}.alumni-form-field label{display:block;font-weight:600}.alumni-form-field input:not([type=checkbox]):not([type=radio]),.alumni-form-field select,.alumni-form-field textarea{width:100%;box-sizing:border-box}.alumni-form-field input[type=file]{padding:.4rem}.alumni-form-required{color:#b42318}.alumni-form-help{font-size:.9em}.alumni-form-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}.alumni-form-notice{padding:1rem;margin:1rem 0}.alumni-form-success{background:#edf7ed}.alumni-form-error{background:#fff0f0}@media(max-width:640px){.alumni-form-row{display:block;margin-bottom:0}.alumni-form-field{width:100%!important;margin:0 0 1.25rem}}</style>
+		<style>.alumni-form-row{display:flex;flex-wrap:wrap;gap:1rem;margin:0 0 1.25rem}.alumni-form-field{width:calc(var(--alumni-form-width) - (1rem * var(--alumni-form-gap-share) / var(--alumni-form-row-count)));box-sizing:border-box;margin:0;min-width:0}.alumni-form-field label{display:block;font-weight:600}.alumni-form-field input:not([type=checkbox]):not([type=radio]),.alumni-form-field select,.alumni-form-field textarea{width:100%;box-sizing:border-box}.alumni-form-field input[type=file]{padding:.4rem}.alumni-form-required{color:#b42318}.alumni-form-help{font-size:.9em}.alumni-form-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}.alumni-form-notice{padding:1rem;margin:1rem 0}.alumni-form-success{background:#edf7ed}.alumni-form-error{background:#fff0f0}@media(max-width:640px){.alumni-form-row{display:block;margin-bottom:0}.alumni-form-field{width:100%!important;margin:0 0 1.25rem}}</style>
 		<?php return ob_get_clean();
 	}
 	private static function render_row($fields) {
-		$total = self::row_width_total($fields);
-		echo '<div class="alumni-form-row">';
-		foreach ($fields as $field) self::render_field($field, $total);
+		echo '<div class="alumni-form-row" style="--alumni-form-row-count:' . max(1, count($fields)) . ';">';
+		foreach ($fields as $field) self::render_field($field, count($fields));
 		echo '</div>';
 	}
 	private static function row_width_total($fields) {
@@ -75,11 +78,11 @@ class Public_Form {
 		$width = isset($field['width']) ? (int)$field['width'] : 100;
 		return in_array($width, array(25,33,50,66,75,100), true) ? $width : 100;
 	}
-	private static function render_field($field, $row_total = 100) {
+	private static function render_field($field, $row_count = 1) {
 		$key='alumni_form_field['.$field['key'].']'; $file_key='alumni_form_file['.$field['key'].']'; $id='alumni-form-'.$field['id']; $required=!empty($field['required']); $type=$field['type'];
 		$options=array_filter(array_map('trim',preg_split('/\r\n|\r|\n/',(string)($field['options']??''))));
 		$min=self::field_min_length($field); $max=self::field_max_length($field); $length=self::length_attributes($min,$max); ?>
-		<div class="alumni-form-field alumni-form-field-<?php echo esc_attr($type); ?>" style="--alumni-form-width:<?php echo esc_attr(self::field_width($field)); ?>%;--alumni-form-columns:<?php echo esc_attr(max(1, count(array_filter(array(25,33,50,66,75,100), function($w) use ($row_total){ return $w <= $row_total; })))); ?>">
+		<div class="alumni-form-field alumni-form-field-<?php echo esc_attr($type); ?>" style="--alumni-form-width:<?php echo esc_attr(self::field_width($field)); ?>%;--alumni-form-gap-share:<?php echo esc_attr(max(0, $row_count - 1)); ?>;">
 			<?php if('checkbox'!==$type): ?><label for="<?php echo esc_attr($id); ?>"><?php echo esc_html($field['label']); ?><?php if($required): ?><span class="alumni-form-required"> <?php esc_html_e('必須','alumni-core'); ?></span><?php endif; ?></label><?php endif; ?>
 			<?php if(!empty($field['help_text'])): ?><div class="alumni-form-help"><?php echo esc_html($field['help_text']); ?></div><?php endif; ?>
 			<?php if('textarea'===$type): ?><textarea id="<?php echo esc_attr($id); ?>" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?>></textarea>
