@@ -1028,3 +1028,31 @@
 	padding: 0.75em 0;
 	font-size: 1.05em;
 }
+
+
+/* Top page section flow:
+   「縦並び」はセクション内のスロットを縦に積む指定のまま、連続する
+   縦並びセクション同士は同じ行で右方向へ展開する。横並びセクションが
+   現れたらその縦並びグループを終了するため、次のセクションは必ず下段
+   から始まる。 */
+.alumni-homepage-section-row-vertical {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 2em;
+	margin-bottom: 2em;
+	align-items: start;
+}
+
+.alumni-homepage-section-row-vertical .alumni-homepage-section {
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+/* 横並びセクションは通常のブロックとして独立して配置されるため、
+   直前の縦並びグループの下から全幅で始まる。 */
+
+@media (max-width: 782px) {
+	.alumni-homepage-section-row-vertical {
+		grid-template-columns: 1fr;
+	}
+}

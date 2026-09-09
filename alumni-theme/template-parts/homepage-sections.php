@@ -21,21 +21,56 @@ if ( empty( $alumni_hp_sections ) ) {
 	return;
 }
 
-foreach ( $alumni_hp_sections as $alumni_hp_section ) :
-	// 全スロットが未設定(type=none)のセクションは、見出しだけの空箱を
-	// 出さないよう丸ごとスキップする。
-	$alumni_hp_has_content = false;
-	foreach ( $alumni_hp_section['slots'] as $alumni_hp_probe_slot ) {
-		if ( 'none' !== $alumni_hp_probe_slot['type'] ) {
-			$alumni_hp_has_content = true;
-			break;
+/*
+ * 未設定スロットだけのセクションは、レイアウトの流れを決める前に除外する。
+ * これにより「縦並び→縦並び→横並び」の判定が、実際に表示されるセクション
+ * だけを基準に行われる。
+ */
+$alumni_hp_sections = array_values(
+	array_filter(
+		$alumni_hp_sections,
+		function ( $alumni_hp_section ) {
+			foreach ( $alumni_hp_section['slots'] as $alumni_hp_probe_slot ) {
+				if ( 'none' !== $alumni_hp_probe_slot['type'] ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
-	}
-	if ( ! $alumni_hp_has_content ) {
-		continue;
+	)
+);
+
+if ( empty( $alumni_hp_sections ) ) {
+	return;
+}
+
+$alumni_hp_section_count = count( $alumni_hp_sections );
+
+foreach ( $alumni_hp_sections as $alumni_hp_section_index => $alumni_hp_section ) :
+	$alumni_hp_layout = ( isset( $alumni_hp_section['layout'] ) && 'vertical' === $alumni_hp_section['layout'] ) ? 'vertical' : 'horizontal';
+
+	$alumni_hp_previous_layout = $alumni_hp_section_index > 0
+		&& isset( $alumni_hp_sections[ $alumni_hp_section_index - 1 ]['layout'] )
+		&& 'vertical' === $alumni_hp_sections[ $alumni_hp_section_index - 1 ]['layout']
+		? 'vertical'
+		: 'horizontal';
+
+	$alumni_hp_next_layout = $alumni_hp_section_index + 1 < $alumni_hp_section_count
+		&& isset( $alumni_hp_sections[ $alumni_hp_section_index + 1 ]['layout'] )
+		&& 'vertical' === $alumni_hp_sections[ $alumni_hp_section_index + 1 ]['layout']
+		? 'vertical'
+		: 'horizontal';
+
+	/*
+	 * 連続する「縦並び」セクションは同じ行にまとめ、右方向へ展開する。
+	 * 「横並び」セクションが現れた時点でその行を閉じるため、次の横並び
+	 * セクションは必ず下の新しい行から始まる。
+	 */
+	if ( 'vertical' === $alumni_hp_layout && 'vertical' !== $alumni_hp_previous_layout ) {
+		echo '<div class="alumni-homepage-section-row alumni-homepage-section-row-vertical">';
 	}
 	?>
-	<?php $alumni_hp_layout = ( isset( $alumni_hp_section['layout'] ) && 'vertical' === $alumni_hp_section['layout'] ) ? 'vertical' : 'horizontal'; ?>
 	<section class="alumni-homepage-section alumni-homepage-section-layout-<?php echo esc_attr( $alumni_hp_layout ); ?> alumni-homepage-section-columns-<?php echo (int) $alumni_hp_section['columns']; ?>">
 		<?php if ( $alumni_hp_section['heading'] ) : ?>
 			<h2 class="alumni-homepage-section-heading"><?php echo esc_html( $alumni_hp_section['heading'] ); ?></h2>
@@ -156,5 +191,8 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 			<?php endforeach; ?>
 		</div>
 	</section>
+	<?php if ( 'vertical' === $alumni_hp_layout && 'vertical' !== $alumni_hp_next_layout ) : ?>
+		</div>
+	<?php endif; ?>
 	<?php
 endforeach;
