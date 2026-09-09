@@ -274,7 +274,7 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '人物挨拶を追加', 'alumni-core' ),
-			__( '＋ 人物挨拶を追加', 'alumni-core' ),
+			__( '人物挨拶を追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
 		);
@@ -282,7 +282,7 @@ class Admin {
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( '自由コンテンツを追加', 'alumni-core' ),
-			__( '＋ 自由コンテンツを追加', 'alumni-core' ),
+			__( '自由コンテンツを追加', 'alumni-core' ),
 			self::CAPABILITY,
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
 		);
