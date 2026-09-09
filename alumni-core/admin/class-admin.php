@@ -16,6 +16,7 @@ use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Admin\Pages\Menu_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Page;
+use AlumniCore\Admin\Pages\Person_Greeting_Order_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -104,6 +105,12 @@ class Admin {
 	 */
 	private $org_chart_page;
 
+	/** @var Person_Greeting_Order_Page */
+	private $person_greeting_order_page;
+
+	/** @var string */
+	private $person_greeting_order_hook = '';
+
 	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
 	 * scope the media-library assets to just this screen.
@@ -141,6 +148,7 @@ class Admin {
 		$this->homepage_page           = new Homepage_Page();
 		$this->menu_page                = new Menu_Page();
 		$this->org_chart_page           = new Org_Chart_Page();
+		$this->person_greeting_order_page = new Person_Greeting_Order_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -167,6 +175,7 @@ class Admin {
 		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_move_org_chart_node', array( $this->org_chart_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_reparent_org_chart_node', array( $this->org_chart_page, 'handle_reparent' ) );
+		add_action( 'admin_post_alumni_core_save_person_greeting_order', array( $this->person_greeting_order_page, 'handle_save' ) );
 	}
 
 	/**
@@ -284,6 +293,15 @@ class Admin {
 			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
 		);
 
+		$this->person_greeting_order_hook = add_submenu_page(
+			self::MENU_SLUG,
+			__( '人物挨拶の並び順', 'alumni-core' ),
+			__( '人物挨拶の並び順', 'alumni-core' ),
+			self::CAPABILITY,
+			Person_Greeting_Order_Page::SLUG,
+			array( $this->person_greeting_order_page, 'render' )
+		);
+
 		add_submenu_page(
 			self::MENU_SLUG,
 			__( 'トップページ設定', 'alumni-core' ),
@@ -352,6 +370,17 @@ class Admin {
 		$is_settings_page      = $this->settings_hook === $hook_suffix;
 		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
 		$is_officers_page      = $this->officers_hook === $hook_suffix;
+		$is_person_greeting_order_page = $this->person_greeting_order_hook === $hook_suffix;
+
+		if ( $is_person_greeting_order_page ) {
+			wp_enqueue_script(
+				'alumni-core-person-greeting-order-admin',
+				ALUMNI_CORE_URL . 'admin/assets/js/person-greeting-order-admin.js',
+				array(),
+				ALUMNI_CORE_VERSION,
+				true
+			);
+		}
 
 		if ( $is_officers_page ) {
 			// No wp.media() here: 役員・理事紹介 only has text/number/select
