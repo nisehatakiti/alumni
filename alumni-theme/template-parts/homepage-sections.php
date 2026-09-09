@@ -4,9 +4,9 @@
  * front-page.php から get_template_part() で呼び出される。
  *
  * Coreが持つのは「各スロットに何を表示するか」という選択結果だけ
- * （alumni_theme_get_homepage_sections()）— 実際の見た目（段組みのCSS・
- * カードの形）はここ、Theme側の責務。段数はCSS Gridのカラム数として
- * そのまま使う（alumni-homepage-section-columns-{1,2,3}、main.css参照）。
+ * （alumni_theme_get_homepage_sections()）— 実際の見た目（横並び／縦並びの
+ * レイアウトCSS・カードの形）はここ、Theme側の責務。表示数はスロット数として
+ * Coreから受け取り、表示方向に応じてGridのカラム数または縦積みに使う。
  *
  * @package Alumni_Theme
  */
@@ -35,7 +35,8 @@ foreach ( $alumni_hp_sections as $alumni_hp_section ) :
 		continue;
 	}
 	?>
-	<section class="alumni-homepage-section alumni-homepage-section-columns-<?php echo (int) $alumni_hp_section['columns']; ?>">
+	<?php $alumni_hp_layout = ( isset( $alumni_hp_section['layout'] ) && 'vertical' === $alumni_hp_section['layout'] ) ? 'vertical' : 'horizontal'; ?>
+	<section class="alumni-homepage-section alumni-homepage-section-layout-<?php echo esc_attr( $alumni_hp_layout ); ?> alumni-homepage-section-columns-<?php echo (int) $alumni_hp_section['columns']; ?>">
 		<?php if ( $alumni_hp_section['heading'] ) : ?>
 			<h2 class="alumni-homepage-section-heading"><?php echo esc_html( $alumni_hp_section['heading'] ); ?></h2>
 		<?php endif; ?>
