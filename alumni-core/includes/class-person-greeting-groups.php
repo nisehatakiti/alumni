@@ -36,6 +36,10 @@ class Person_Greeting_Groups {
 	 */
 	const OPTION_NAME = 'alumni_core_person_greeting_groups';
 
+	/** 固定プリセット。人物挨拶は自由分類ではなく、この2系統だけを持つ。 */
+	const PRESET_PRINCIPALS = 'principals';
+	const PRESET_CHAIRMEN   = 'chairmen';
+
 	/**
 	 * Singleton instance.
 	 *
@@ -73,16 +77,56 @@ class Person_Greeting_Groups {
 	 */
 	public function get_all() {
 		if ( null === $this->groups ) {
-			$saved        = get_option( self::OPTION_NAME, null );
-			$groups       = is_array( $saved ) ? array_values( $saved ) : array();
-			$this->groups = array_map( array( __CLASS__, 'normalize_group' ), $groups );
+			$saved  = get_option( self::OPTION_NAME, null );
+			$stored = is_array( $saved ) ? array_values( $saved ) : array();
 
-			usort(
-				$this->groups,
-				function ( $a, $b ) {
-					return $a['order'] <=> $b['order'];
-				}
+			// 旧名称「母校校長挨拶」「同窓会長挨拶」は、既存の group_id と
+			// 所属投稿をそのまま維持したまま新しい固定名称へ移行する。
+			$aliases = array(
+				self::PRESET_PRINCIPALS => array( '歴代校長', '母校校長挨拶', '校長挨拶' ),
+				self::PRESET_CHAIRMEN   => array( '歴代会長', '同窓会長挨拶', '同窓会長挨拶' ),
 			);
+			$labels = array(
+				self::PRESET_PRINCIPALS => '歴代校長',
+				self::PRESET_CHAIRMEN   => '歴代会長',
+			);
+			$orders = array(
+				self::PRESET_PRINCIPALS => 1,
+				self::PRESET_CHAIRMEN   => 2,
+			);
+
+			$presets = array();
+			foreach ( $aliases as $preset_key => $names ) {
+				$matched = null;
+				foreach ( $stored as $raw_group ) {
+					$raw_group = self::normalize_group( $raw_group );
+					if ( in_array( $raw_group['name'], $names, true ) ) {
+						$matched = $raw_group;
+						break;
+					}
+				}
+				if ( null === $matched ) {
+					$matched = array(
+						'group_id' => $preset_key,
+						'name'     => $labels[ $preset_key ],
+						'order'    => $orders[ $preset_key ],
+					);
+				} else {
+					$matched['name']  = $labels[ $preset_key ];
+					$matched['order'] = $orders[ $preset_key ];
+				}
+				$presets[] = self::normalize_group( $matched );
+			}
+
+			// 人物挨拶グループは固定プリセットのみ。自由に追加された旧グループ
+			// は保存値を破壊せず残すが、管理・公開対象には含めない。
+			$this->groups = $presets;
+
+			// 旧名称を見つけた場合や初回導入時は、プリセット状態を保存して以後
+			// 同じ group_id を安定して利用する。
+			if ( $stored !== $presets ) {
+				update_option( self::OPTION_NAME, $presets );
+			}
 		}
 
 		return $this->groups;
@@ -137,34 +181,13 @@ class Person_Greeting_Groups {
 	}
 
 	/**
-	 * Creates a new group and returns its ID. A group with the same name
-	 * (trimmed, case-sensitive match) is never duplicated — returns the
-	 * existing group's ID instead (used by the standard preset, which must
-	 * be safe to re-run without creating duplicate "母校校長挨拶" groups).
+	 * Returns whether an ID is one of the fixed person-greeting presets.
 	 *
-	 * @param string $name Raw, sanitized here.
-	 * @return string The (new or pre-existing) group's ID.
+	 * @param string $group_id
+	 * @return bool
 	 */
-	public function create_group( $name ) {
-		$name    = sanitize_text_field( $name );
-		$groups  = $this->get_all();
-
-		foreach ( $groups as $group ) {
-			if ( $group['name'] === $name ) {
-				return $group['group_id'];
-			}
-		}
-
-		$new_group = self::normalize_group(
-			array(
-				'name'  => $name,
-				'order' => count( $groups ) + 1,
-			)
-		);
-
-		$groups[] = $new_group;
-		$this->save_groups( $groups );
-
-		return $new_group['group_id'];
+	public function is_preset( $group_id ) {
+		return null !== $this->get_group( $group_id );
 	}
+
 }
