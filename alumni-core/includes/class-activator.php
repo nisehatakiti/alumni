@@ -40,6 +40,7 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-school-photos-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-song-motto-shortcode.php';
 
 		Installer::install();
 		Settings::instance()->set_defaults();
@@ -57,6 +58,7 @@ class Activator {
 		Org_Chart_Shortcode::maybe_create_page();
 		Person_Greeting_Groups_Shortcode::maybe_create_pages();
 		School_Photos_Shortcode::maybe_create_page();
+		School_Song_Motto_Shortcode::maybe_create_pages();
 
 		// register_activation_hook() fires before 'init' on this request,
 		// so the post types must be registered explicitly here — otherwise
