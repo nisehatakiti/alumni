@@ -86,9 +86,6 @@ class Person_Greeting_Groups {
 			$saved  = get_option( self::OPTION_NAME, null );
 			$stored = is_array( $saved ) ? array_values( $saved ) : array();
 
-			// 既存サイトの「歴代校長／歴代会長」系グループは、保存済みの
-			// group_id をそのまま引き継ぐ。投稿・メニューはIDで参照している
-			// ため、ここで新しいIDに置き換えないことが重要。
 			$specs = array(
 				self::PRESET_CURRENT_CHAIRMAN => array(
 					'name'    => '現在の同窓会長',
@@ -126,30 +123,107 @@ class Person_Greeting_Groups {
 					}
 				}
 
-				if ( null === $matched ) {
-					$matched = array(
-						'group_id' => $preset_key,
-						'name'     => $spec['name'],
-						'order'    => $spec['order'],
-					);
-				} else {
-					$matched['name']  = $spec['name'];
-					$matched['order'] = $spec['order'];
+				// 旧実装では名称からUUIDを生成していたため、既存投稿・既存メニューが
+				// 旧UUIDを参照していることがある。固定プリセット化では「表示名」だけ
+				// ではなくIDも固定し、参照元を一度だけ正規IDへ移行する。
+				if ( null !== $matched && $matched['group_id'] !== $preset_key ) {
+					$this->migrate_group_references( $matched['group_id'], $preset_key );
 				}
 
-				$presets[] = self::normalize_group( $matched );
+				$presets[] = array(
+					'group_id' => $preset_key,
+					'name'     => $spec['name'],
+					'order'    => $spec['order'],
+				);
 			}
 
 			$this->groups = $presets;
 
-			// 自由に作られた旧グループは保存値を破壊せず、固定プリセットへ
-			// 正規化した結果だけを以後の人物挨拶グループ設定として保持する。
 			if ( $stored !== $presets ) {
 				update_option( self::OPTION_NAME, $presets );
 			}
 		}
 
 		return $this->groups;
+	}
+
+	/**
+	 * Migrates every persisted reference from a legacy person-greeting
+	 * group ID to the fixed preset ID.
+	 *
+	 * This is intentionally ID-to-ID. Display names are never used as
+	 * foreign keys, so future label changes cannot break memberships.
+	 *
+	 * @param string $old_id
+	 * @param string $new_id
+	 * @return void
+	 */
+	private function migrate_group_references( $old_id, $new_id ) {
+		$old_id = (string) $old_id;
+		$new_id = (string) $new_id;
+
+		if ( '' === $old_id || '' === $new_id || $old_id === $new_id ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta} SET meta_value = %s WHERE meta_key = %s AND meta_value = %s",
+				$new_id,
+				'_' . 'alumni_person_greeting_group_id',
+				$old_id
+			)
+		);
+
+		$menu_items = get_option( Menu_Structure::OPTION_NAME, null );
+		if ( is_array( $menu_items ) ) {
+			$changed = false;
+
+			foreach ( $menu_items as &$item ) {
+				if (
+					is_array( $item )
+					&& ( $item['ref_type'] ?? '' ) === Menu_Structure::REF_PERSON_GREETING_GROUP
+					&& (string) ( $item['ref_id'] ?? '' ) === $old_id
+				) {
+					$item['ref_id'] = $new_id;
+					$changed = true;
+				}
+			}
+			unset( $item );
+
+			if ( $changed ) {
+				update_option( Menu_Structure::OPTION_NAME, $menu_items );
+			}
+		}
+
+		$old_option = Person_Greeting_Groups_Shortcode::PAGE_ID_OPTION_PREFIX . $old_id;
+		$new_option = Person_Greeting_Groups_Shortcode::PAGE_ID_OPTION_PREFIX . $new_id;
+		$page_id    = (int) get_option( $old_option, 0 );
+
+		if ( $page_id && 'page' === get_post_type( $page_id ) ) {
+			update_option( $new_option, $page_id );
+			delete_option( $old_option );
+
+			$post = get_post( $page_id );
+			if ( $post instanceof \WP_Post ) {
+				$new_content = str_replace(
+					'id="' . $old_id . '"',
+					'id="' . $new_id . '"',
+					(string) $post->post_content
+				);
+
+				if ( $new_content !== $post->post_content ) {
+					wp_update_post(
+						array(
+							'ID'           => $page_id,
+							'post_content' => $new_content,
+						)
+					);
+				}
+			}
+		}
 	}
 
 	/**

@@ -150,6 +150,13 @@ class Menu_Structure {
 			} else {
 				$items        = is_array( $saved ) ? array_values( $saved ) : array();
 				$this->items = array_map( array( __CLASS__, 'normalize_item' ), $items );
+
+				// normalize_item() may repair a legacy group reference whose
+				// ref_type was previously erased. Persist that repair immediately
+				// so the item does not fall back to「未設定」on a later request.
+				if ( $items !== $this->items ) {
+					update_option( self::OPTION_NAME, $this->items );
+				}
 			}
 		}
 
@@ -361,6 +368,20 @@ class Menu_Structure {
 		$ref_type = isset( $item['ref_type'] ) ? $item['ref_type'] : '';
 		if ( ! in_array( $ref_type, array( self::REF_CONTENT, self::REF_SYSTEM, self::REF_OFFICER_LIST, self::REF_OFFICER_LIST_GROUP, self::REF_PERSON_GREETING_GROUP ), true ) ) {
 			$ref_type = '';
+		}
+
+		// 旧版では officer_list_group が許可リストから漏れていたため、
+		// 保存済み項目の ref_type が読み込み時に空文字へ正規化されることが
+		// あった。失われた型は ref_id を既存グループIDと照合して復旧する。
+		// UUIDのグループIDと数値の投稿IDは別空間なので、この復旧で通常の
+		// コンテンツ参照を誤判定しない。
+		$raw_ref_id = isset( $item['ref_id'] ) ? (string) $item['ref_id'] : '';
+		if ( self::TYPE_CONTENT === $type && '' === $ref_type && '' !== $raw_ref_id ) {
+			if ( null !== Officer_List_Groups::instance()->get_group( $raw_ref_id ) ) {
+				$ref_type = self::REF_OFFICER_LIST_GROUP;
+			} elseif ( null !== Person_Greeting_Groups::instance()->get_group( $raw_ref_id ) ) {
+				$ref_type = self::REF_PERSON_GREETING_GROUP;
+			}
 		}
 
 		$audience = isset( $item['audience'] ) ? $item['audience'] : self::AUDIENCE_COMMON;
