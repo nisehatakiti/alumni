@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * 「母校校長挨拶」「同窓会長挨拶」のように、同種の人物挨拶（歴代の
- * 校長・会長など）を1つにまとめるための専用データ構造。
+ * 「現在の校長」「現在の同窓会長」「歴代校長」「歴代同窓会長」のように、
+ * 人物挨拶を固定プリセットへ分類するための専用データ構造。
  *
  * これはサイトナビゲーションの階層を作るための汎用的な「親コンテンツ」
  * ではない — 人物挨拶（Modules\Content\Post_Type::KIND_PERSON_GREETING）
@@ -36,9 +36,15 @@ class Person_Greeting_Groups {
 	 */
 	const OPTION_NAME = 'alumni_core_person_greeting_groups';
 
-	/** 固定プリセット。人物挨拶は自由分類ではなく、この2系統だけを持つ。 */
-	const PRESET_PRINCIPALS = 'principals';
-	const PRESET_CHAIRMEN   = 'chairmen';
+	/**
+	 * 固定プリセット。人物挨拶グループは管理者が追加・編集・削除できない。
+	 * IDは表示名から独立した不変キーなので、表示名の将来的な文言調整でも
+	 * 投稿・メニューとの紐付けは切れない。
+	 */
+	const PRESET_CURRENT_CHAIRMAN  = 'current_chairman';
+	const PRESET_CURRENT_PRINCIPAL = 'current_principal';
+	const PRESET_CHAIRMEN          = 'chairmen';
+	const PRESET_PRINCIPALS        = 'principals';
 
 	/**
 	 * Singleton instance.
@@ -80,50 +86,64 @@ class Person_Greeting_Groups {
 			$saved  = get_option( self::OPTION_NAME, null );
 			$stored = is_array( $saved ) ? array_values( $saved ) : array();
 
-			// 旧名称「母校校長挨拶」「同窓会長挨拶」は、既存の group_id と
-			// 所属投稿をそのまま維持したまま新しい固定名称へ移行する。
-			$aliases = array(
-				self::PRESET_PRINCIPALS => array( '歴代校長', '母校校長挨拶', '校長挨拶' ),
-				self::PRESET_CHAIRMEN   => array( '歴代会長', '同窓会長挨拶', '同窓会長挨拶' ),
-			);
-			$labels = array(
-				self::PRESET_PRINCIPALS => '歴代校長',
-				self::PRESET_CHAIRMEN   => '歴代会長',
-			);
-			$orders = array(
-				self::PRESET_PRINCIPALS => 1,
-				self::PRESET_CHAIRMEN   => 2,
+			// 既存サイトの「歴代校長／歴代会長」系グループは、保存済みの
+			// group_id をそのまま引き継ぐ。投稿・メニューはIDで参照している
+			// ため、ここで新しいIDに置き換えないことが重要。
+			$specs = array(
+				self::PRESET_CURRENT_CHAIRMAN => array(
+					'name'    => '現在の同窓会長',
+					'order'   => 1,
+					'aliases' => array( '現在の同窓会長', '同窓会長挨拶' ),
+				),
+				self::PRESET_CURRENT_PRINCIPAL => array(
+					'name'    => '現在の校長',
+					'order'   => 2,
+					'aliases' => array( '現在の校長', '母校校長挨拶', '校長挨拶' ),
+				),
+				self::PRESET_CHAIRMEN => array(
+					'name'    => '歴代同窓会長',
+					'order'   => 3,
+					'aliases' => array( '歴代同窓会長', '歴代会長' ),
+				),
+				self::PRESET_PRINCIPALS => array(
+					'name'    => '歴代校長',
+					'order'   => 4,
+					'aliases' => array( '歴代校長' ),
+				),
 			);
 
 			$presets = array();
-			foreach ( $aliases as $preset_key => $names ) {
+
+			foreach ( $specs as $preset_key => $spec ) {
 				$matched = null;
+
 				foreach ( $stored as $raw_group ) {
 					$raw_group = self::normalize_group( $raw_group );
-					if ( in_array( $raw_group['name'], $names, true ) ) {
+
+					if ( $raw_group['group_id'] === $preset_key || in_array( $raw_group['name'], $spec['aliases'], true ) ) {
 						$matched = $raw_group;
 						break;
 					}
 				}
+
 				if ( null === $matched ) {
 					$matched = array(
 						'group_id' => $preset_key,
-						'name'     => $labels[ $preset_key ],
-						'order'    => $orders[ $preset_key ],
+						'name'     => $spec['name'],
+						'order'    => $spec['order'],
 					);
 				} else {
-					$matched['name']  = $labels[ $preset_key ];
-					$matched['order'] = $orders[ $preset_key ];
+					$matched['name']  = $spec['name'];
+					$matched['order'] = $spec['order'];
 				}
+
 				$presets[] = self::normalize_group( $matched );
 			}
 
-			// 人物挨拶グループは固定プリセットのみ。自由に追加された旧グループ
-			// は保存値を破壊せず残すが、管理・公開対象には含めない。
 			$this->groups = $presets;
 
-			// 旧名称を見つけた場合や初回導入時は、プリセット状態を保存して以後
-			// 同じ group_id を安定して利用する。
+			// 自由に作られた旧グループは保存値を破壊せず、固定プリセットへ
+			// 正規化した結果だけを以後の人物挨拶グループ設定として保持する。
 			if ( $stored !== $presets ) {
 				update_option( self::OPTION_NAME, $presets );
 			}
