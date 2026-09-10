@@ -96,7 +96,53 @@ class Settings {
 	/**
 	 * Use instance() instead.
 	 */
-	private function __construct() {}
+	private function __construct() {
+		// The public site's canonical name is the association name configured
+		// in Alumni Core. Keep WordPress's site-title consumers (browser
+		// title, admin bar, feeds, etc.) in sync without requiring a second
+		// setting to be maintained manually.
+		add_filter( 'pre_option_blogname', array( $this, 'filter_blogname' ) );
+
+		// The school emblem is the site's favicon/source icon. WordPress asks
+		// for several sizes; return the matching attachment rendition so the
+		// browser receives a normal favicon-sized image.
+		add_filter( 'get_site_icon_url', array( $this, 'filter_site_icon_url' ), 20, 3 );
+	}
+
+	/**
+	 * Uses the configured association name as the public WordPress site name.
+	 *
+	 * @param mixed $pre_option Existing short-circuit value.
+	 * @return mixed|string
+	 */
+	public function filter_blogname( $pre_option ) {
+		$name = $this->get( 'association_name', '' );
+
+		return '' !== $name ? $name : $pre_option;
+	}
+
+	/**
+	 * Uses the configured school emblem as the site icon/favicon.
+	 *
+	 * @param string $url Current icon URL.
+	 * @param int    $size Requested square size.
+	 * @param int    $blog_id Blog ID (unused for the single-site setting).
+	 * @return string
+	 */
+	public function filter_site_icon_url( $url, $size, $blog_id ) {
+		$id = (int) $this->get( 'school_emblem_id', 0 );
+
+		if ( ! self::is_valid_image_attachment( $id ) ) {
+			return $url;
+		}
+
+		$icon_url = wp_get_attachment_image_url(
+			$id,
+			(int) $size >= 512 ? 'full' : array( (int) $size, (int) $size )
+		);
+
+		return $icon_url ? $icon_url : $url;
+	}
 
 	/**
 	 * Default values for every setting.
