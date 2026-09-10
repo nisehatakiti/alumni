@@ -132,6 +132,13 @@ class School_Enrollment_Years_Shortcode {
 			$block_start_year = $first_entry_year + $from_term - 1;
 			$block_end_year   = $first_entry_year + $to_term - 1 + ( self::SCHOOL_YEARS - 1 );
 
+			/*
+			 * 最終表は未来年度を表示しない。
+			 * 現在年度までで打ち切るため、在校生については現在年度までの
+			 * 学年だけを表示する（例: 63期は今年度の1年生まで）。
+			 */
+			$block_end_year = min( $block_end_year, $end_year );
+
 			for ( $year = $block_start_year; $year <= $block_end_year; $year++ ) {
 				$cells = array();
 
