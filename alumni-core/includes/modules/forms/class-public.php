@@ -90,6 +90,7 @@ class Public_Form {
 			<?php elseif('radio'===$type): foreach($options as $n=>$option): ?><label><input type="radio" name="<?php echo esc_attr($key); ?>" value="<?php echo esc_attr($option); ?>"<?php echo $required&&0===$n?' required':''; ?> /> <?php echo esc_html($option); ?></label><?php endforeach;
 			elseif('checkbox'===$type): ?><label><input id="<?php echo esc_attr($id); ?>" type="checkbox" name="<?php echo esc_attr($key); ?>" value="1"<?php echo $required?' required':''; ?> /> <?php echo esc_html($field['label']); ?><?php if($required): ?><span class="alumni-form-required"> <?php esc_html_e('必須','alumni-core'); ?></span><?php endif; ?></label>
 			<?php elseif('file'===$type): $accept=self::file_accept_attribute($field); ?><input id="<?php echo esc_attr($id); ?>" type="file" name="<?php echo esc_attr($file_key); ?>"<?php echo $accept?' accept="'.esc_attr($accept).'"':''; ?><?php echo $required?' required':''; ?> /><?php if(self::field_max_file_size_mb($field)): ?><div class="alumni-form-help"><?php echo esc_html(sprintf(__('最大 %d MB','alumni-core'),self::field_max_file_size_mb($field))); ?></div><?php endif; ?>
+			<?php elseif('date'===$type): ?><input id="<?php echo esc_attr($id); ?>" type="date" name="<?php echo esc_attr($key); ?>"<?php echo $required?' required':''; ?> />
 			<?php else: ?><input id="<?php echo esc_attr($id); ?>" type="<?php echo esc_attr(in_array($type,array('email','tel','number'),true)?$type:'text'); ?>" name="<?php echo esc_attr($key); ?>" placeholder="<?php echo esc_attr($field['placeholder']); ?>"<?php echo $length; ?><?php echo $required?' required':''; ?> /><?php endif; ?>
 		</div><?php
 	}
@@ -120,6 +121,7 @@ class Public_Form {
 				if(($min&&$len<$min)||($max&&$len>$max)){$errors=true;continue;}
 				if('email'===$field['type']&&!is_email($raw)){$errors=true;continue;}
 				if('number'===$field['type']&&!is_numeric($raw)){$errors=true;continue;}
+				if('date'===$field['type']&&!self::is_valid_date($raw)){$errors=true;continue;}
 				$options=array_filter(array_map('trim',preg_split('/\r\n|\r|\n/',(string)($field['options']??''))));
 				if(in_array($field['type'],array('select','radio'),true)&&!in_array($raw,$options,true)){$errors=true;continue;}
 			}
@@ -195,6 +197,7 @@ class Public_Form {
 	private static function allowed_mimes($extensions){$all=wp_get_mime_types();$allowed=array();foreach($all as $pattern=>$mime)foreach(preg_split('/\|/',$pattern) as $ext)if(in_array(strtolower($ext),$extensions,true))$allowed[$pattern]=$mime;return $allowed;}
 	private static function file_accept_attribute($field){$ext=self::allowed_extensions($field);return $ext?implode(',',array_map(function($x){return '.'.$x;},$ext)):'';}
 	private static function field_max_file_size_mb($field){return max(1,isset($field['max_file_size_mb'])?absint($field['max_file_size_mb']):5);}
+	private static function is_valid_date($value){$date=\DateTime::createFromFormat('Y-m-d',(string)$value);return $date&&$date->format('Y-m-d')===(string)$value;}
 	private static function field_min_length($field){return isset($field['min_length'])?max(0,absint($field['min_length'])):0;}
 	private static function field_max_length($field){$max=isset($field['max_length'])?max(0,absint($field['max_length'])):0;$min=self::field_min_length($field);return $max&&$max<$min?$min:$max;}
 	private static function length_attributes($min,$max){$s='';if($min)$s.=' minlength="'.esc_attr($min).'"';if($max)$s.=' maxlength="'.esc_attr($max).'"';return $s;}
