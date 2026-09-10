@@ -349,6 +349,11 @@ class Menu_Page {
 			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
 		}
 
+		if ( Menu_Structure::REF_ORG_CHART_GROUP === $item['ref_type'] ) {
+			$group = Org_Chart_Groups::instance()->get_group( $item['ref_id'] );
+			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
+		}
+
 		if ( Menu_Structure::REF_PERSON_GREETING_GROUP === $item['ref_type'] ) {
 			$group = Person_Greeting_Groups::instance()->get_group( $item['ref_id'] );
 			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
