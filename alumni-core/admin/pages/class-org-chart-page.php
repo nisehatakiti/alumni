@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 class Org_Chart_Page {
 	const SLUG='alumni-core-org-chart';
+	const ADD_SLUG='alumni-core-org-chart-add';
 	const ACTION_CREATE_CHART='alumni_core_create_org_chart';
 	const ACTION_UPDATE_CHART='alumni_core_update_org_chart';
 	const ACTION_DELETE_CHART='alumni_core_delete_org_chart';
@@ -24,6 +25,8 @@ class Org_Chart_Page {
 	const ACTION_MOVE_NODE='alumni_core_move_org_chart_node';
 	const ACTION_REPARENT_NODE='alumni_core_reparent_org_chart_node';
 	const ACTION_SAVE_DISPLAY='alumni_core_save_org_chart_display_settings';
+
+	public function render_add(){ if(!current_user_can(Admin::CAPABILITY)){return;} $this->render_chart_form(null); }
 
 	public function render(){
 		if(!current_user_can(Admin::CAPABILITY)){return;}
