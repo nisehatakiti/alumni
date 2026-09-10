@@ -609,7 +609,7 @@ class Officers_Page {
 		$group_id = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : '';
 		$name = isset( $_POST['group_name'] ) ? sanitize_text_field( wp_unslash( $_POST['group_name'] ) ) : '';
 		Officer_List_Groups::instance()->update_group( $group_id, $name );
-		AlumniCoreIncludesOfficer_List_Groups_Shortcode::maybe_create_pages();
+		\AlumniCore\Includes\Officer_List_Groups_Shortcode::maybe_create_pages();
 		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
 		exit;
 	}

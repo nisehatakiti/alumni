@@ -33,6 +33,18 @@ class Officer_List_Groups_Shortcode {
 		$option = self::PAGE_ID_OPTION_PREFIX . $group_id;
 		$page_id = (int) get_option( $option, 0 );
 		if ( $page_id && 'page' === get_post_type( $page_id ) ) {
+			// Keep the auto-managed page title in sync with a group rename.
+			// The group ID remains the permalink/shortcode key, so no member
+			// binding or menu reference depends on the mutable display name.
+			$page = get_post( $page_id );
+			if ( $page && $page->post_title !== $name ) {
+				wp_update_post(
+					array(
+						'ID'         => $page_id,
+						'post_title' => $name,
+					)
+				);
+			}
 			return;
 		}
 		$slug = sanitize_title( 'officer-group-' . $name );
@@ -79,6 +91,7 @@ class Officer_List_Groups_Shortcode {
 		ob_start();
 		?>
 		<div class="alumni-officer-list-group">
+			<h1 class="alumni-officer-list-group-title"><?php echo esc_html( $group['name'] ); ?></h1>
 			<?php foreach ( $members as $index => $list ) : ?>
 				<section class="alumni-officer-list-group-member">
 					<h2><?php echo esc_html( $list['title'] ? $list['title'] : $list['name'] ); ?></h2>
