@@ -209,7 +209,7 @@ class Officers_Page {
 							<select id="alumni-officer-list-group" name="list_group_id">
 								<option value=""><?php esc_html_e( '（単独ページ）', 'alumni-core' ); ?></option>
 								<?php foreach ( Officer_List_Groups::instance()->get_all() as $group ) : ?>
-									<option value="<?php echo esc_attr( $group['group_id'] ); ?>" <?php selected( $group['group_id'], isset( $list['group_id'] ? $list['group_id'] : '' ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+									<option value="<?php echo esc_attr( $group['group_id'] ); ?>" <?php selected( $group['group_id'], isset( $list['group_id'] ) ? $list['group_id'] : '' ); ?>><?php echo esc_html( $group['name'] ); ?></option>
 								<?php endforeach; ?>
 							</select>
 							<p class="description"><?php esc_html_e( '同じグループを選択した複数の一覧は、1つの公開ページにまとめて表示されます。グループ内の表示順は「役員・理事紹介の並び順」で変更できます。', 'alumni-core' ); ?></p>
