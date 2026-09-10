@@ -97,6 +97,7 @@ class Officers_Page {
 						<tr>
 							<th><?php esc_html_e( '一覧名', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '役員数', 'alumni-core' ); ?></th>
+							<th><?php esc_html_e( '公開グループ', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '状態', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '公開URL', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '操作', 'alumni-core' ); ?></th>
@@ -111,6 +112,7 @@ class Officers_Page {
 									<a href="<?php echo esc_url( $edit_url ); ?>"><?php echo esc_html( $list['name'] ); ?></a>
 								</td>
 								<td><?php echo esc_html( count( $list['rows'] ) ); ?></td>
+								<td><?php $group = ! empty( $list['group_id'] ) ? Officer_List_Groups::instance()->get_group( $list['group_id'] ) : null; echo esc_html( $group ? $group['name'] : __( '（単独ページ）', 'alumni-core' ) ); ?></td>
 								<td><?php echo empty( $list['enabled'] ) ? esc_html__( '非公開', 'alumni-core' ) : esc_html__( '公開', 'alumni-core' ); ?></td>
 								<td>
 									<?php if ( $public_url ) : ?>
