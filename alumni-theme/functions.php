@@ -1103,3 +1103,7 @@ function alumni_theme_format_officer_list_term( array $list ) {
 
 	return alumni_core_format_officer_list_term( $list );
 }
+
+function alumni_theme_get_school_song_motto_url() { return alumni_theme_core_active() && function_exists( 'alumni_core_get_school_song_motto_url' ) ? alumni_core_get_school_song_motto_url() : ''; }
+function alumni_theme_get_school_song_url() { return alumni_theme_core_active() && function_exists( 'alumni_core_get_school_song_url' ) ? alumni_core_get_school_song_url() : ''; }
+function alumni_theme_get_school_motto_url() { return alumni_theme_core_active() && function_exists( 'alumni_core_get_school_motto_url' ) ? alumni_core_get_school_motto_url() : ''; }
