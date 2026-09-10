@@ -508,11 +508,7 @@
 	gap: 1.5em;
 }
 
-.alumni-homepage-section-layout-horizontal.alumni-homepage-section-columns-2 .alumni-homepage-section-grid {
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.alumni-homepage-section-layout-horizontal.alumni-homepage-section-columns-3 .alumni-homepage-section-grid {
+.alumni-homepage-section-layout-horizontal .alumni-homepage-section-grid {
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
@@ -530,6 +526,29 @@
 	.alumni-homepage-vertical-group .alumni-homepage-section {
 		width: 100%;
 	}
+}
+
+.alumni-homepage-slot {
+	min-width: 0;
+}
+
+.alumni-homepage-slot-indent-1 {
+	margin-left: 1.5em;
+}
+
+.alumni-homepage-slot-indent-2 {
+	margin-left: 3em;
+}
+
+.alumni-homepage-slot-indent-3 {
+	margin-left: 4.5em;
+}
+
+.alumni-homepage-slot-heading {
+	margin: 0 0 0.35em;
+	font-weight: 700;
+	font-size: 1.05em;
+	color: #333;
 }
 
 .alumni-homepage-slot-title {
