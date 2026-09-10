@@ -75,6 +75,7 @@ final class Plugin {
 		\AlumniCore\Includes\Org_Chart_Groups_Shortcode::register();
 		\AlumniCore\Includes\Person_Greeting_Groups_Shortcode::register();
 		\AlumniCore\Includes\School_Photos_Shortcode::register();
+		\AlumniCore\Includes\School_Song_Motto_Shortcode::register();
 
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
@@ -106,6 +107,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-school-photos-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-song-motto-shortcode.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/org-chart-functions.php';
@@ -114,6 +116,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-settings-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-school-photos-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-school-song-motto-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officers-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officer-list-order-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-graduation-lookup-page.php';
