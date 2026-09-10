@@ -62,7 +62,7 @@ class Homepage_Page {
 				</div>
 			<?php endif; ?>
 
-			<p><?php esc_html_e( 'トップページは複数の「セクション」で構成されます。各セクションごとに表示するコンテンツ数（1〜3件）と、横並び／縦並びの表示方向を選びます。実際の見た目（カードの形など）はテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
+			<p><?php esc_html_e( 'トップページは複数の「セクション」で構成されます。各セクションごとに表示する項目数（1〜20件）と、横並び／縦並びの表示方向を選びます。各項目はコンテンツリンクまたは任意テキストの見出しとして設定でき、インデントも指定できます。実際の見た目（カードの形など）はテーマ側のデザインに従います。', 'alumni-core' ); ?></p>
 
 			<?php if ( empty( $sections ) ) : ?>
 				<p class="description"><?php esc_html_e( 'まだセクションがありません。下のボタンから追加してください。', 'alumni-core' ); ?></p>
@@ -124,7 +124,7 @@ class Homepage_Page {
 							<div class="alumni-homepage-slots">
 								<?php foreach ( $section['slots'] as $slot_index => $slot ) : ?>
 									<div class="alumni-homepage-slot">
-										<label>
+										<div class="alumni-homepage-slot-label">
 											<?php
 											printf(
 												/* translators: %d: 1-based slot position */
@@ -132,9 +132,8 @@ class Homepage_Page {
 												(int) $slot_index + 1
 											);
 											?>
-											<br />
-											<?php $this->render_slot_select( "sections[{$section['section_id']}][slots][{$slot_index}]", $slot ); ?>
-										</label>
+										</div>
+										<?php $this->render_slot_select( "sections[{$section['section_id']}][slots][{$slot_index}]", $slot ); ?>
 									</div>
 								<?php endforeach; ?>
 							</div>
@@ -250,6 +249,10 @@ class Homepage_Page {
 	 */
 	private function render_slot_select( $name, array $current_slot ) {
 		$current_value = 'none';
+		$current_type  = ( isset( $current_slot['type'] ) && Homepage_Sections::SLOT_HEADING === $current_slot['type'] ) ? Homepage_Sections::SLOT_HEADING : 'link';
+		$current_indent = isset( $current_slot['indent'] ) ? min( Homepage_Sections::MAX_INDENT_LEVEL, absint( $current_slot['indent'] ) ) : 0;
+		$current_heading = isset( $current_slot['heading'] ) ? (string) $current_slot['heading'] : '';
+
 		if ( 'system' === $current_slot['type'] ) {
 			$current_value = 'system:' . $current_slot['system_key'];
 		} elseif ( 'content' === $current_slot['type'] ) {
@@ -258,40 +261,73 @@ class Homepage_Page {
 			$current_value = 'person_greeting_group:' . $current_slot['group_id'];
 		}
 		?>
-		<select name="<?php echo esc_attr( $name ); ?>">
-			<option value="none" <?php selected( 'none', $current_value ); ?>><?php esc_html_e( '（未設定）', 'alumni-core' ); ?></option>
-			<optgroup label="<?php echo esc_attr__( 'システムページ', 'alumni-core' ); ?>">
-				<?php foreach ( Homepage_Sections::system_key_labels() as $system_key => $label ) : ?>
-					<?php $value = 'system:' . $system_key; ?>
-					<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
-				<?php endforeach; ?>
-			</optgroup>
-			<?php $person_greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
-			<?php if ( ! empty( $person_greeting_groups ) ) : ?>
-				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
-					<?php foreach ( $person_greeting_groups as $person_greeting_group ) : ?>
-						<?php $value = 'person_greeting_group:' . $person_greeting_group['group_id']; ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $person_greeting_group['name'] ); ?></option>
+		<p>
+			<label>
+				<?php esc_html_e( '項目種別', 'alumni-core' ); ?><br />
+				<select name="<?php echo esc_attr( $name ); ?>[type]">
+					<option value="link" <?php selected( 'link', $current_type ); ?>><?php esc_html_e( 'コンテンツリンク', 'alumni-core' ); ?></option>
+					<option value="<?php echo esc_attr( Homepage_Sections::SLOT_HEADING ); ?>" <?php selected( Homepage_Sections::SLOT_HEADING, $current_type ); ?>><?php esc_html_e( '見出し', 'alumni-core' ); ?></option>
+				</select>
+			</label>
+		</p>
+		<p>
+			<label>
+				<?php esc_html_e( 'コンテンツ', 'alumni-core' ); ?><br />
+				<select name="<?php echo esc_attr( $name ); ?>[value]">
+					<option value="none" <?php selected( 'none', $current_value ); ?>><?php esc_html_e( '（未設定）', 'alumni-core' ); ?></option>
+					<optgroup label="<?php echo esc_attr__( 'システムページ', 'alumni-core' ); ?>">
+						<?php foreach ( Homepage_Sections::system_key_labels() as $system_key => $label ) : ?>
+							<?php $value = 'system:' . $system_key; ?>
+							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</optgroup>
+					<?php $person_greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
+					<?php if ( ! empty( $person_greeting_groups ) ) : ?>
+						<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
+							<?php foreach ( $person_greeting_groups as $person_greeting_group ) : ?>
+								<?php $value = 'person_greeting_group:' . $person_greeting_group['group_id']; ?>
+								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $person_greeting_group['name'] ); ?></option>
+							<?php endforeach; ?>
+						</optgroup>
+					<?php endif; ?>
+					<?php
+					$audience_labels = array(
+						Content_Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
+						Content_Post_Type::AUDIENCE_ALUMNI  => __( '卒業生向け', 'alumni-core' ),
+						Content_Post_Type::AUDIENCE_STUDENT => __( '在校生向け', 'alumni-core' ),
+					);
+					foreach ( $audience_labels as $audience_value => $audience_label ) :
+						$tree = Content_Hierarchy::build_tree( $audience_value, false );
+						if ( empty( $tree ) ) :
+							continue;
+						endif;
+						?>
+						<optgroup label="<?php echo esc_attr( $audience_label ); ?>">
+							<?php $this->render_slot_option_nodes( $tree, $current_value, 0 ); ?>
+						</optgroup>
 					<?php endforeach; ?>
-				</optgroup>
-			<?php endif; ?>
-			<?php
-			$audience_labels = array(
-				Content_Post_Type::AUDIENCE_COMMON  => __( '共通', 'alumni-core' ),
-				Content_Post_Type::AUDIENCE_ALUMNI  => __( '卒業生向け', 'alumni-core' ),
-				Content_Post_Type::AUDIENCE_STUDENT => __( '在校生向け', 'alumni-core' ),
-			);
-			foreach ( $audience_labels as $audience_value => $audience_label ) :
-				$tree = Content_Hierarchy::build_tree( $audience_value, false );
-				if ( empty( $tree ) ) :
-					continue;
-				endif;
-				?>
-				<optgroup label="<?php echo esc_attr( $audience_label ); ?>">
-					<?php $this->render_slot_option_nodes( $tree, $current_value, 0 ); ?>
-				</optgroup>
-			<?php endforeach; ?>
-		</select>
+				</select>
+			</label>
+		</p>
+		<p>
+			<label>
+				<?php esc_html_e( '見出しテキスト', 'alumni-core' ); ?><br />
+				<input type="text" class="regular-text" name="<?php echo esc_attr( $name ); ?>[heading]" value="<?php echo esc_attr( $current_heading ); ?>" placeholder="<?php echo esc_attr__( '見出しを直接入力', 'alumni-core' ); ?>" />
+			</label>
+			<span class="description"><?php esc_html_e( '項目種別が「見出し」の場合に使用します。', 'alumni-core' ); ?></span>
+		</p>
+		<p>
+			<label>
+				<?php esc_html_e( 'インデント', 'alumni-core' ); ?><br />
+				<select name="<?php echo esc_attr( $name ); ?>[indent]">
+					<?php for ( $indent = 0; $indent <= Homepage_Sections::MAX_INDENT_LEVEL; $indent++ ) : ?>
+						<option value="<?php echo esc_attr( $indent ); ?>" <?php selected( $indent, $current_indent ); ?>>
+							<?php echo esc_html( 0 === $indent ? __( 'なし', 'alumni-core' ) : sprintf( __( '%d段', 'alumni-core' ), $indent ) ); ?>
+						</option>
+					<?php endfor; ?>
+				</select>
+			</label>
+		</p>
 		<?php
 	}
 
@@ -423,7 +459,7 @@ class Homepage_Page {
 			$raw_slots = isset( $data['slots'] ) && is_array( $data['slots'] ) ? $data['slots'] : array();
 
 			foreach ( $raw_slots as $slot_index => $raw_value ) {
-				$sections->set_slot( $section_id, (int) $slot_index, self::parse_slot_value( (string) $raw_value ) );
+				$sections->set_slot( $section_id, (int) $slot_index, self::parse_slot_value( is_array( $raw_value ) ? $raw_value : array( 'type' => 'link', 'value' => (string) $raw_value ) ) );
 			}
 		}
 
@@ -447,28 +483,45 @@ class Homepage_Page {
 	 * @param string $raw_value
 	 * @return array
 	 */
-	private static function parse_slot_value( $raw_value ) {
-		if ( 0 === strpos( $raw_value, 'system:' ) ) {
+	private static function parse_slot_value( array $raw_value ) {
+		$type    = isset( $raw_value['type'] ) ? sanitize_key( $raw_value['type'] ) : 'link';
+		$indent  = isset( $raw_value['indent'] ) ? min( Homepage_Sections::MAX_INDENT_LEVEL, absint( $raw_value['indent'] ) ) : 0;
+		$heading = isset( $raw_value['heading'] ) ? sanitize_text_field( $raw_value['heading'] ) : '';
+		$value   = isset( $raw_value['value'] ) ? (string) $raw_value['value'] : 'none';
+
+		if ( Homepage_Sections::SLOT_HEADING === $type ) {
+			return array(
+				'type'    => Homepage_Sections::SLOT_HEADING,
+				'heading' => $heading,
+				'indent'  => $indent,
+			);
+		}
+
+		if ( 0 === strpos( $value, 'system:' ) ) {
 			return array(
 				'type'       => 'system',
-				'system_key' => substr( $raw_value, strlen( 'system:' ) ),
+				'system_key' => substr( $value, strlen( 'system:' ) ),
+				'indent'     => $indent,
 			);
 		}
 
-		if ( 0 === strpos( $raw_value, 'person_greeting_group:' ) ) {
+		if ( 0 === strpos( $value, 'person_greeting_group:' ) ) {
 			return array(
 				'type'     => Homepage_Sections::SLOT_PERSON_GREETING_GROUP,
-				'group_id' => substr( $raw_value, strlen( 'person_greeting_group:' ) ),
+				'group_id' => substr( $value, strlen( 'person_greeting_group:' ) ),
+				'indent'   => $indent,
 			);
 		}
 
-		if ( 0 === strpos( $raw_value, 'content:' ) ) {
+		if ( 0 === strpos( $value, 'content:' ) ) {
 			return array(
 				'type'       => 'content',
-				'content_id' => absint( substr( $raw_value, strlen( 'content:' ) ) ),
+				'content_id' => absint( substr( $value, strlen( 'content:' ) ) ),
+				'indent'     => $indent,
 			);
 		}
 
-		return array( 'type' => 'none' );
+		return array( 'type' => 'none', 'indent' => 0 );
 	}
+
 }
