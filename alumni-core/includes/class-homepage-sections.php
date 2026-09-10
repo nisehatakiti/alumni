@@ -8,6 +8,7 @@
 namespace AlumniCore\Includes;
 
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
+use AlumniCore\Includes\Modules\Forms\Post_Type as Form_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -326,6 +327,18 @@ class Homepage_Sections {
 				: array( 'type' => 'none', 'indent' => 0 );
 		}
 
+		if ( 'form' === $slot['type'] ) {
+			$form_id = isset( $slot['form_id'] ) ? absint( $slot['form_id'] ) : 0;
+
+			return self::is_publishable_form( $form_id )
+				? array(
+					'type'    => 'form',
+					'form_id' => $form_id,
+					'indent'  => $indent,
+				)
+				: array( 'type' => 'none', 'indent' => 0 );
+		}
+
 		if ( self::SLOT_PERSON_GREETING_GROUP === $slot['type'] ) {
 			$group_id = isset( $slot['group_id'] ) ? (string) $slot['group_id'] : '';
 			$group    = \AlumniCore\Includes\Person_Greeting_Groups::instance()->get_group( $group_id );
@@ -352,6 +365,20 @@ class Homepage_Sections {
 		}
 
 		return array( 'type' => 'none', 'indent' => 0 );
+	}
+
+	/**
+	 * @param int $content_id
+	 * @return bool
+	 */
+	private static function is_publishable_form( $form_id ) {
+		if ( ! $form_id ) {
+			return false;
+		}
+
+		$post = get_post( $form_id );
+
+		return $post && Form_Post_Type::SLUG === $post->post_type && 'publish' === $post->post_status;
 	}
 
 	/**
