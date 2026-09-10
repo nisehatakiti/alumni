@@ -31,6 +31,7 @@ class Activator {
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-module.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-enrollment-years-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officer-lists.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-terms-listing-shortcode.php';
@@ -49,6 +50,7 @@ class Activator {
 		// doesn't already exist — see each method's docblock for the
 		// "don't duplicate" logic.
 		Graduation_Lookup_Shortcode::maybe_create_page();
+		School_Enrollment_Years_Shortcode::maybe_create_page();
 		Officers_Shortcode::maybe_create_pages();
 		\AlumniCore\Includes\Modules\NewsEvents\Listing_Shortcode::maybe_create_pages();
 		Terms_Listing_Shortcode::maybe_create_page();
