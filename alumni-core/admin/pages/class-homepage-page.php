@@ -476,11 +476,11 @@ class Homepage_Page {
 	}
 
 	/**
-	 * Parses one スロットselectの送信値 ("none" / "system:{key}" /
-	 * "content:{id}") into the array shape Homepage_Sections::set_slot()
-	 * expects.
+	 * Parses one slot's submitted fields into the array shape
+	 * Homepage_Sections::set_slot() expects. Supports a content link or
+	 * an administrator-entered heading, plus an indentation level.
 	 *
-	 * @param string $raw_value
+	 * @param array $raw_value
 	 * @return array
 	 */
 	private static function parse_slot_value( array $raw_value ) {
