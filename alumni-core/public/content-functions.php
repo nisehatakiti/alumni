@@ -135,6 +135,14 @@ if ( ! function_exists( 'alumni_core_get_content' ) ) {
 			return null;
 		}
 
+		// Top-page cards for 規約類 are links only. Their body must remain
+		// available on the detail page, but must not be used as a teaser on
+		// the homepage.
+		if ( function_exists( 'is_front_page' ) && is_front_page() && \\AlumniCore\\Includes\\Modules\\Content\\Post_Type::is_terms( $post->ID ) ) {
+			$post = clone $post;
+			$post->post_content = '';
+		}
+
 		return $post;
 	}
 }
