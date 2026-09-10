@@ -393,3 +393,19 @@ if ( ! function_exists( 'alumni_core_format_updated_at' ) ) {
 		return mysql2date( get_option( 'date_format' ), $raw_datetime );
 	}
 }
+
+if ( ! function_exists( 'alumni_core_get_school_song_motto_url' ) ) {
+	function alumni_core_get_school_song_motto_url() { return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'combined' ); }
+}
+if ( ! function_exists( 'alumni_core_get_school_song_url' ) ) {
+	function alumni_core_get_school_song_url() { return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'song' ); }
+}
+if ( ! function_exists( 'alumni_core_get_school_motto_url' ) ) {
+	function alumni_core_get_school_motto_url() { return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'motto' ); }
+}
+if ( ! function_exists( 'alumni_core_get_school_song_data' ) ) {
+	function alumni_core_get_school_song_data() { return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_song_data(); }
+}
+if ( ! function_exists( 'alumni_core_get_school_motto_data' ) ) {
+	function alumni_core_get_school_motto_data() { return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_motto_data(); }
+}
