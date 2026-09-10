@@ -358,7 +358,7 @@ class Menu_Structure {
 		$type = ( self::TYPE_FOLDER === ( $item['type'] ?? '' ) ) ? self::TYPE_FOLDER : self::TYPE_CONTENT;
 
 		$ref_type = isset( $item['ref_type'] ) ? $item['ref_type'] : '';
-		if ( ! in_array( $ref_type, array( self::REF_CONTENT, self::REF_SYSTEM, self::REF_OFFICER_LIST, self::REF_PERSON_GREETING_GROUP ), true ) ) {
+		if ( ! in_array( $ref_type, array( self::REF_CONTENT, self::REF_SYSTEM, self::REF_OFFICER_LIST, self::REF_OFFICER_LIST_GROUP, self::REF_PERSON_GREETING_GROUP ), true ) ) {
 			$ref_type = '';
 		}
 
