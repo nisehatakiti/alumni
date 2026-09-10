@@ -79,4 +79,73 @@ class Officer_List_Groups {
 		$this->save_groups( $groups );
 		return $new['group_id'];
 	}
+
+	/**
+	 * Renames a freely configurable officer-list group.
+	 *
+	 * @param string $group_id
+	 * @param string $name
+	 * @return array|null
+	 */
+	public function update_group( $group_id, $name ) {
+		$group_id = sanitize_text_field( $group_id );
+		$name     = sanitize_text_field( $name );
+		if ( '' === $group_id || '' === $name ) {
+			return null;
+		}
+
+		$groups = $this->get_all();
+		$found  = null;
+		foreach ( $groups as &$group ) {
+			if ( $group['group_id'] !== $group_id ) {
+				continue;
+			}
+			$group['name'] = $name;
+			$found = $group;
+			break;
+		}
+		unset( $group );
+
+		if ( null !== $found ) {
+			$this->save_groups( $groups );
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Deletes a group. Member lists are detached and remain as standalone
+	 * lists, so deleting a grouping never deletes officer data.
+	 *
+	 * @param string $group_id
+	 * @return bool
+	 */
+	public function delete_group( $group_id ) {
+		$group_id = sanitize_text_field( $group_id );
+		if ( '' === $group_id || null === $this->get_group( $group_id ) ) {
+			return false;
+		}
+
+		$groups = array_values(
+			array_filter(
+				$this->get_all(),
+				function ( $group ) use ( $group_id ) {
+					return $group['group_id'] !== $group_id;
+				}
+			)
+		);
+
+		$this->save_groups( $groups );
+
+		// Lists survive group deletion and simply become standalone pages.
+		$lists = Officer_Lists::instance()->get_all();
+		foreach ( $lists as $list ) {
+			if ( (string) $list['group_id'] === $group_id ) {
+				Officer_Lists::instance()->save_list_group( $list['list_id'], '' );
+			}
+		}
+
+		return true;
+	}
+
 }
