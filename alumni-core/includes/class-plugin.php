@@ -67,6 +67,7 @@ final class Plugin {
 		\AlumniCore\Includes\Modules\Content\Module::register();
 		\AlumniCore\Includes\Modules\Forms\Module::register();
 		\AlumniCore\Includes\Graduation_Lookup_Shortcode::register();
+		\AlumniCore\Includes\School_Enrollment_Years_Shortcode::register();
 		\AlumniCore\Includes\Officers_Shortcode::register();
 		\AlumniCore\Includes\Officer_List_Groups_Shortcode::register();
 		\AlumniCore\Includes\Terms_Listing_Shortcode::register();
@@ -92,6 +93,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-officer-list-groups.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officer-list-groups-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-graduation-lookup-shortcode.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-enrollment-years-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-officers-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-terms-listing-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-content-hierarchy.php';
@@ -115,6 +117,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officers-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-officer-list-order-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-graduation-lookup-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-school-enrollment-years-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-terms-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-menu-page.php';
