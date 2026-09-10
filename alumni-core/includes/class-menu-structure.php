@@ -150,6 +150,13 @@ class Menu_Structure {
 			} else {
 				$items        = is_array( $saved ) ? array_values( $saved ) : array();
 				$this->items = array_map( array( __CLASS__, 'normalize_item' ), $items );
+
+				// normalize_item() may repair a legacy group reference whose
+				// ref_type was previously erased. Persist that repair immediately
+				// so the item does not fall back to「未設定」on a later request.
+				if ( $items !== $this->items ) {
+					update_option( self::OPTION_NAME, $this->items );
+				}
 			}
 		}
 
