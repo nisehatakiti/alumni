@@ -179,21 +179,45 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 					<?php elseif ( 'form' === $alumni_hp_slot['type'] ) : ?>
 
 						<?php
-						// フォームは独立した公開投稿なので、通常のコンテンツURL解決に
-						// 依存せずフォーム投稿自身のパーマリンクを直接使用する。
-						// これによりトップページのスロットでフォームを選択した場合も、
-						// 確実にクリック可能な公開リンクとして表示される。
-						$alumni_hp_form_post = alumni_theme_get_form( $alumni_hp_slot['form_id'] );
-						$alumni_hp_form_url  = $alumni_hp_form_post ? (string) get_permalink( $alumni_hp_form_post->ID ) : '';
+						// フォームは alumni_content とは別の公開投稿なので、フォーム投稿
+						// 自身を直接解決して必ず公開リンクを作る。テーマ／Coreの更新順や
+						// パーマリンク設定の状態に依存してスロット全体が消えないよう、
+						// helper -> get_post() の順で解決し、通常のパーマリンクが取得
+						// できない場合は WordPress のクエリ形式URLへフォールバックする。
+						$alumni_hp_form_id   = isset( $alumni_hp_slot['form_id'] ) ? absint( $alumni_hp_slot['form_id'] ) : 0;
+						$alumni_hp_form_post = function_exists( 'alumni_theme_get_form' )
+							? alumni_theme_get_form( $alumni_hp_form_id )
+							: null;
+
+						if ( ! $alumni_hp_form_post && $alumni_hp_form_id ) {
+							$alumni_hp_candidate = get_post( $alumni_hp_form_id );
+							if (
+								$alumni_hp_candidate &&
+								'alumni_form' === $alumni_hp_candidate->post_type &&
+								'publish' === $alumni_hp_candidate->post_status
+							) {
+								$alumni_hp_form_post = $alumni_hp_candidate;
+							}
+						}
+
+						$alumni_hp_form_url = '';
+						if ( $alumni_hp_form_post ) {
+							$alumni_hp_form_url = (string) get_permalink( $alumni_hp_form_post );
+							if ( '' === $alumni_hp_form_url ) {
+								$alumni_hp_form_url = add_query_arg(
+									array(
+										'post_type' => 'alumni_form',
+										'p'         => $alumni_hp_form_post->ID,
+									),
+									home_url( '/' )
+								);
+							}
+						}
 						?>
 						<?php if ( $alumni_hp_form_post ) : ?>
 							<div class="alumni-homepage-slot-form">
 								<h3 class="alumni-homepage-slot-title">
-									<?php if ( $alumni_hp_form_url ) : ?>
-										<a class="alumni-homepage-slot-form-link" href="<?php echo esc_url( $alumni_hp_form_url ); ?>"><?php echo esc_html( $alumni_hp_form_post->post_title ); ?></a>
-									<?php else : ?>
-										<?php echo esc_html( $alumni_hp_form_post->post_title ); ?>
-									<?php endif; ?>
+									<a class="alumni-homepage-slot-form-link" href="<?php echo esc_url( $alumni_hp_form_url ); ?>"><?php echo esc_html( $alumni_hp_form_post->post_title ); ?></a>
 								</h3>
 							</div>
 						<?php endif; ?>
