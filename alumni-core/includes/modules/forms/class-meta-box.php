@@ -38,6 +38,8 @@ class Meta_Box {
 		$reply_email = Post_Type::get_reply_to_email( $post->ID );
 		$reply_field = Post_Type::get_reply_to_field_key( $post->ID );
 		$fields      = Post_Type::get_fields( $post->ID );
+		$form_mode   = Post_Type::get_mode( $post->ID );
+		$form_target = Post_Type::get_target( $post->ID );
 
 		wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME );
 		?>
@@ -48,6 +50,22 @@ class Meta_Box {
 			.alumni-form-admin-field input[type=text],.alumni-form-admin-field select,.alumni-form-admin-field textarea{width:100%}
 			@media(max-width:782px){.alumni-form-admin-grid{grid-template-columns:1fr}}
 		</style>
+		<hr />
+		<h3><?php esc_html_e( 'フォームの用途', 'alumni-core' ); ?></h3>
+		<p>
+			<label><input type="radio" name="alumni_form_mode" value="standard" <?php checked( $form_mode, 'standard' ); ?> /> <?php esc_html_e( '通常フォーム', 'alumni-core' ); ?></label><br />
+			<label><input type="radio" name="alumni_form_mode" value="content_submission" <?php checked( $form_mode, 'content_submission' ); ?> /> <?php esc_html_e( 'コンテンツ投稿フォーム（送信内容からWordPressの下書きを作成）', 'alumni-core' ); ?></label>
+		</p>
+		<p class="alumni-form-target-setting">
+			<label for="alumni_form_target"><strong><?php esc_html_e( '作成対象コンテンツ', 'alumni-core' ); ?></strong></label><br />
+			<select id="alumni_form_target" name="alumni_form_target">
+				<option value=""><?php esc_html_e( '選択してください', 'alumni-core' ); ?></option>
+				<option value="person_greeting" <?php selected( $form_target, 'person_greeting' ); ?>><?php esc_html_e( '人物挨拶', 'alumni-core' ); ?></option>
+				<option value="news_event" <?php selected( $form_target, 'news_event' ); ?>><?php esc_html_e( 'ニュース・イベント', 'alumni-core' ); ?></option>
+			</select>
+			<button type="button" class="button" id="alumni-form-apply-template"><?php esc_html_e( '推奨項目をフォームへ設定', 'alumni-core' ); ?></button>
+			<span class="description"><?php esc_html_e( '対象コンテンツに合わせた推奨項目を自動生成します。必要に応じて生成後に編集できます。', 'alumni-core' ); ?></span>
+		</p>
 		<p>
 			<label for="alumni_form_description"><strong><?php esc_html_e( '説明文', 'alumni-core' ); ?></strong></label><br />
 			<textarea id="alumni_form_description" name="alumni_form_description" rows="4" class="large-text"><?php echo esc_textarea( $description ); ?></textarea>
@@ -119,6 +137,14 @@ class Meta_Box {
 				if(e.target.classList.contains('alumni-form-move-up')&&row.previousElementSibling){wrap.insertBefore(row,row.previousElementSibling);}
 				if(e.target.classList.contains('alumni-form-move-down')&&row.nextElementSibling){wrap.insertBefore(row.nextElementSibling,row);}
 			});
+			const templates={
+				person_greeting:[['name','氏名','text',1],['title','肩書','text',1],['body','挨拶本文','textarea',1],['photo','写真','file',0]],
+				news_event:[['title','タイトル','text',1],['content','本文','textarea',1],['event_date','開催日','text',0],['photo','画像','file',0]]
+			};
+			const applyTemplate=document.getElementById('alumni-form-apply-template');
+			if(applyTemplate){applyTemplate.addEventListener('click',function(){const target=document.getElementById('alumni_form_target').value;if(!templates[target])return;wrap.innerHTML='';templates[target].forEach((f,n)=>{const i='tpl_'+Date.now()+'_'+n;let html=tpl.innerHTML.replace(/__INDEX__/g,i);const holder=document.createElement('div');holder.innerHTML=html;const row=holder.firstElementChild;row.querySelector('[name$="[label]"]').value=f[1];row.querySelector('[name$="[key]"]').value=f[0];row.querySelector('[name$="[type]"]').value=f[2];const req=row.querySelector('[name$="[required]"]');if(req)req.checked=!!f[3];wrap.appendChild(row);});});}
+			const modeToggle=function(){const selected=document.querySelector('input[name="alumni_form_mode"]:checked');document.querySelectorAll('.alumni-form-target-setting').forEach(el=>el.style.display=selected&&selected.value==='content_submission'?'block':'none');};
+			document.querySelectorAll('input[name="alumni_form_mode"]').forEach(el=>el.addEventListener('change',modeToggle));modeToggle();
 			const replyMode=function(){const selected=document.querySelector('input[name="alumni_form_reply_to_mode"]:checked');const mode=selected?selected.value:'none';document.querySelectorAll('.alumni-form-reply-to-fixed').forEach(el=>el.style.display='fixed'===mode?'block':'none');document.querySelectorAll('.alumni-form-reply-to-field').forEach(el=>el.style.display='form_field'===mode?'block':'none');};
 			document.querySelectorAll('input[name="alumni_form_reply_to_mode"]').forEach(el=>el.addEventListener('change',replyMode));replyMode();
 		})();
@@ -170,6 +196,14 @@ class Meta_Box {
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 		if ( ! isset( $_POST[ self::NONCE_NAME ] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST[ self::NONCE_NAME ] ) ), self::NONCE_ACTION ) ) return;
 		if ( Post_Type::SLUG !== $post->post_type || ! current_user_can( 'edit_post', $post_id ) ) return;
+
+		$mode = isset( $_POST['alumni_form_mode'] ) ? sanitize_key( wp_unslash( $_POST['alumni_form_mode'] ) ) : 'standard';
+		if ( ! in_array( $mode, array( 'standard', 'content_submission' ), true ) ) $mode = 'standard';
+		$target = isset( $_POST['alumni_form_target'] ) ? sanitize_key( wp_unslash( $_POST['alumni_form_target'] ) ) : '';
+		if ( ! in_array( $target, array( 'person_greeting', 'news_event' ), true ) ) $target = '';
+		if ( 'content_submission' !== $mode || ! $target ) { $mode = 'standard'; $target = ''; }
+		update_post_meta( $post_id, Post_Type::META_MODE, $mode );
+		update_post_meta( $post_id, Post_Type::META_TARGET, $target );
 
 		$recipient_raw = isset( $_POST['alumni_form_recipient_email'] ) ? (string) wp_unslash( $_POST['alumni_form_recipient_email'] ) : '';
 		$recipient_parts = preg_split( '/[\\r\\n,;]+/', $recipient_raw );
