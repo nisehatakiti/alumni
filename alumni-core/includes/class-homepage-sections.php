@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * 「スロットベースのレイアウト」（docs/top-page-slot-based-layout-design.md
  * 他）の実装。トップページはセクションの並びで構成され、各セクションは
- * 1〜3件のスロットを持ち、各スロットに表示コンテンツを割り当てる。
+ * 1〜20件のスロットを持ち、各スロットに表示コンテンツを割り当てる。
  * セクションごとに横並び／縦並びの表示方向も保持する。
  *
  * 重要な分離:
@@ -46,7 +46,7 @@ class Homepage_Sections {
 	const OPTION_NAME = 'alumni_core_homepage_sections';
 
 	const MIN_COLUMNS = 1;
-	const MAX_COLUMNS = 3;
+	const MAX_COLUMNS = 20;
 
 	const LAYOUT_HORIZONTAL = 'horizontal';
 	const LAYOUT_VERTICAL   = 'vertical';
@@ -62,6 +62,8 @@ class Homepage_Sections {
 	const SYSTEM_ORG_CHART          = 'org_chart';
 	const SYSTEM_SCHOOL_PHOTOS      = 'school_photos';
 	const SLOT_PERSON_GREETING_GROUP = 'person_greeting_group';
+	const SLOT_HEADING               = 'heading';
+	const MAX_INDENT_LEVEL           = 3;
 
 	/**
 	 * Singleton instance.
@@ -298,7 +300,18 @@ class Homepage_Sections {
 	 */
 	private static function normalize_slot( $slot ) {
 		if ( ! is_array( $slot ) || ! isset( $slot['type'] ) ) {
-			return array( 'type' => 'none' );
+			return array( 'type' => 'none', 'indent' => 0 );
+		}
+
+		$indent = isset( $slot['indent'] ) ? absint( $slot['indent'] ) : 0;
+		$indent = min( self::MAX_INDENT_LEVEL, $indent );
+
+		if ( self::SLOT_HEADING === $slot['type'] ) {
+			return array(
+				'type'    => self::SLOT_HEADING,
+				'heading' => isset( $slot['heading'] ) ? sanitize_text_field( $slot['heading'] ) : '',
+				'indent'  => $indent,
+			);
 		}
 
 		if ( 'content' === $slot['type'] ) {
@@ -308,8 +321,9 @@ class Homepage_Sections {
 				? array(
 					'type'       => 'content',
 					'content_id' => $content_id,
+					'indent'     => $indent,
 				)
-				: array( 'type' => 'none' );
+				: array( 'type' => 'none', 'indent' => 0 );
 		}
 
 		if ( self::SLOT_PERSON_GREETING_GROUP === $slot['type'] ) {
@@ -320,8 +334,9 @@ class Homepage_Sections {
 				? array(
 					'type'     => self::SLOT_PERSON_GREETING_GROUP,
 					'group_id' => $group_id,
+					'indent'   => $indent,
 				)
-				: array( 'type' => 'none' );
+				: array( 'type' => 'none', 'indent' => 0 );
 		}
 
 		if ( 'system' === $slot['type'] ) {
@@ -331,11 +346,12 @@ class Homepage_Sections {
 				? array(
 					'type'       => 'system',
 					'system_key' => $key,
+					'indent'     => $indent,
 				)
-				: array( 'type' => 'none' );
+				: array( 'type' => 'none', 'indent' => 0 );
 		}
 
-		return array( 'type' => 'none' );
+		return array( 'type' => 'none', 'indent' => 0 );
 	}
 
 	/**
@@ -420,7 +436,7 @@ class Homepage_Sections {
  *
  * @param string $section_id
  * @param string $heading Raw, sanitized here. May be empty (見出しなしも許容).
- * @param mixed  $columns Raw, clamped to [MIN_COLUMNS,MAX_COLUMNS].
+ * @param mixed  $columns Raw, clamped to [MIN_COLUMNS,MAX_COLUMNS] (1〜20).
  * @param mixed  $layout Raw layout direction, normalized to horizontal/vertical.
  * @return array|null The updated section, or null if $section_id doesn't exist.
  */
