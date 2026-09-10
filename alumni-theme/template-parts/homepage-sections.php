@@ -57,8 +57,14 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 
 		<div class="alumni-homepage-section-grid">
 			<?php foreach ( $alumni_hp_section['slots'] as $alumni_hp_slot ) : ?>
-				<div class="alumni-homepage-slot">
-					<?php if ( 'system' === $alumni_hp_slot['type'] ) : ?>
+				<?php $alumni_hp_slot_indent = isset( $alumni_hp_slot['indent'] ) ? max( 0, min( 3, (int) $alumni_hp_slot['indent'] ) ) : 0; ?>
+				<div class="alumni-homepage-slot alumni-homepage-slot-indent-<?php echo (int) $alumni_hp_slot_indent; ?>">
+					<?php if ( 'heading' === $alumni_hp_slot['type'] ) : ?>
+						<?php if ( ! empty( $alumni_hp_slot['heading'] ) ) : ?>
+							<div class="alumni-homepage-slot-heading"><?php echo esc_html( $alumni_hp_slot['heading'] ); ?></div>
+						<?php endif; ?>
+
+					<?php elseif ( 'system' === $alumni_hp_slot['type'] ) : ?>
 
 						<?php
 						$alumni_hp_system_key   = $alumni_hp_slot['system_key'];
