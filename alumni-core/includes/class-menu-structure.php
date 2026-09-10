@@ -70,6 +70,7 @@ class Menu_Structure {
 	const REF_SYSTEM                = 'system';
 	const REF_OFFICER_LIST          = 'officer_list';
 	const REF_PERSON_GREETING_GROUP = 'person_greeting_group';
+	const REF_OFFICER_LIST_GROUP = 'officer_list_group';
 
 	const AUDIENCE_ALUMNI  = 'alumni';
 	const AUDIENCE_STUDENT = 'student';
@@ -684,6 +685,23 @@ class Menu_Structure {
 			);
 		}
 
+
+		if ( self::REF_OFFICER_LIST_GROUP === $item['ref_type'] ) {
+			$group = Officer_List_Groups::instance()->get_group( $item['ref_id'] );
+			if ( null === $group ) {
+				return null;
+			}
+			$url = Officer_List_Groups_Shortcode::get_group_url( $item['ref_id'] );
+			if ( ! $url ) {
+				return null;
+			}
+			return array(
+				'item_id' => $item['item_id'],
+				'type'    => 'content',
+				'label'   => '' !== $item['label'] ? $item['label'] : $group['name'],
+				'url'     => $url,
+			);
+		}
 		return null;
 	}
 
