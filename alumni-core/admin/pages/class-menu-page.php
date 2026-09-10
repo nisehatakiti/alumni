@@ -108,7 +108,7 @@ class Menu_Page {
 				<?php wp_nonce_field( self::NONCE_ACTION_APPLY_PRESET ); ?>
 				<?php submit_button( __( '標準メニューを設定', 'alumni-core' ), 'secondary', 'submit', false ); ?>
 				<p class="description">
-					<?php esc_html_e( '同窓会サイトの標準的なメニュー構造（役員・理事紹介、規約類一覧、卒業期早見表、学校写真など）を追加します。既存のメニュー項目は一切変更・削除されず、まだ無い項目だけが追加されます（重複作成もされません）。何度クリックしても安全です。', 'alumni-core' ); ?>
+					<?php esc_html_e( '同窓会サイトの標準的なメニュー構造（組織名簿、規約類一覧、卒業期早見表、学校写真など）を追加します。既存のメニュー項目は一切変更・削除されず、まだ無い項目だけが追加されます（重複作成もされません）。何度クリックしても安全です。', 'alumni-core' ); ?>
 				</p>
 			</form>
 
@@ -441,7 +441,7 @@ class Menu_Page {
 			<?php endif; ?>
 			<?php $officer_groups = Officer_List_Groups::instance()->get_all(); ?>
 			<?php if ( ! empty( $officer_groups ) ) : ?>
-				<optgroup label="<?php echo esc_attr__( '役員・理事紹介グループ', 'alumni-core' ); ?>">
+				<optgroup label="<?php echo esc_attr__( '組織名簿グループ', 'alumni-core' ); ?>">
 					<?php foreach ( $officer_groups as $group ) : ?>
 						<?php $value = 'officer_list_group:' . $group['group_id']; ?>
 						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>

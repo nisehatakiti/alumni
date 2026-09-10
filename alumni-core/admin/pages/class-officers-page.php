@@ -1,6 +1,6 @@
 <?php
 /**
- * 同窓会 > 役員・理事紹介 screen.
+ * 同窓会 > 組織名簿 screen.
  *
  * @package AlumniCore
  */
@@ -75,7 +75,7 @@ class Officers_Page {
 		$lists = Officer_Lists::instance()->get_all();
 		?>
 		<div class="wrap alumni-core-officers">
-			<h1><?php esc_html_e( '役員・理事紹介', 'alumni-core' ); ?></h1>
+			<h1><?php esc_html_e( '組織名簿', 'alumni-core' ); ?></h1>
 
 			<?php if ( isset( $_GET['updated'] ) && 'true' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag. ?>
 				<div class="notice notice-success is-dismissible">
@@ -141,7 +141,7 @@ class Officers_Page {
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( '公開グループの管理', 'alumni-core' ); ?></h2>
-			<p><?php esc_html_e( '役員・理事紹介の公開グループは自由に作成・名称変更・削除できます。人物挨拶の「歴代校長」「歴代会長」とは別の仕組みです。', 'alumni-core' ); ?></p>
+			<p><?php esc_html_e( '組織名簿の公開グループは自由に作成・名称変更・削除できます。人物挨拶の「歴代校長」「歴代会長」とは別の仕組みです。', 'alumni-core' ); ?></p>
 			<?php $public_groups = Officer_List_Groups::instance()->get_all(); ?>
 			<?php if ( ! empty( $public_groups ) ) : ?>
 				<table class="wp-list-table widefat fixed striped alumni-officer-groups-table">
@@ -182,7 +182,7 @@ class Officers_Page {
 				<?php wp_nonce_field( self::NONCE_ACTION_CREATE_GROUP ); ?>
 				<p>
 					<label for="alumni-officer-group-new-name"><?php esc_html_e( 'グループ名', 'alumni-core' ); ?></label><br />
-					<input type="text" id="alumni-officer-group-new-name" name="group_name" class="regular-text" placeholder="<?php echo esc_attr__( '例：役員・理事紹介、歴代会長', 'alumni-core' ); ?>" required="required" />
+					<input type="text" id="alumni-officer-group-new-name" name="group_name" class="regular-text" placeholder="<?php echo esc_attr__( '例：組織名簿、歴代会長', 'alumni-core' ); ?>" required="required" />
 				</p>
 				<?php submit_button( __( '＋ 公開グループを作成', 'alumni-core' ), 'secondary' ); ?>
 			</form>
@@ -214,7 +214,7 @@ class Officers_Page {
 		<div class="wrap alumni-core-officers">
 			<h1>
 				<?php echo esc_html( $list['name'] ); ?>
-				<a href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) ); ?>" class="page-title-action"><?php esc_html_e( '一覧一覧へ戻る', 'alumni-core' ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) ); ?>" class="page-title-action"><?php esc_html_e( '一覧に戻る', 'alumni-core' ); ?></a>
 			</h1>
 
 			<?php if ( isset( $_GET['updated'] ) && 'true' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag. ?>
@@ -252,7 +252,7 @@ class Officers_Page {
 									<option value="<?php echo esc_attr( $group['group_id'] ); ?>" <?php selected( $group['group_id'], isset( $list['group_id'] ) ? $list['group_id'] : '' ); ?>><?php echo esc_html( $group['name'] ); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( '同じグループを選択した複数の一覧は、1つの公開ページにまとめて表示されます。グループ内の表示順は「役員・理事紹介の並び順」で変更できます。', 'alumni-core' ); ?></p>
+							<p class="description"><?php esc_html_e( '同じグループを選択した複数の一覧は、1つの公開ページにまとめて表示されます。グループ内の表示順は「組織名簿の並び順」で変更できます。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
 					<tr>

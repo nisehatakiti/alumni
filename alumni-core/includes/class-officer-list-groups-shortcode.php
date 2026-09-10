@@ -85,13 +85,12 @@ class Officer_List_Groups_Shortcode {
 		$atts = shortcode_atts( array( 'id' => '' ), (array) $atts, self::SHORTCODE );
 		$group = Officer_List_Groups::instance()->get_group( (string) $atts['id'] );
 		if ( null === $group ) {
-			return '<p class="alumni-notice">' . esc_html__( 'この役員・理事紹介グループは見つかりませんでした。', 'alumni-core' ) . '</p>';
+			return '<p class="alumni-notice">' . esc_html__( 'この組織名簿グループは見つかりませんでした。', 'alumni-core' ) . '</p>';
 		}
 		$members = Officer_Lists::instance()->get_group_members( $group['group_id'] );
 		ob_start();
 		?>
 		<div class="alumni-officer-list-group">
-			<h1 class="alumni-officer-list-group-title"><?php echo esc_html( $group['name'] ); ?></h1>
 			<?php foreach ( $members as $index => $list ) : ?>
 				<section class="alumni-officer-list-group-member">
 					<h2><?php echo esc_html( $list['title'] ? $list['title'] : $list['name'] ); ?></h2>

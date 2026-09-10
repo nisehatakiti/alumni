@@ -32,7 +32,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *       - 'content':      alumni_content投稿（自由コンテンツ／人物挨拶／
  *                          規約類／フォルダ種別のコンテンツ）。
  *       - 'system':       Homepage_Sectionsと共通の「システムページ」
- *                          （ニュース一覧・イベント一覧・役員・理事紹介
+ *                          （ニュース一覧・イベント一覧・組織名簿
  *                          インデックス・規約類一覧・卒業期早見表）。
  *       - 'officer_list': 役員・理事一覧の特定の1つ（Officer_Lists）。
  *                          複数一覧のうち特定の一覧だけをメニューへ個別に
@@ -197,7 +197,7 @@ class Menu_Structure {
 	 *
 	 * 標準構成:
 	 *   共通
-	 *     ├─ 役員・理事紹介（フォルダ）
+	 *     ├─ 組織名簿（フォルダ）
 	 *     │    ├─ 母校校長挨拶（人物挨拶グループ）
 	 *     │    ├─ 同窓会長挨拶（人物挨拶グループ）
 	 *     │    ├─ 役員紹介（役員・理事一覧）
@@ -222,7 +222,7 @@ class Menu_Structure {
 		$created = 0;
 		$skipped = 0;
 
-		$officers_folder_label = __( '役員・理事紹介', 'alumni-core' );
+		$officers_folder_label = __( '組織名簿', 'alumni-core' );
 		$officers_folder_id    = $this->find_top_level_item( self::AUDIENCE_COMMON, self::TYPE_FOLDER, '', '', $officers_folder_label );
 
 		if ( null === $officers_folder_id ) {
@@ -232,12 +232,8 @@ class Menu_Structure {
 			$skipped++;
 		}
 
-		// 人物挨拶グループは自由作成ではなく、固定プリセットをIDで参照する。
-		$principal_group_id = Person_Greeting_Groups::PRESET_CURRENT_PRINCIPAL;
-		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $principal_group_id, $created, $skipped );
-
-		$chair_group_id = Person_Greeting_Groups::PRESET_CURRENT_CHAIRMAN;
-		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $chair_group_id, $created, $skipped );
+		// 人物挨拶の固定プリセットは「歴代同窓会長」「歴代校長」のみ。
+		// 組織名簿の標準メニューには人物挨拶を自動配置しない。
 
 		$officer_intro_list_id = self::find_or_create_officer_list_by_name( __( '役員紹介', 'alumni-core' ) );
 		$this->ensure_child_ref( $officers_folder_id, self::REF_OFFICER_LIST, $officer_intro_list_id, $created, $skipped );

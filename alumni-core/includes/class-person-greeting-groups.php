@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * 「現在の校長」「現在の同窓会長」「歴代校長」「歴代同窓会長」のように、
- * 人物挨拶を固定プリセットへ分類するための専用データ構造。
+ * 「歴代校長」「歴代同窓会長」のように、人物挨拶を固定プリセットへ
+ * 分類するための専用データ構造。
  *
  * これはサイトナビゲーションの階層を作るための汎用的な「親コンテンツ」
  * ではない — 人物挨拶（Modules\Content\Post_Type::KIND_PERSON_GREETING）
@@ -41,10 +41,8 @@ class Person_Greeting_Groups {
 	 * IDは表示名から独立した不変キーなので、表示名の将来的な文言調整でも
 	 * 投稿・メニューとの紐付けは切れない。
 	 */
-	const PRESET_CURRENT_CHAIRMAN  = 'current_chairman';
-	const PRESET_CURRENT_PRINCIPAL = 'current_principal';
-	const PRESET_CHAIRMEN          = 'chairmen';
-	const PRESET_PRINCIPALS        = 'principals';
+	const PRESET_CHAIRMEN   = 'chairmen';
+	const PRESET_PRINCIPALS = 'principals';
 
 	/**
 	 * Singleton instance.
@@ -87,28 +85,17 @@ class Person_Greeting_Groups {
 			$stored = is_array( $saved ) ? array_values( $saved ) : array();
 
 			$specs = array(
-				self::PRESET_CURRENT_CHAIRMAN => array(
-					'name'    => '現在の同窓会長',
-					'order'   => 1,
-					'aliases' => array( '現在の同窓会長', '同窓会長挨拶' ),
-				),
-				self::PRESET_CURRENT_PRINCIPAL => array(
-					'name'    => '現在の校長',
-					'order'   => 2,
-					'aliases' => array( '現在の校長', '母校校長挨拶', '校長挨拶' ),
-				),
 				self::PRESET_CHAIRMEN => array(
 					'name'    => '歴代同窓会長',
-					'order'   => 3,
+					'order'   => 1,
 					'aliases' => array( '歴代同窓会長', '歴代会長' ),
 				),
 				self::PRESET_PRINCIPALS => array(
 					'name'    => '歴代校長',
-					'order'   => 4,
+					'order'   => 2,
 					'aliases' => array( '歴代校長' ),
 				),
 			);
-
 			$presets = array();
 
 			foreach ( $specs as $preset_key => $spec ) {

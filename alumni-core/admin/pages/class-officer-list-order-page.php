@@ -24,9 +24,9 @@ class Officer_List_Order_Page {
 		$groups = Officer_List_Groups::instance()->get_all();
 		?>
 		<div class="wrap alumni-person-greeting-order-page">
-			<h1><?php esc_html_e( '役員・理事紹介の並び順', 'alumni-core' ); ?></h1>
+			<h1><?php esc_html_e( '組織名簿の並び順', 'alumni-core' ); ?></h1>
 			<?php if ( isset( $_GET['updated'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( '役員・理事紹介の並び順を保存しました。', 'alumni-core' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( '組織名簿の並び順を保存しました。', 'alumni-core' ); ?></p></div>
 			<?php endif; ?>
 			<p class="description"><?php esc_html_e( '一覧をドラッグ＆ドロップして順番を変更してください。同じグループの一覧は、1つの公開ページにこの順番で表示されます。', 'alumni-core' ); ?></p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="alumni-person-greeting-order-form">
