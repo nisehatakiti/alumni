@@ -310,12 +310,16 @@ class Org_Chart {
 		$swap = 'up' === $direction ? $index - 1 : $index + 1;
 		if ( null === $index || $swap < 0 || $swap >= count( $siblings ) ) { return; }
 		$nodes = $this->get_all();
-		$a = $siblings[$index]['node_id']; $b = $siblings[$swap]['node_id'];
+		$a = $siblings[$index]['node_id'];
+		$b = $siblings[$swap]['node_id'];
+		$order_a = $siblings[$index]['sort_order'];
+		$order_b = $siblings[$swap]['sort_order'];
 		foreach ( $nodes as &$node ) {
-			if ( $node['node_id'] === $a ) { $oa = $node['sort_order']; $node['sort_order'] = $siblings[$swap]['sort_order']; }
-			elseif ( $node['node_id'] === $b ) { $node['sort_order'] = isset( $oa ) ? $oa : $siblings[$index]['sort_order']; }
+			if ( $node['node_id'] === $a ) { $node['sort_order'] = $order_b; }
+			elseif ( $node['node_id'] === $b ) { $node['sort_order'] = $order_a; }
 		}
-		unset( $node ); $this->save_nodes( $nodes );
+		unset( $node );
+		$this->save_nodes( $nodes );
 	}
 
 	public function set_parent( $node_id, $new_parent_id ) {
