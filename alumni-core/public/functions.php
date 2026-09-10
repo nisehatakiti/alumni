@@ -300,6 +300,17 @@ if ( ! function_exists( 'alumni_core_get_graduation_lookup_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_school_enrollment_years_url' ) ) {
+	/**
+	 * The public URL of the auto-generated 在校年度一覧 page.
+	 *
+	 * @return string
+	 */
+	function alumni_core_get_school_enrollment_years_url() {
+		return \AlumniCore\Includes\School_Enrollment_Years_Shortcode::get_url();
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_officers_listing_url' ) ) {
 	/**
 	 * The public URL of the 役員・理事紹介 インデックスページ (every 一覧
