@@ -1,6 +1,6 @@
 <?php
 /**
- * 同窓会 > 同窓会組織図 screen.
+ * 同窓会組織図の一覧・編集画面.
  *
  * @package AlumniCore
  */
@@ -9,389 +9,64 @@ namespace AlumniCore\Admin\Pages;
 
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Org_Chart;
+use AlumniCore\Includes\Org_Chart_Groups;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-/**
- * 組織図（会長→副会長→委員会…のような、組織そのものの親子構造）を
- * 管理する画面。Menu_Page（メニュー構成）と見た目・操作パターンは近いが、
- * 扱うデータは完全に別（このクラスはMenu_Structureを一切参照しない —
- * class-org-chart.phpのdocblock参照）。
- */
 class Org_Chart_Page {
+	const SLUG='alumni-core-org-chart';
+	const ACTION_CREATE_CHART='alumni_core_create_org_chart';
+	const ACTION_UPDATE_CHART='alumni_core_update_org_chart';
+	const ACTION_DELETE_CHART='alumni_core_delete_org_chart';
+	const ACTION_CREATE_NODE='alumni_core_create_org_chart_node';
+	const ACTION_UPDATE_NODE='alumni_core_update_org_chart_node';
+	const ACTION_DELETE_NODE='alumni_core_delete_org_chart_node';
+	const ACTION_MOVE_NODE='alumni_core_move_org_chart_node';
+	const ACTION_REPARENT_NODE='alumni_core_reparent_org_chart_node';
+	const ACTION_SAVE_DISPLAY='alumni_core_save_org_chart_display_settings';
 
-	/**
-	 * Submenu slug.
-	 */
-	const SLUG = 'alumni-core-org-chart';
-
-	/**
-	 * Nonce actions.
-	 */
-	const NONCE_ACTION_CREATE  = 'alumni_core_create_org_chart_node';
-	const NONCE_ACTION_UPDATE  = 'alumni_core_update_org_chart_node';
-	const NONCE_ACTION_DELETE  = 'alumni_core_delete_org_chart_node';
-	const NONCE_ACTION_MOVE    = 'alumni_core_move_org_chart_node';
-	const NONCE_ACTION_REPARENT = 'alumni_core_reparent_org_chart_node';
-	const NONCE_ACTION_SAVE_DISPLAY = 'alumni_core_save_org_chart_display_settings';
-
-	/**
-	 * Renders the screen: the node edit screen when ?node= is present and
-	 * resolves to a real node, otherwise the full-tree index.
-	 */
-	public function render() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only navigation, nothing is written.
-		$node_id = isset( $_GET['node'] ) ? sanitize_key( wp_unslash( $_GET['node'] ) ) : '';
-		$node    = '' !== $node_id ? Org_Chart::instance()->get_node( $node_id ) : null;
-
-		if ( null !== $node ) {
-			$this->render_node_editor( $node );
-			return;
-		}
-
+	public function render(){
+		if(!current_user_can(Admin::CAPABILITY)){return;}
+		$chart_id=isset($_GET['chart'])?sanitize_text_field(wp_unslash($_GET['chart'])):'';
+		if('new'===($chart_id?:'') || isset($_GET['new'])){$this->render_chart_form(null);return;}
+		$chart=''!==$chart_id?Org_Chart::instance()->get_chart($chart_id):null;
+		if(null!==$chart){Org_Chart::instance()->set_active_chart($chart_id);$node_id=isset($_GET['node'])?sanitize_text_field(wp_unslash($_GET['node'])):'';$node=$node_id?Org_Chart::instance()->get_node($node_id):null;if($node){$this->render_node_editor($chart,$node);return;}$this->render_chart_editor($chart);return;}
 		$this->render_index();
 	}
 
-	/**
-	 * Renders the full 組織図 as an indented list, plus the ＋ノード追加
-	 * form.
-	 */
-	private function render_index() {
-		?>
-		<div class="wrap alumni-core-org-chart">
-			<h1><?php esc_html_e( '同窓会組織図', 'alumni-core' ); ?></h1>
+	private function base($args=array()){return add_query_arg(array_merge(array('page'=>self::SLUG),$args),admin_url('admin.php'));}
+	private function render_index(){ $charts=Org_Chart::instance()->get_charts(); ?>
+		<div class="wrap"><h1><?php esc_html_e('同窓会組織図','alumni-core'); ?><a href="<?php echo esc_url($this->base(array('new'=>1))); ?>" class="page-title-action"><?php esc_html_e('組織図を追加','alumni-core'); ?></a></h1>
+		<p class="description"><?php esc_html_e('複数の組織図を作成し、組織図専用グループごとに公開できます。親メニュー自体が組織図一覧です。別途「組織図一覧」メニューは作成しません。','alumni-core'); ?></p>
+		<table class="widefat striped"><thead><tr><th><?php esc_html_e('組織図名','alumni-core'); ?></th><th><?php esc_html_e('グループ','alumni-core'); ?></th><th><?php esc_html_e('操作','alumni-core'); ?></th></tr></thead><tbody>
+		<?php foreach($charts as $chart): $group=''!==$chart['group_id']?Org_Chart_Groups::instance()->get_group($chart['group_id']):null; ?><tr><td><?php echo esc_html($chart['name']?:__('（無題）','alumni-core')); ?></td><td><?php echo esc_html($group?$group['name']:__('未設定','alumni-core')); ?></td><td><a class="button button-small" href="<?php echo esc_url($this->base(array('chart'=>$chart['chart_id']))); ?>"><?php esc_html_e('編集','alumni-core'); ?></a>
+		<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline" onsubmit="return confirm('<?php echo esc_js(__('この組織図を削除します。よろしいですか？','alumni-core')); ?>');"><input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_DELETE_CHART); ?>"><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart['chart_id']); ?>"><?php wp_nonce_field(self::ACTION_DELETE_CHART); ?><button class="button button-small"><?php esc_html_e('削除','alumni-core'); ?></button></form></td></tr><?php endforeach; ?>
+		<?php if(empty($charts)): ?><tr><td colspan="3"><?php esc_html_e('組織図はまだありません。','alumni-core'); ?></td></tr><?php endif; ?></tbody></table></div><?php }
 
-			<?php if ( isset( $_GET['updated'] ) && 'true' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only status flag. ?>
-				<div class="notice notice-success is-dismissible">
-					<p><?php esc_html_e( '保存しました。', 'alumni-core' ); ?></p>
-				</div>
-			<?php endif; ?>
+	private function render_chart_form($chart){$groups=Org_Chart_Groups::instance()->get_all();$editing=is_array($chart);?><div class="wrap"><h1><?php echo esc_html($editing?__('組織図を編集','alumni-core'):__('組織図を追加','alumni-core')); ?><a href="<?php echo esc_url($this->base()); ?>" class="page-title-action"><?php esc_html_e('一覧に戻る','alumni-core'); ?></a></h1><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="<?php echo esc_attr($editing?self::ACTION_UPDATE_CHART:self::ACTION_CREATE_CHART); ?>"><?php if($editing): ?><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart['chart_id']); ?>"><?php endif; ?><?php wp_nonce_field($editing?self::ACTION_UPDATE_CHART:self::ACTION_CREATE_CHART); ?><table class="form-table"><tr><th><?php esc_html_e('組織図名','alumni-core'); ?></th><td><input class="regular-text" required name="name" value="<?php echo esc_attr($editing?$chart['name']:''); ?>"></td></tr><tr><th><?php esc_html_e('公開グループ','alumni-core'); ?></th><td><select name="group_id"><option value=""><?php esc_html_e('（未設定）','alumni-core'); ?></option><?php foreach($groups as $group): ?><option value="<?php echo esc_attr($group['group_id']); ?>" <?php selected($editing?$chart['group_id']:'',$group['group_id']); ?>><?php echo esc_html($group['name']); ?></option><?php endforeach; ?></select></td></tr></table><?php submit_button($editing?__('保存','alumni-core'):__('組織図を作成','alumni-core')); ?></form></div><?php}
 
-			<p><?php esc_html_e( '「会長→副会長→委員会」のような、同窓会組織そのものの親子構造をここで管理します。これはメニュー構成（サイトナビゲーション）とは別のデータです。公開ページへの掲載は「同窓会 > メニュー構成」で「同窓会組織図」をシステムページとして配置してください。', 'alumni-core' ); ?></p>
+	private function render_chart_editor($chart){$this->render_chart_form($chart);Org_Chart::instance()->set_active_chart($chart['chart_id']);$roots=Org_Chart::instance()->get_children('');?><div class="wrap alumni-core-org-chart"><h2><?php esc_html_e('組織図の構造','alumni-core'); ?></h2><?php if(empty($roots)): ?><p class="description"><?php esc_html_e('まだノードがありません。','alumni-core'); ?></p><?php else:$this->render_nodes($chart['chart_id'],$roots,0);endif;?><h2><?php esc_html_e('＋ ノードを追加','alumni-core'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_CREATE_NODE); ?>"><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart['chart_id']); ?>"><?php wp_nonce_field(self::ACTION_CREATE_NODE); ?><input name="name" class="regular-text" required placeholder="<?php echo esc_attr__('例：会長、副会長、総務委員会','alumni-core'); ?>"> <select name="parent_id"><option value=""><?php esc_html_e('（トップレベル）','alumni-core'); ?></option><?php $this->parent_options(''); ?></select><?php submit_button(__('＋ ノードを追加','alumni-core'),'secondary','submit',false); ?></form></div><?php}
 
-			<?php $display_settings = \AlumniCore\Includes\Org_Chart_Shortcode::get_display_settings(); ?>
-			<h2><?php esc_html_e( '公開時の表示設定', 'alumni-core' ); ?></h2>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="alumni_core_save_org_chart_display_settings" />
-				<?php wp_nonce_field( self::NONCE_ACTION_SAVE_DISPLAY ); ?>
-				<p>
-					<label><input type="checkbox" name="show_connectors" value="1" <?php checked( $display_settings['show_connectors'] ); ?> /> <?php esc_html_e( '罫線でつなぐ', 'alumni-core' ); ?></label><br />
-					<label><input type="checkbox" name="show_boxes" value="1" <?php checked( $display_settings['show_boxes'] ); ?> /> <?php esc_html_e( '各ノードを箱で囲む', 'alumni-core' ); ?></label>
-				</p>
-				<?php submit_button( __( '表示設定を保存', 'alumni-core' ), 'secondary', 'submit', false ); ?>
-			</form>
+	private function render_nodes($chart_id,array $nodes,$depth){foreach($nodes as $node){$url=$this->base(array('chart'=>$chart_id,'node'=>$node['node_id']));$children=Org_Chart::instance()->get_children($node['node_id']);?><div class="alumni-org-chart-row" style="margin-left:<?php echo (int)($depth*2); ?>em"><span class="alumni-org-chart-row-label"><?php echo esc_html($node['name']); ?></span><a class="button button-small" href="<?php echo esc_url($url); ?>"><?php esc_html_e('編集','alumni-core'); ?></a><?php $this->node_action(self::ACTION_MOVE_NODE,$chart_id,$node['node_id'],__('↑','alumni-core'),array('direction'=>'up'));$this->node_action(self::ACTION_MOVE_NODE,$chart_id,$node['node_id'],__('↓','alumni-core'),array('direction'=>'down'));$this->node_action(self::ACTION_DELETE_NODE,$chart_id,$node['node_id'],__('削除','alumni-core'),array(),true);?></div><?php if(!empty($children)){$this->render_nodes($chart_id,$children,$depth+1);}}}
 
-			<div class="alumni-org-chart-tree">
-				<?php
-				$roots = Org_Chart::instance()->get_children( '' );
+	private function node_action($action,$chart_id,$node_id,$label,$extra=array(),$confirm=false){?><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline"<?php echo $confirm?' onsubmit="return confirm(\''.esc_js(__('このノードを削除します。','alumni-core')).'\');"':''; ?>><input type="hidden" name="action" value="<?php echo esc_attr($action); ?>"><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart_id); ?>"><input type="hidden" name="node_id" value="<?php echo esc_attr($node_id); ?>"><?php foreach($extra as $k=>$v): ?><input type="hidden" name="<?php echo esc_attr($k); ?>" value="<?php echo esc_attr($v); ?>"><?php endforeach; ?><?php wp_nonce_field($action); ?><button class="button button-small"><?php echo esc_html($label); ?></button></form><?php}
 
-				if ( empty( $roots ) ) :
-					?>
-					<p class="description"><?php esc_html_e( 'まだノードがありません。', 'alumni-core' ); ?></p>
-					<?php
-				else :
-					$this->render_node_rows( $roots, 0 );
-				endif;
-				?>
-			</div>
+	private function render_node_editor($chart,$node){?><div class="wrap"><h1><?php esc_html_e('ノードの編集','alumni-core'); ?><a href="<?php echo esc_url($this->base(array('chart'=>$chart['chart_id']))); ?>" class="page-title-action"><?php esc_html_e('組織図へ戻る','alumni-core'); ?></a></h1><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_UPDATE_NODE); ?>"><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart['chart_id']); ?>"><input type="hidden" name="node_id" value="<?php echo esc_attr($node['node_id']); ?>"><?php wp_nonce_field(self::ACTION_UPDATE_NODE); ?><input name="name" class="regular-text" value="<?php echo esc_attr($node['name']); ?>"><?php submit_button(__('保存','alumni-core')); ?></form><h2><?php esc_html_e('親ノードを変更','alumni-core'); ?></h2><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="<?php echo esc_attr(self::ACTION_REPARENT_NODE); ?>"><input type="hidden" name="chart_id" value="<?php echo esc_attr($chart['chart_id']); ?>"><input type="hidden" name="node_id" value="<?php echo esc_attr($node['node_id']); ?>"><?php wp_nonce_field(self::ACTION_REPARENT_NODE); ?><select name="parent_id"><option value=""><?php esc_html_e('（トップレベル）','alumni-core'); ?></option><?php $this->parent_options($node['node_id']); ?></select><?php submit_button(__('親ノードを変更','alumni-core'),'secondary'); ?></form></div><?php}
 
-			<h2><?php esc_html_e( '＋ ノードを追加', 'alumni-core' ); ?></h2>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-org-chart-create-form">
-				<input type="hidden" name="action" value="alumni_core_create_org_chart_node" />
-				<?php wp_nonce_field( self::NONCE_ACTION_CREATE ); ?>
-				<p>
-					<label><?php esc_html_e( '名前', 'alumni-core' ); ?><br />
-						<input type="text" name="name" class="regular-text" required="required" placeholder="<?php echo esc_attr__( '例：会長、副会長、総務委員会', 'alumni-core' ); ?>" />
-					</label>
-				</p>
-				<p>
-					<label><?php esc_html_e( '親ノード', 'alumni-core' ); ?><br />
-						<select name="parent_id">
-							<option value=""><?php esc_html_e( '（トップレベル）', 'alumni-core' ); ?></option>
-							<?php $this->render_parent_options(); ?>
-						</select>
-					</label>
-				</p>
-				<?php submit_button( __( '＋ ノードを追加', 'alumni-core' ), 'secondary' ); ?>
-			</form>
-		</div>
-		<?php
-	}
+	private function parent_options($exclude){$exclude_ids=$exclude?array_merge(array($exclude),Org_Chart::instance()->get_descendant_ids($exclude)):array();$this->parent_rows(Org_Chart::instance()->get_children(''),$exclude_ids,0);}
+	private function parent_rows($nodes,$exclude,$depth){foreach($nodes as $node){if(!in_array($node['node_id'],$exclude,true)){printf('<option value="%1$s">%2$s</option>',esc_attr($node['node_id']),esc_html(str_repeat('— ',$depth).$node['name']));}$children=Org_Chart::instance()->get_children($node['node_id']);if($children){$this->parent_rows($children,$exclude,$depth+1);}}}
 
-	/**
-	 * @param array[] $nodes 同じparent_idを持つノード（Org_Chart::get_children()）。
-	 * @param int     $depth
-	 */
-	private function render_node_rows( array $nodes, $depth ) {
-		foreach ( $nodes as $node ) {
-			$edit_url = add_query_arg( array( 'page' => self::SLUG, 'node' => $node['node_id'] ), admin_url( 'admin.php' ) );
-			$children = Org_Chart::instance()->get_children( $node['node_id'] );
-			?>
-			<div class="alumni-org-chart-row" style="margin-left: <?php echo (int) ( $depth * 2 ); ?>em;">
-				<span class="alumni-org-chart-row-label"><?php echo esc_html( $node['name'] ? $node['name'] : __( '（無題）', 'alumni-core' ) ); ?></span>
-				<span class="alumni-org-chart-row-actions">
-					<a class="button button-small" href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( '編集', 'alumni-core' ); ?></a>
-					<?php $this->render_action_form( self::NONCE_ACTION_MOVE, 'alumni_core_move_org_chart_node', $node['node_id'], __( '↑', 'alumni-core' ), array( 'direction' => 'up' ) ); ?>
-					<?php $this->render_action_form( self::NONCE_ACTION_MOVE, 'alumni_core_move_org_chart_node', $node['node_id'], __( '↓', 'alumni-core' ), array( 'direction' => 'down' ) ); ?>
-					<?php $this->render_action_form( self::NONCE_ACTION_DELETE, 'alumni_core_delete_org_chart_node', $node['node_id'], __( '削除', 'alumni-core' ), array(), true ); ?>
-				</span>
-			</div>
-			<?php
-			if ( ! empty( $children ) ) {
-				$this->render_node_rows( $children, $depth + 1 );
-			}
-		}
-	}
+	private function guard($action){if(!current_user_can(Admin::CAPABILITY)){wp_die(esc_html__('この操作を行う権限がありません。','alumni-core'));}check_admin_referer($action);}
+	private function posted_chart(){ $id=isset($_POST['chart_id'])?sanitize_text_field(wp_unslash($_POST['chart_id'])):''; Org_Chart::instance()->set_active_chart($id); return $id; }
+	private function redirect_chart($id,$extra=array()){wp_safe_redirect($this->base(array_merge(array('chart'=>$id),$extra)));exit;}
 
-	/**
-	 * A one-click action form (same established pattern as Menu_Page).
-	 *
-	 * @param string $nonce_action
-	 * @param string $post_action  admin_post_{$post_action} hook name.
-	 * @param string $node_id
-	 * @param string $label
-	 * @param array  $extra_fields Extra hidden fields, name => value.
-	 * @param bool   $confirm      Whether to show a JS confirm() dialog.
-	 */
-	private function render_action_form( $nonce_action, $post_action, $node_id, $label, array $extra_fields = array(), $confirm = false ) {
-		$confirm_attr = $confirm ? ' onsubmit="return confirm(\'' . esc_js( __( 'このノードを削除します（配下のノードも削除されます）。よろしいですか？', 'alumni-core' ) ) . '\');"' : '';
-		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="alumni-org-chart-action-form"<?php echo $confirm_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built entirely from esc_js() above. ?>>
-			<input type="hidden" name="action" value="<?php echo esc_attr( $post_action ); ?>" />
-			<input type="hidden" name="node_id" value="<?php echo esc_attr( $node_id ); ?>" />
-			<?php foreach ( $extra_fields as $field_name => $field_value ) : ?>
-				<input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( $field_value ); ?>" />
-			<?php endforeach; ?>
-			<?php wp_nonce_field( $nonce_action ); ?>
-			<button type="submit" class="button button-small"><?php echo esc_html( $label ); ?></button>
-		</form>
-		<?php
-	}
-
-	/**
-	 * Renders one node's edit screen: name + 親ノード（reparent）.
-	 *
-	 * @param array $node
-	 */
-	private function render_node_editor( array $node ) {
-		?>
-		<div class="wrap alumni-core-org-chart">
-			<h1>
-				<?php esc_html_e( 'ノードの編集', 'alumni-core' ); ?>
-				<a href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) ); ?>" class="page-title-action"><?php esc_html_e( '組織図へ戻る', 'alumni-core' ); ?></a>
-			</h1>
-
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="alumni_core_update_org_chart_node" />
-				<input type="hidden" name="node_id" value="<?php echo esc_attr( $node['node_id'] ); ?>" />
-				<?php wp_nonce_field( self::NONCE_ACTION_UPDATE ); ?>
-
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row"><label for="alumni-org-chart-node-name"><?php esc_html_e( '名前', 'alumni-core' ); ?></label></th>
-						<td>
-							<input type="text" id="alumni-org-chart-node-name" name="name" class="regular-text" value="<?php echo esc_attr( $node['name'] ); ?>" />
-						</td>
-					</tr>
-				</table>
-
-				<?php submit_button( __( '保存', 'alumni-core' ) ); ?>
-			</form>
-
-			<h2><?php esc_html_e( '親ノードを変更', 'alumni-core' ); ?></h2>
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="alumni_core_reparent_org_chart_node" />
-				<input type="hidden" name="node_id" value="<?php echo esc_attr( $node['node_id'] ); ?>" />
-				<?php wp_nonce_field( self::NONCE_ACTION_REPARENT ); ?>
-				<p>
-					<select name="parent_id">
-						<option value=""><?php esc_html_e( '（トップレベル）', 'alumni-core' ); ?></option>
-						<?php $this->render_parent_options( $node['node_id'] ); ?>
-					</select>
-				</p>
-				<?php submit_button( __( '親ノードを変更', 'alumni-core' ), 'secondary' ); ?>
-			</form>
-		</div>
-		<?php
-	}
-
-	/**
-	 * Renders <option> elements for the 親ノード select, indented to show
-	 * depth. When $exclude_node_id is given, that node and its own
-	 * descendants are left out (choosing either would create a cycle;
-	 * Org_Chart::set_parent() enforces this again regardless).
-	 *
-	 * @param string $exclude_node_id '' when creating a brand-new node.
-	 */
-	private function render_parent_options( $exclude_node_id = '' ) {
-		$exclude_ids = array();
-
-		if ( '' !== $exclude_node_id ) {
-			$exclude_ids = array_merge( array( $exclude_node_id ), Org_Chart::instance()->get_descendant_ids( $exclude_node_id ) );
-		}
-
-		$this->render_parent_option_rows( Org_Chart::instance()->get_children( '' ), $exclude_ids, 0 );
-	}
-
-	/**
-	 * @param array[] $nodes
-	 * @param array   $exclude_ids
-	 * @param int     $depth
-	 */
-	private function render_parent_option_rows( array $nodes, array $exclude_ids, $depth ) {
-		foreach ( $nodes as $node ) {
-			if ( ! in_array( $node['node_id'], $exclude_ids, true ) ) {
-				$label = str_repeat( '— ', $depth ) . ( $node['name'] ? $node['name'] : __( '（無題）', 'alumni-core' ) );
-				printf( '<option value="%1$s">%2$s</option>', esc_attr( $node['node_id'] ), esc_html( $label ) );
-			}
-
-			$children = Org_Chart::instance()->get_children( $node['node_id'] );
-			if ( ! empty( $children ) ) {
-				$this->render_parent_option_rows( $children, $exclude_ids, $depth + 1 );
-			}
-		}
-	}
-
-	/**
-	 * Handles public display settings.
-	 */
-	public function handle_save_display_settings() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_SAVE_DISPLAY );
-
-		update_option(
-			\AlumniCore\Includes\Org_Chart_Shortcode::OPTION_DISPLAY_SETTINGS,
-			array(
-				'show_connectors' => isset( $_POST['show_connectors'] ),
-				'show_boxes'      => isset( $_POST['show_boxes'] ),
-			)
-		);
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
-	/**
-	 * Handles 「＋ ノードを追加」 (admin_post_alumni_core_create_org_chart_node).
-	 */
-	public function handle_create() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_CREATE );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by create_node().
-		$name      = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$parent_id = isset( $_POST['parent_id'] ) ? sanitize_key( wp_unslash( $_POST['parent_id'] ) ) : '';
-
-		Org_Chart::instance()->create_node( $parent_id, $name );
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
-	/**
-	 * Handles the ノードの編集 form submission
-	 * (admin_post_alumni_core_update_org_chart_node).
-	 */
-	public function handle_update() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_UPDATE );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		$node_id = isset( $_POST['node_id'] ) ? sanitize_key( wp_unslash( $_POST['node_id'] ) ) : '';
-
-		if ( '' === $node_id || null === Org_Chart::instance()->get_node( $node_id ) ) {
-			wp_die( esc_html__( '指定されたノードが見つかりません。', 'alumni-core' ) );
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by update_node().
-		$name = isset( $_POST['name'] ) ? wp_unslash( $_POST['name'] ) : '';
-
-		Org_Chart::instance()->update_node( $node_id, $name );
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
-	/**
-	 * Handles 削除 (admin_post_alumni_core_delete_org_chart_node).
-	 */
-	public function handle_delete() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_DELETE );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		$node_id = isset( $_POST['node_id'] ) ? sanitize_key( wp_unslash( $_POST['node_id'] ) ) : '';
-
-		if ( '' !== $node_id ) {
-			Org_Chart::instance()->delete_node( $node_id );
-		}
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
-	/**
-	 * Handles 並び替え (admin_post_alumni_core_move_org_chart_node).
-	 */
-	public function handle_move() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_MOVE );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		$node_id   = isset( $_POST['node_id'] ) ? sanitize_key( wp_unslash( $_POST['node_id'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$direction = isset( $_POST['direction'] ) ? sanitize_key( wp_unslash( $_POST['direction'] ) ) : '';
-
-		if ( '' !== $node_id && in_array( $direction, array( 'up', 'down' ), true ) ) {
-			Org_Chart::instance()->move_node( $node_id, $direction );
-		}
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
-
-	/**
-	 * Handles 親ノードを変更 (admin_post_alumni_core_reparent_org_chart_node).
-	 */
-	public function handle_reparent() {
-		if ( ! current_user_can( Admin::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
-		}
-
-		check_admin_referer( self::NONCE_ACTION_REPARENT );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above.
-		$node_id   = isset( $_POST['node_id'] ) ? sanitize_key( wp_unslash( $_POST['node_id'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$parent_id = isset( $_POST['parent_id'] ) ? sanitize_key( wp_unslash( $_POST['parent_id'] ) ) : '';
-
-		if ( '' !== $node_id ) {
-			Org_Chart::instance()->set_parent( $node_id, $parent_id );
-		}
-
-		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'node' => $node_id ), admin_url( 'admin.php' ) ) );
-		exit;
-	}
+	public function handle_create_chart(){$this->guard(self::ACTION_CREATE_CHART);$id=Org_Chart::instance()->create_chart(isset($_POST['name'])?wp_unslash($_POST['name']):'',isset($_POST['group_id'])?sanitize_text_field(wp_unslash($_POST['group_id'])):'');$this->redirect_chart($id);}
+	public function handle_update_chart(){$this->guard(self::ACTION_UPDATE_CHART);$id=$this->posted_chart();Org_Chart::instance()->update_chart($id,isset($_POST['name'])?wp_unslash($_POST['name']):'',isset($_POST['group_id'])?sanitize_text_field(wp_unslash($_POST['group_id'])):'');$this->redirect_chart($id);}
+	public function handle_delete_chart(){$this->guard(self::ACTION_DELETE_CHART);Org_Chart::instance()->delete_chart(isset($_POST['chart_id'])?sanitize_text_field(wp_unslash($_POST['chart_id'])):'');wp_safe_redirect($this->base());exit;}
+	public function handle_create(){$this->guard(self::ACTION_CREATE_NODE);$id=$this->posted_chart();Org_Chart::instance()->create_node(isset($_POST['parent_id'])?sanitize_text_field(wp_unslash($_POST['parent_id'])):'',isset($_POST['name'])?wp_unslash($_POST['name']):'');$this->redirect_chart($id);}
+	public function handle_update(){$this->guard(self::ACTION_UPDATE_NODE);$id=$this->posted_chart();Org_Chart::instance()->update_node(isset($_POST['node_id'])?sanitize_text_field(wp_unslash($_POST['node_id'])):'',isset($_POST['name'])?wp_unslash($_POST['name']):'');$this->redirect_chart($id);}
+	public function handle_delete(){$this->guard(self::ACTION_DELETE_NODE);$id=$this->posted_chart();Org_Chart::instance()->delete_node(isset($_POST['node_id'])?sanitize_text_field(wp_unslash($_POST['node_id'])):'');$this->redirect_chart($id);}
+	public function handle_move(){$this->guard(self::ACTION_MOVE_NODE);$id=$this->posted_chart();Org_Chart::instance()->move_node(isset($_POST['node_id'])?sanitize_text_field(wp_unslash($_POST['node_id'])):'',isset($_POST['direction'])?sanitize_key(wp_unslash($_POST['direction'])):'');$this->redirect_chart($id);}
+	public function handle_reparent(){$this->guard(self::ACTION_REPARENT_NODE);$id=$this->posted_chart();Org_Chart::instance()->set_parent(isset($_POST['node_id'])?sanitize_text_field(wp_unslash($_POST['node_id'])):'',isset($_POST['parent_id'])?sanitize_text_field(wp_unslash($_POST['parent_id'])):'');$this->redirect_chart($id);}
+	public function handle_save_display_settings(){/* legacy route retained for compatibility; display is shared and handled by existing option. */$this->guard(self::ACTION_SAVE_DISPLAY);update_option(\AlumniCore\Includes\Org_Chart_Shortcode::OPTION_DISPLAY_SETTINGS,array('show_connectors'=>isset($_POST['show_connectors']),'show_boxes'=>isset($_POST['show_boxes'])));wp_safe_redirect($this->base());exit;}
 }
