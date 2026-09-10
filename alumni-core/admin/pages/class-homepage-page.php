@@ -12,6 +12,7 @@ use AlumniCore\Includes\Homepage_Sections;
 use AlumniCore\Includes\Content_Hierarchy;
 use AlumniCore\Includes\Person_Greeting_Groups;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
+use AlumniCore\Includes\Modules\Forms\Post_Type as Form_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -260,6 +261,8 @@ class Homepage_Page {
 			$current_value = 'system:' . $current_slot['system_key'];
 		} elseif ( 'content' === $current_slot['type'] ) {
 			$current_value = 'content:' . $current_slot['content_id'];
+		} elseif ( 'form' === $current_slot['type'] ) {
+			$current_value = 'form:' . $current_slot['form_id'];
 		} elseif ( Homepage_Sections::SLOT_PERSON_GREETING_GROUP === $current_slot['type'] ) {
 			$current_value = 'person_greeting_group:' . $current_slot['group_id'];
 		}
@@ -284,6 +287,25 @@ class Homepage_Page {
 							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
 						<?php endforeach; ?>
 					</optgroup>
+					<?php
+					$form_posts = get_posts(
+						array(
+							'post_type'      => Form_Post_Type::SLUG,
+							'post_status'    => 'publish',
+							'posts_per_page' => -1,
+							'orderby'        => 'menu_order title',
+							'order'          => 'ASC',
+						)
+					);
+					?>
+					<?php if ( ! empty( $form_posts ) ) : ?>
+						<optgroup label="<?php echo esc_attr__( 'フォーム', 'alumni-core' ); ?>">
+							<?php foreach ( $form_posts as $form_post ) : ?>
+								<?php $value = 'form:' . $form_post->ID; ?>
+								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $form_post->post_title ? $form_post->post_title : sprintf( '#%d', $form_post->ID ) ); ?></option>
+							<?php endforeach; ?>
+						</optgroup>
+					<?php endif; ?>
 					<?php $person_greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
 					<?php if ( ! empty( $person_greeting_groups ) ) : ?>
 						<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
@@ -513,6 +535,14 @@ class Homepage_Page {
 				'type'     => Homepage_Sections::SLOT_PERSON_GREETING_GROUP,
 				'group_id' => substr( $value, strlen( 'person_greeting_group:' ) ),
 				'indent'   => $indent,
+			);
+		}
+
+		if ( 0 === strpos( $value, 'form:' ) ) {
+			return array(
+				'type'    => 'form',
+				'form_id' => absint( substr( $value, strlen( 'form:' ) ) ),
+				'indent'  => $indent,
 			);
 		}
 

@@ -451,6 +451,39 @@ function alumni_theme_get_content_url( $id ) {
 }
 
 /**
+ * A single published form post, or null when Core is inactive or the form
+ * is unavailable.
+ *
+ * @param int $id Form post ID.
+ * @return WP_Post|null
+ */
+function alumni_theme_get_form( $id ) {
+	if ( ! alumni_theme_core_active() ) {
+		return null;
+	}
+
+	$post = get_post( $id );
+
+	if ( ! $post || 'alumni_form' !== $post->post_type || 'publish' !== $post->post_status ) {
+		return null;
+	}
+
+	return $post;
+}
+
+/**
+ * Public URL for one published form, or '' when unavailable.
+ *
+ * @param int $id Form post ID.
+ * @return string
+ */
+function alumni_theme_get_form_url( $id ) {
+	$form = alumni_theme_get_form( $id );
+
+	return $form ? (string) get_permalink( $form ) : '';
+}
+
+/**
  * Every field needed to render a 人物挨拶 card/page (name, kana, title,
  * term, photo ID, body, ...), or null when Core is inactive or $post
  * isn't a 人物挨拶 コンテンツ post.
