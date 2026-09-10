@@ -12,6 +12,7 @@ use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
 use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
+use AlumniCore\Admin\Pages\School_Enrollment_Years_Page;
 use AlumniCore\Admin\Pages\Terms_Page;
 use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Admin\Pages\Menu_Page;
@@ -79,6 +80,9 @@ class Admin {
 	 * @var Graduation_Lookup_Page
 	 */
 	private $graduation_lookup_page;
+
+	/** @var School_Enrollment_Years_Page */
+	private $school_enrollment_years_page;
 
 	/**
 	 * 規約類 screen handler.
@@ -162,6 +166,7 @@ class Admin {
 		$this->school_photos_page     = new School_Photos_Page();
 		$this->officers_page          = new Officers_Page();
 		$this->graduation_lookup_page = new Graduation_Lookup_Page();
+		$this->school_enrollment_years_page = new School_Enrollment_Years_Page();
 		$this->terms_page             = new Terms_Page();
 		$this->homepage_page           = new Homepage_Page();
 		$this->menu_page                = new Menu_Page();
@@ -274,6 +279,7 @@ class Admin {
 		$this->settings_hook = add_submenu_page( self::MENU_SLUG, __( '基本設定', 'alumni-core' ), __( '基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
 		$this->school_photos_hook = add_submenu_page( self::MENU_SLUG, __( '学校写真', 'alumni-core' ), __( '学校写真', 'alumni-core' ), self::CAPABILITY, School_Photos_Page::SLUG, array( $this->school_photos_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( 'トップページ設定', 'alumni-core' ), __( 'トップページ設定', 'alumni-core' ), self::CAPABILITY, Homepage_Page::SLUG, array( $this->homepage_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '在校年度一覧', 'alumni-core' ), __( '在校年度一覧', 'alumni-core' ), self::CAPABILITY, School_Enrollment_Years_Page::SLUG, array( $this->school_enrollment_years_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( 'メニュー構成', 'alumni-core' ), __( 'メニュー構成', 'alumni-core' ), self::CAPABILITY, Menu_Page::SLUG, array( $this->menu_page, 'render' ) );
 
 		// WordPress が自動追加する CPT サブメニューを一度外し、管理者に
