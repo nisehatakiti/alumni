@@ -44,6 +44,8 @@ class Officers_Page {
 	const NONCE_ACTION_DELETE = 'alumni_core_delete_officer_list';
 	const NONCE_ACTION_SAVE   = 'alumni_core_save_officer_list';
 	const NONCE_ACTION_CREATE_GROUP = 'alumni_core_create_officer_list_group';
+	const NONCE_ACTION_UPDATE_GROUP = 'alumni_core_update_officer_list_group';
+	const NONCE_ACTION_DELETE_GROUP = 'alumni_core_delete_officer_list_group';
 
 	/**
 	 * Renders the screen: the list index, or one list's edit screen when
@@ -136,6 +138,42 @@ class Officers_Page {
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+			<?php endif; ?>
+
+			<h2><?php esc_html_e( '公開グループの管理', 'alumni-core' ); ?></h2>
+			<p><?php esc_html_e( '役員・理事紹介の公開グループは自由に作成・名称変更・削除できます。人物挨拶の「歴代校長」「歴代会長」とは別の仕組みです。', 'alumni-core' ); ?></p>
+			<?php $public_groups = Officer_List_Groups::instance()->get_all(); ?>
+			<?php if ( ! empty( $public_groups ) ) : ?>
+				<table class="wp-list-table widefat fixed striped alumni-officer-groups-table">
+					<thead><tr><th><?php esc_html_e( 'グループ名', 'alumni-core' ); ?></th><th><?php esc_html_e( '所属一覧', 'alumni-core' ); ?></th><th><?php esc_html_e( '操作', 'alumni-core' ); ?></th></tr></thead>
+					<tbody>
+						<?php foreach ( $public_groups as $group ) : ?>
+							<?php $member_count = count( Officer_Lists::instance()->get_group_members( $group['group_id'] ) ); ?>
+							<tr>
+								<td>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<input type="hidden" name="action" value="alumni_core_update_officer_list_group" />
+										<input type="hidden" name="group_id" value="<?php echo esc_attr( $group['group_id'] ); ?>" />
+										<?php wp_nonce_field( self::NONCE_ACTION_UPDATE_GROUP ); ?>
+										<input type="text" name="group_name" class="regular-text" value="<?php echo esc_attr( $group['name'] ); ?>" />
+										<button type="submit" class="button"><?php esc_html_e( '名称変更', 'alumni-core' ); ?></button>
+									</form>
+								</td>
+								<td><?php echo esc_html( $member_count ); ?></td>
+								<td>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'この公開グループを削除します。所属一覧は削除されず、単独ページに戻ります。よろしいですか？', 'alumni-core' ) ); ?>');">
+										<input type="hidden" name="action" value="alumni_core_delete_officer_list_group" />
+										<input type="hidden" name="group_id" value="<?php echo esc_attr( $group['group_id'] ); ?>" />
+										<?php wp_nonce_field( self::NONCE_ACTION_DELETE_GROUP ); ?>
+										<button type="submit" class="button-link-delete"><?php esc_html_e( '削除', 'alumni-core' ); ?></button>
+									</form>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p class="description"><?php esc_html_e( 'まだ公開グループがありません。下から自由に作成できます。', 'alumni-core' ); ?></p>
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( '公開グループを作成', 'alumni-core' ); ?></h2>
@@ -555,6 +593,37 @@ class Officers_Page {
 			Officer_List_Groups::instance()->create_group( $name );
 			\AlumniCore\Includes\Officer_List_Groups_Shortcode::maybe_create_pages();
 		}
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+
+	/**
+	 * Handles public officer-list group rename.
+	 */
+	public function handle_update_group() {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+		check_admin_referer( self::NONCE_ACTION_UPDATE_GROUP );
+		$group_id = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : '';
+		$name = isset( $_POST['group_name'] ) ? sanitize_text_field( wp_unslash( $_POST['group_name'] ) ) : '';
+		Officer_List_Groups::instance()->update_group( $group_id, $name );
+		AlumniCoreIncludesOfficer_List_Groups_Shortcode::maybe_create_pages();
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * Handles public officer-list group deletion.
+	 */
+	public function handle_delete_group() {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+		check_admin_referer( self::NONCE_ACTION_DELETE_GROUP );
+		$group_id = isset( $_POST['group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['group_id'] ) ) : '';
+		Officer_List_Groups::instance()->delete_group( $group_id );
 		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
 		exit;
 	}
