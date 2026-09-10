@@ -76,7 +76,7 @@ class Public_Form {
 	}
 	private static function field_width($field) {
 		$width = isset($field['width']) ? (int)$field['width'] : 100;
-		return in_array($width, array(25,33,50,66,75,100), true) ? $width : 100;
+		return in_array($width, array(10,25,33,50,66,75,100), true) ? $width : 100;
 	}
 	private static function render_field($field, $row_count = 1) {
 		$key='alumni_form_field['.$field['key'].']'; $file_key='alumni_form_file['.$field['key'].']'; $id='alumni-form-'.$field['id']; $required=!empty($field['required']); $type=$field['type'];
