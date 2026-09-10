@@ -225,10 +225,11 @@ class Menu_Structure {
 			$skipped++;
 		}
 
-		$principal_group_id = Person_Greeting_Groups::instance()->create_group( __( '母校校長挨拶', 'alumni-core' ) );
+		// 人物挨拶グループは自由作成ではなく、固定プリセットをIDで参照する。
+		$principal_group_id = Person_Greeting_Groups::PRESET_CURRENT_PRINCIPAL;
 		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $principal_group_id, $created, $skipped );
 
-		$chair_group_id = Person_Greeting_Groups::instance()->create_group( __( '同窓会長挨拶', 'alumni-core' ) );
+		$chair_group_id = Person_Greeting_Groups::PRESET_CURRENT_CHAIRMAN;
 		$this->ensure_child_ref( $officers_folder_id, self::REF_PERSON_GREETING_GROUP, $chair_group_id, $created, $skipped );
 
 		$officer_intro_list_id = self::find_or_create_officer_list_by_name( __( '役員紹介', 'alumni-core' ) );
