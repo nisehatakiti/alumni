@@ -103,8 +103,9 @@ class Org_Chart_Shortcode {
 	 *
 	 * @return string
 	 */
-	public static function render_shortcode() {
-		$tree     = Org_Chart::instance()->get_tree();
+	public static function render_shortcode( $atts = array() ) {
+		$atts = shortcode_atts( array( 'id' => '' ), (array) $atts, self::SHORTCODE );
+		$tree = '' !== (string) $atts['id'] ? Org_Chart::instance()->get_tree_for_chart( (string) $atts['id'] ) : Org_Chart::instance()->get_tree();
 		$settings = self::get_display_settings();
 
 		ob_start();
