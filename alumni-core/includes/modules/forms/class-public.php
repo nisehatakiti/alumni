@@ -149,7 +149,7 @@ class Public_Form {
 			update_post_meta($post_id,'_alumni_content_kind','person_greeting');
 			update_post_meta($post_id,'_alumni_person_name',sanitize_text_field((string)($values['name']??'')));
 			update_post_meta($post_id,'_alumni_person_title',sanitize_text_field((string)($values['title']??'')));
-			if(!empty($files['photo']))self::attach_upload_to_draft($files['photo'],$post_id,true);
+			if(!empty($files['photo'])){$photo_id=self::attach_upload_to_draft($files['photo'],$post_id,true);if($photo_id)update_post_meta($post_id,'_alumni_person_photo_id',$photo_id);}
 			return $post_id;
 		}
 		if('news_event'===$target){
