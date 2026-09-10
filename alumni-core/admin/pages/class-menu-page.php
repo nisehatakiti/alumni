@@ -12,6 +12,7 @@ use AlumniCore\Includes\Menu_Structure;
 use AlumniCore\Includes\Officer_Lists;
 use AlumniCore\Includes\Officer_List_Groups;
 use AlumniCore\Includes\Person_Greeting_Groups;
+use AlumniCore\Includes\Org_Chart_Groups;
 use AlumniCore\Includes\Homepage_Sections;
 use AlumniCore\Includes\Content_Hierarchy;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
