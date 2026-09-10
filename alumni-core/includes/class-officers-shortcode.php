@@ -268,37 +268,60 @@ class Officers_Shortcode {
 						<?php esc_html_e( '現在、この一覧に役員・理事の情報は登録されていません。', 'alumni-core' ); ?>
 					</p>
 				<?php else : ?>
+					<?php
+					$display_columns = isset( $list['display_columns'] ) && is_array( $list['display_columns'] ) ? $list['display_columns'] : array();
+					$columns = array();
+					if ( ! empty( $display_columns['title'] ) ) {
+						$columns['title'] = $list['title_heading'] ? $list['title_heading'] : Officer_Lists::DEFAULT_TITLE_HEADING;
+					}
+					$columns['name'] = __( '氏名', 'alumni-core' );
+					if ( ! empty( $display_columns['term'] ) ) {
+						$columns['term'] = __( '卒業期', 'alumni-core' );
+					}
+					if ( ! empty( $display_columns['committee'] ) ) {
+						$columns['committee'] = __( '委員会', 'alumni-core' );
+					}
+					if ( ! empty( $display_columns['remarks'] ) ) {
+						$columns['remarks'] = __( '備考', 'alumni-core' );
+					}
+					$column_width = 100 / max( 1, count( $columns ) );
+					?>
 					<table class="alumni-officers-listing-table">
+						<colgroup>
+							<?php foreach ( $columns as $column_key => $column_label ) : ?>
+								<col class="alumni-officers-listing-col alumni-officers-listing-col-<?php echo esc_attr( $column_key ); ?>" style="width: <?php echo esc_attr( $column_width ); ?>%;" />
+							<?php endforeach; ?>
+						</colgroup>
 						<thead>
 							<tr>
-								<th><?php echo esc_html( $list['title_heading'] ? $list['title_heading'] : Officer_Lists::DEFAULT_TITLE_HEADING ); ?></th>
-								<th><?php esc_html_e( '氏名', 'alumni-core' ); ?></th>
-								<th><?php esc_html_e( '卒業期', 'alumni-core' ); ?></th>
-								<th><?php esc_html_e( '委員会', 'alumni-core' ); ?></th>
-								<th><?php esc_html_e( '備考', 'alumni-core' ); ?></th>
+								<?php foreach ( $columns as $column_label ) : ?>
+									<th><?php echo esc_html( $column_label ); ?></th>
+								<?php endforeach; ?>
 							</tr>
 						</thead>
 						<tbody>
 							<?php foreach ( $officers as $officer ) : ?>
 								<?php $link_url = alumni_core_get_officer_link_url( $officer ); ?>
 								<tr>
-									<td><?php echo esc_html( $officer['title'] ); ?></td>
-									<td>
-										<?php if ( $link_url ) : ?>
-											<a href="<?php echo esc_url( $link_url ); ?>"><?php echo esc_html( $officer['name'] ); ?></a>
-										<?php else : ?>
-											<?php echo esc_html( $officer['name'] ); ?>
-										<?php endif; ?>
-									</td>
-									<td>
-										<?php
-										echo '' === $officer['term'] || null === $officer['term']
-											? ''
-											: esc_html( sprintf( __( '第%s期', 'alumni-core' ), $officer['term'] ) );
-										?>
-									</td>
-									<td><?php echo esc_html( $officer['committee'] ); ?></td>
-									<td><?php echo esc_html( $officer['remarks'] ); ?></td>
+									<?php foreach ( $columns as $column_key => $column_label ) : ?>
+										<td>
+											<?php if ( 'title' === $column_key ) : ?>
+												<?php echo esc_html( $officer['title'] ); ?>
+											<?php elseif ( 'name' === $column_key ) : ?>
+												<?php if ( $link_url ) : ?>
+													<a href="<?php echo esc_url( $link_url ); ?>"><?php echo esc_html( $officer['name'] ); ?></a>
+												<?php else : ?>
+													<?php echo esc_html( $officer['name'] ); ?>
+												<?php endif; ?>
+											<?php elseif ( 'term' === $column_key ) : ?>
+												<?php echo '' === $officer['term'] || null === $officer['term'] ? '' : esc_html( sprintf( __( '第%s期', 'alumni-core' ), $officer['term'] ) ); ?>
+											<?php elseif ( 'committee' === $column_key ) : ?>
+												<?php echo esc_html( $officer['committee'] ); ?>
+											<?php elseif ( 'remarks' === $column_key ) : ?>
+												<?php echo esc_html( $officer['remarks'] ); ?>
+											<?php endif; ?>
+										</td>
+									<?php endforeach; ?>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
