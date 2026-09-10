@@ -173,14 +173,14 @@ class Content_Meta_Box {
 
 			<div id="alumni-person-greeting-fields" class="alumni-person-greeting-fields"<?php echo Post_Type::KIND_PERSON_GREETING === $kind ? '' : ' style="display:none;"'; ?>>
 				<p>
-					<label for="alumni_person_greeting_group_id"><strong><?php esc_html_e( '人物挨拶グループ（必須）', 'alumni-core' ); ?></strong></label><br />
+					<label for="alumni_person_greeting_group_id"><strong><?php esc_html_e( '人物挨拶の区分（固定）', 'alumni-core' ); ?></strong></label><br />
 					<select id="alumni_person_greeting_group_id" name="alumni_person_greeting_group_id">
 						<option value=""><?php esc_html_e( '（未選択）', 'alumni-core' ); ?></option>
 						<?php foreach ( Person_Greeting_Groups::instance()->get_all() as $group ) : ?>
 							<option value="<?php echo esc_attr( $group['group_id'] ); ?>" <?php selected( $group['group_id'], $group_id ); ?>><?php echo esc_html( $group['name'] ); ?></option>
 						<?php endforeach; ?>
 					</select>
-					<p class="description"><?php esc_html_e( '「母校校長挨拶」「同窓会長挨拶」のように、歴代の人物挨拶をまとめる分類です。', 'alumni-core' ); ?></p>
+					<p class="description"><?php esc_html_e( '「歴代校長」「歴代会長」のように、歴代の人物挨拶をまとめる分類です。', 'alumni-core' ); ?></p>
 				</p>
 				<p>
 					<label for="alumni_person_name"><strong><?php esc_html_e( '氏名（必須）', 'alumni-core' ); ?></strong></label><br />
