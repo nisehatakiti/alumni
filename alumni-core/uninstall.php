@@ -40,6 +40,8 @@ if ( $alumni_core_delete_user_data ) {
 	delete_option( 'alumni_core_terms_listing_page_id' );
 	delete_option( 'alumni_core_homepage_sections' );
 	delete_option( 'alumni_core_menu_structure' );
+	delete_option( 'alumni_core_org_charts' );
+	delete_option( 'alumni_core_org_chart_groups' );
 	delete_option( 'alumni_core_officer_lists_updated_at' );
 	delete_option( 'alumni_core_org_chart' );
 	delete_option( 'alumni_core_org_chart_page_id' );
