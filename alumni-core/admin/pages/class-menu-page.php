@@ -448,6 +448,15 @@ class Menu_Page {
 					<?php endforeach; ?>
 				</optgroup>
 			<?php endif; ?>
+			<?php $org_chart_groups = Org_Chart_Groups::instance()->get_all(); ?>
+			<?php if ( ! empty( $org_chart_groups ) ) : ?>
+				<optgroup label="<?php echo esc_attr__( '組織図グループ', 'alumni-core' ); ?>">
+					<?php foreach ( $org_chart_groups as $group ) : ?>
+						<?php $value = 'org_chart_group:' . $group['group_id']; ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+					<?php endforeach; ?>
+				</optgroup>
+			<?php endif; ?>
 			<?php $greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
 			<?php if ( ! empty( $greeting_groups ) ) : ?>
 				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
@@ -510,7 +519,7 @@ class Menu_Page {
 	 * @return array{0:string,1:string}
 	 */
 	private static function parse_reference_value( $raw_value ) {
-		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_OFFICER_LIST_GROUP, Menu_Structure::REF_PERSON_GREETING_GROUP, Menu_Structure::REF_CONTENT ) as $ref_type ) {
+		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_OFFICER_LIST_GROUP, Menu_Structure::REF_PERSON_GREETING_GROUP, Menu_Structure::REF_ORG_CHART_GROUP, Menu_Structure::REF_CONTENT ) as $ref_type ) {
 			$prefix = $ref_type . ':';
 			if ( 0 === strpos( $raw_value, $prefix ) ) {
 				return array( $ref_type, substr( $raw_value, strlen( $prefix ) ) );
