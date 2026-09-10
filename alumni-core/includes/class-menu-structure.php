@@ -363,6 +363,20 @@ class Menu_Structure {
 			$ref_type = '';
 		}
 
+		// 旧版では officer_list_group が許可リストから漏れていたため、
+		// 保存済み項目の ref_type が読み込み時に空文字へ正規化されることが
+		// あった。失われた型は ref_id を既存グループIDと照合して復旧する。
+		// UUIDのグループIDと数値の投稿IDは別空間なので、この復旧で通常の
+		// コンテンツ参照を誤判定しない。
+		$raw_ref_id = isset( $item['ref_id'] ) ? (string) $item['ref_id'] : '';
+		if ( self::TYPE_CONTENT === $type && '' === $ref_type && '' !== $raw_ref_id ) {
+			if ( null !== Officer_List_Groups::instance()->get_group( $raw_ref_id ) ) {
+				$ref_type = self::REF_OFFICER_LIST_GROUP;
+			} elseif ( null !== Person_Greeting_Groups::instance()->get_group( $raw_ref_id ) ) {
+				$ref_type = self::REF_PERSON_GREETING_GROUP;
+			}
+		}
+
 		$audience = isset( $item['audience'] ) ? $item['audience'] : self::AUDIENCE_COMMON;
 		if ( ! in_array( $audience, array( self::AUDIENCE_ALUMNI, self::AUDIENCE_STUDENT, self::AUDIENCE_COMMON ), true ) ) {
 			$audience = self::AUDIENCE_COMMON;
