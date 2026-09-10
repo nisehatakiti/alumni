@@ -562,7 +562,11 @@ class Content_Meta_Box {
 		// すでにWordPress自身がブロックエディターの送信値を正しく入れて
 		// いるので、ここで空文字などに上書きしない。
 		if ( Post_Type::KIND_TERMS !== $kind ) {
-			$content = isset( $_POST['alumni_content_body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
+			// 自由コンテンツ／人物挨拶の本文はクラシックエディターから送信されるため、
+			// テキストだけに限定する sanitize_textarea_field() ではなく、WordPress標準投稿本文と
+			// 同じ安全な許可HTMLセットを使う wp_kses_post() で保存する。これにより「メディアを追加」
+			// から挿入した <img> などの画像HTMLを保持できる。
+			$content = isset( $_POST['alumni_content_body'] ) ? wp_kses_post( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
 
 			$data['post_content'] = wp_slash( $content );
 		}
