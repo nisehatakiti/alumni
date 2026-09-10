@@ -63,6 +63,9 @@ class Homepage_Sections {
 	const SYSTEM_SCHOOL_ENROLLMENT_YEARS = 'school_enrollment_years';
 	const SYSTEM_ORG_CHART          = 'org_chart';
 	const SYSTEM_SCHOOL_PHOTOS      = 'school_photos';
+	const SYSTEM_SCHOOL_SONG_MOTTO = 'school_song_motto';
+	const SYSTEM_SCHOOL_SONG       = 'school_song';
+	const SYSTEM_SCHOOL_MOTTO      = 'school_motto';
 	const SLOT_PERSON_GREETING_GROUP = 'person_greeting_group';
 	const SLOT_HEADING               = 'heading';
 	const MAX_INDENT_LEVEL           = 3;
@@ -112,6 +115,9 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_ENROLLMENT_YEARS,
 			self::SYSTEM_ORG_CHART,
 			self::SYSTEM_SCHOOL_PHOTOS,
+			self::SYSTEM_SCHOOL_SONG_MOTTO,
+			self::SYSTEM_SCHOOL_SONG,
+			self::SYSTEM_SCHOOL_MOTTO,
 		);
 	}
 
@@ -130,6 +136,9 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_ENROLLMENT_YEARS => __( '在校年度一覧', 'alumni-core' ),
 			self::SYSTEM_ORG_CHART         => __( '同窓会組織図', 'alumni-core' ),
 			self::SYSTEM_SCHOOL_PHOTOS     => __( '学校写真', 'alumni-core' ),
+			self::SYSTEM_SCHOOL_SONG_MOTTO => __( '校歌・校訓', 'alumni-core' ),
+			self::SYSTEM_SCHOOL_SONG => __( '校歌', 'alumni-core' ),
+			self::SYSTEM_SCHOOL_MOTTO => __( '校訓', 'alumni-core' ),
 		);
 	}
 
@@ -160,6 +169,12 @@ class Homepage_Sections {
 				return alumni_core_get_org_chart_url();
 			case self::SYSTEM_SCHOOL_PHOTOS:
 				return \AlumniCore\Includes\School_Photos_Shortcode::get_url();
+			case self::SYSTEM_SCHOOL_SONG_MOTTO:
+				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'combined' );
+			case self::SYSTEM_SCHOOL_SONG:
+				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'song' );
+			case self::SYSTEM_SCHOOL_MOTTO:
+				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'motto' );
 			default:
 				return '';
 		}
