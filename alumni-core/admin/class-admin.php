@@ -159,6 +159,7 @@ class Admin {
 		$this->officer_list_order_page = new Officer_List_Order_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
+		add_action( 'pre_get_posts', array( $this, 'filter_person_greeting_list' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
@@ -189,6 +190,46 @@ class Admin {
 		add_action( 'admin_post_alumni_core_save_person_greeting_order', array( $this->person_greeting_order_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_officer_list_order', array( $this->officer_list_order_page, 'handle_save' ) );
 	}
+
+
+	/**
+	 * Restricts the dedicated 人物挨拶一覧 screen to person_greeting posts.
+	 *
+	 * The menu uses Content_Post_Type::QUERY_VAR_KIND for the route, but
+	 * WordPress does not automatically translate that custom query variable
+	 * into a postmeta constraint on the CPT list screen. Apply the constraint
+	 * here so the dedicated screen never mixes in 規約類 or 自由コンテンツ.
+	 *
+	 * @param \WP_Query $query Main admin query.
+	 */
+	public function filter_person_greeting_list( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		global $pagenow;
+
+		if ( 'edit.php' !== $pagenow || Content_Post_Type::SLUG !== $query->get( 'post_type' ) ) {
+			return;
+		}
+
+		$requested_kind = isset( $_GET[ Content_Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_GET[ Content_Post_Type::QUERY_VAR_KIND ] ) ) : '';
+
+		if ( Content_Post_Type::KIND_PERSON_GREETING !== $requested_kind ) {
+			return;
+		}
+
+		$meta_query   = $query->get( 'meta_query' );
+		$meta_query   = is_array( $meta_query ) ? $meta_query : array();
+		$meta_query[] = array(
+			'key'     => Content_Post_Type::META_KIND,
+			'value'   => Content_Post_Type::KIND_PERSON_GREETING,
+			'compare' => '=',
+		);
+
+		$query->set( 'meta_query', $meta_query );
+	}
+
 
 	/**
 	 * Adds the 「同窓会」 top-level menu plus its current submenus.
@@ -228,6 +269,7 @@ class Admin {
 
 		add_submenu_page( self::MENU_SLUG, __( '人物挨拶', 'alumni-core' ), __( '人物挨拶', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
 		add_submenu_page( self::MENU_SLUG, __( '人物挨拶を追加', 'alumni-core' ), __( '├ 人物挨拶を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
+		add_submenu_page( self::MENU_SLUG, __( '人物挨拶一覧', 'alumni-core' ), __( '├ 人物挨拶一覧', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
 		$this->person_greeting_order_hook = add_submenu_page( self::MENU_SLUG, __( '人物挨拶の並び順', 'alumni-core' ), __( '└ 人物挨拶の並び順', 'alumni-core' ), self::CAPABILITY, Person_Greeting_Order_Page::SLUG, array( $this->person_greeting_order_page, 'render' ) );
 
 		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '役員・理事紹介', 'alumni-core' ), __( '役員・理事紹介', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
