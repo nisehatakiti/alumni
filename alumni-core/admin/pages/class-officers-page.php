@@ -9,6 +9,7 @@ namespace AlumniCore\Admin\Pages;
 
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Officer_Lists;
+use AlumniCore\Includes\Officer_List_Groups;
 use AlumniCore\Includes\Officers_Shortcode;
 use AlumniCore\Includes\Content_Hierarchy;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
@@ -42,6 +43,7 @@ class Officers_Page {
 	const NONCE_ACTION_CREATE = 'alumni_core_create_officer_list';
 	const NONCE_ACTION_DELETE = 'alumni_core_delete_officer_list';
 	const NONCE_ACTION_SAVE   = 'alumni_core_save_officer_list';
+	const NONCE_ACTION_CREATE_GROUP = 'alumni_core_create_officer_list_group';
 
 	/**
 	 * Renders the screen: the list index, or one list's edit screen when
@@ -85,7 +87,7 @@ class Officers_Page {
 				</div>
 			<?php endif; ?>
 
-			<p><?php esc_html_e( '役員・理事の一覧は複数作成できます（例：2026年度役員／2026年度理事／歴代会長）。一覧ごとに独立した公開ページを持ちます。', 'alumni-core' ); ?></p>
+			<p><?php esc_html_e( '役員・理事の一覧は複数作成できます。単独ページとして公開することも、同じグループにまとめて1ページに表示することもできます。', 'alumni-core' ); ?></p>
 
 			<?php if ( empty( $lists ) ) : ?>
 				<p class="description"><?php esc_html_e( 'まだ一覧がありません。下のフォームから作成してください。', 'alumni-core' ); ?></p>
@@ -133,6 +135,17 @@ class Officers_Page {
 					</tbody>
 				</table>
 			<?php endif; ?>
+
+			<h2><?php esc_html_e( '公開グループを作成', 'alumni-core' ); ?></h2>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="alumni_core_create_officer_list_group" />
+				<?php wp_nonce_field( self::NONCE_ACTION_CREATE_GROUP ); ?>
+				<p>
+					<label for="alumni-officer-group-new-name"><?php esc_html_e( 'グループ名', 'alumni-core' ); ?></label><br />
+					<input type="text" id="alumni-officer-group-new-name" name="group_name" class="regular-text" placeholder="<?php echo esc_attr__( '例：役員・理事紹介、歴代会長', 'alumni-core' ); ?>" required="required" />
+				</p>
+				<?php submit_button( __( '＋ 公開グループを作成', 'alumni-core' ), 'secondary' ); ?>
+			</form>
 
 			<h2><?php esc_html_e( '新しい一覧を作成', 'alumni-core' ); ?></h2>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -187,6 +200,19 @@ class Officers_Page {
 						<td>
 							<input type="text" id="alumni-officer-list-title" name="list_title" class="regular-text" value="<?php echo esc_attr( $list['title'] ); ?>" />
 							<p class="description"><?php esc_html_e( '公開ページに表示される見出しです（未入力の場合は一覧名を使用します）。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row"><label for="alumni-officer-list-group"><?php esc_html_e( '公開グループ', 'alumni-core' ); ?></label></th>
+						<td>
+							<select id="alumni-officer-list-group" name="list_group_id">
+								<option value=""><?php esc_html_e( '（単独ページ）', 'alumni-core' ); ?></option>
+								<?php foreach ( Officer_List_Groups::instance()->get_all() as $group ) : ?>
+									<option value="<?php echo esc_attr( $group['group_id'] ); ?>" <?php selected( $group['group_id'], isset( $list['group_id'] ? $list['group_id'] : '' ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description"><?php esc_html_e( '同じグループを選択した複数の一覧は、1つの公開ページにまとめて表示されます。グループ内の表示順は「役員・理事紹介の並び順」で変更できます。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -513,6 +539,24 @@ class Officers_Page {
 		exit;
 	}
 
+
+	/**
+	 * Handles public officer-list group creation.
+	 */
+	public function handle_create_group() {
+		if ( ! current_user_can( Admin::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この操作を行う権限がありません。', 'alumni-core' ) );
+		}
+		check_admin_referer( self::NONCE_ACTION_CREATE_GROUP );
+		$name = isset( $_POST['group_name'] ) ? sanitize_text_field( wp_unslash( $_POST['group_name'] ) ) : '';
+		if ( '' !== $name ) {
+			Officer_List_Groups::instance()->create_group( $name );
+			\AlumniCore\Includes\Officer_List_Groups_Shortcode::maybe_create_pages();
+		}
+		wp_safe_redirect( add_query_arg( array( 'page' => self::SLUG, 'updated' => 'true' ), admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
 	/**
 	 * Handles 一覧の削除 (admin_post_alumni_core_delete_officer_list).
 	 */
@@ -574,6 +618,8 @@ class Officers_Page {
 		$audience      = isset( $_POST['list_audience'] ) ? sanitize_key( wp_unslash( $_POST['list_audience'] ) ) : Officer_Lists::AUDIENCE_COMMON;
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$parent_id     = isset( $_POST['list_parent_id'] ) ? absint( wp_unslash( $_POST['list_parent_id'] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$group_id      = isset( $_POST['list_group_id'] ) ? sanitize_text_field( wp_unslash( $_POST['list_group_id'] ) ) : '';
 		$enabled       = ! empty( $_POST['list_enabled'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- unchecked checkbox simply omits the key.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; sanitized by save_list_term().
 		$term_start    = isset( $_POST['list_term_start'] ) ? wp_unslash( $_POST['list_term_start'] ) : '';
@@ -585,6 +631,7 @@ class Officers_Page {
 		Officer_Lists::instance()->save_list_meta( $list_id, $list_name, $list_title, $title_heading );
 		Officer_Lists::instance()->save_list_rows( $list_id, $raw_rows );
 		Officer_Lists::instance()->save_list_structure( $list_id, $parent_id, $audience, $enabled );
+		Officer_Lists::instance()->save_list_group( $list_id, $group_id );
 		Officer_Lists::instance()->save_list_term( $list_id, $term_start, $term_end, $term_label );
 
 		wp_safe_redirect(
