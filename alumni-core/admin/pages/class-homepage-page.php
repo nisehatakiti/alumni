@@ -93,7 +93,7 @@ class Homepage_Page {
 							<p>
 								<label>
 									<?php esc_html_e( '表示数', 'alumni-core' ); ?><br />
-									<select name="sections[<?php echo esc_attr( $section['section_id'] ); ?>][columns]">
+									<select class="alumni-homepage-columns" name="sections[<?php echo esc_attr( $section['section_id'] ); ?>][columns]">
 										<?php for ( $columns = Homepage_Sections::MIN_COLUMNS; $columns <= Homepage_Sections::MAX_COLUMNS; $columns++ ) : ?>
 											<option value="<?php echo esc_attr( $columns ); ?>" <?php selected( $columns, $section['columns'] ); ?>>
 												<?php
@@ -122,8 +122,11 @@ class Homepage_Page {
 							</p>
 
 							<div class="alumni-homepage-slots">
-								<?php foreach ( $section['slots'] as $slot_index => $slot ) : ?>
-									<div class="alumni-homepage-slot">
+								<?php for ( $slot_index = 0; $slot_index < Homepage_Sections::MAX_COLUMNS; $slot_index++ ) : ?>
+									<?php
+									$slot = isset( $section['slots'][ $slot_index ] ) ? $section['slots'][ $slot_index ] : array( 'type' => 'none' );
+									?>
+									<div class="alumni-homepage-slot" data-slot-index="<?php echo esc_attr( $slot_index ); ?>"<?php echo $slot_index >= (int) $section['columns'] ? ' hidden' : ''; ?>>
 										<div class="alumni-homepage-slot-label">
 											<?php
 											printf(
@@ -135,7 +138,7 @@ class Homepage_Page {
 										</div>
 										<?php $this->render_slot_select( "sections[{$section['section_id']}][slots][{$slot_index}]", $slot ); ?>
 									</div>
-								<?php endforeach; ?>
+								<?php endfor; ?>
 							</div>
 						</fieldset>
 
@@ -264,13 +267,13 @@ class Homepage_Page {
 		<p>
 			<label>
 				<?php esc_html_e( '項目種別', 'alumni-core' ); ?><br />
-				<select name="<?php echo esc_attr( $name ); ?>[type]">
+				<select class="alumni-homepage-slot-type" name="<?php echo esc_attr( $name ); ?>[type]">
 					<option value="link" <?php selected( 'link', $current_type ); ?>><?php esc_html_e( 'コンテンツリンク', 'alumni-core' ); ?></option>
 					<option value="<?php echo esc_attr( Homepage_Sections::SLOT_HEADING ); ?>" <?php selected( Homepage_Sections::SLOT_HEADING, $current_type ); ?>><?php esc_html_e( '見出し', 'alumni-core' ); ?></option>
 				</select>
 			</label>
 		</p>
-		<p>
+		<p class="alumni-homepage-slot-content-field">
 			<label>
 				<?php esc_html_e( 'コンテンツ', 'alumni-core' ); ?><br />
 				<select name="<?php echo esc_attr( $name ); ?>[value]">
@@ -309,7 +312,7 @@ class Homepage_Page {
 				</select>
 			</label>
 		</p>
-		<p>
+		<p class="alumni-homepage-slot-heading-field">
 			<label>
 				<?php esc_html_e( '見出しテキスト', 'alumni-core' ); ?><br />
 				<input type="text" class="regular-text" name="<?php echo esc_attr( $name ); ?>[heading]" value="<?php echo esc_attr( $current_heading ); ?>" placeholder="<?php echo esc_attr__( '見出しを直接入力', 'alumni-core' ); ?>" />
