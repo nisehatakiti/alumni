@@ -417,7 +417,7 @@ class Menu_Page {
 	}
 
 	/**
-	 * Renders the 表示対象 select: システムページ／役員・理事一覧／
+	 * Renders the 表示対象 select: システムページ／組織名簿／
 	 * （対象者ごとの）公開済みコンテンツ階層、のいずれかを選ぶ。
 	 * 送信値は "system:{key}" / "officer_list:{id}" / "content:{id}" の
 	 * いずれかの文字列で、handle_create_content()/handle_update() 側で
@@ -438,7 +438,7 @@ class Menu_Page {
 			</optgroup>
 			<?php $officer_lists = Officer_Lists::instance()->get_all(); ?>
 			<?php if ( ! empty( $officer_lists ) ) : ?>
-				<optgroup label="<?php echo esc_attr__( '役員・理事一覧', 'alumni-core' ); ?>">
+				<optgroup label="<?php echo esc_attr__( '組織名簿', 'alumni-core' ); ?>">
 					<?php foreach ( $officer_lists as $list ) : ?>
 						<?php $value = 'officer_list:' . $list['list_id']; ?>
 						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $list['name'] ); ?></option>
