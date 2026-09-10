@@ -307,6 +307,14 @@ class Officer_Lists {
 		$lists = $this->get_all();
 		$found = null;
 		$group_id = sanitize_text_field( $group_id );
+
+		// A list may only point at a currently existing officer-list group.
+		// Persist the immutable group ID, never the display name, so a rename
+		// keeps every existing list and menu reference intact.
+		if ( '' !== $group_id && null === Officer_List_Groups::instance()->get_group( $group_id ) ) {
+			$group_id = '';
+		}
+
 		foreach ( $lists as &$list ) {
 			if ( $list['list_id'] !== $list_id ) { continue; }
 			$list['group_id'] = $group_id;
