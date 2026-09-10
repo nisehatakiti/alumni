@@ -17,6 +17,7 @@ use AlumniCore\Admin\Pages\Homepage_Page;
 use AlumniCore\Admin\Pages\Menu_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Page;
 use AlumniCore\Admin\Pages\Person_Greeting_Order_Page;
+use AlumniCore\Admin\Pages\Officer_List_Order_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -108,8 +109,14 @@ class Admin {
 	/** @var Person_Greeting_Order_Page */
 	private $person_greeting_order_page;
 
+	/** @var Officer_List_Order_Page */
+	private $officer_list_order_page;
+
 	/** @var string */
 	private $person_greeting_order_hook = '';
+
+	/** @var string */
+	private $officer_list_order_hook = '';
 
 	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
@@ -149,12 +156,14 @@ class Admin {
 		$this->menu_page                = new Menu_Page();
 		$this->org_chart_page           = new Org_Chart_Page();
 		$this->person_greeting_order_page = new Person_Greeting_Order_Page();
+		$this->officer_list_order_page = new Officer_List_Order_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_create_officer_list_group', array( $this->officers_page, 'handle_create_group' ) );
 		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_homepage_section', array( $this->homepage_page, 'handle_create' ) );
@@ -176,6 +185,7 @@ class Admin {
 		add_action( 'admin_post_alumni_core_move_org_chart_node', array( $this->org_chart_page, 'handle_move' ) );
 		add_action( 'admin_post_alumni_core_reparent_org_chart_node', array( $this->org_chart_page, 'handle_reparent' ) );
 		add_action( 'admin_post_alumni_core_save_person_greeting_order', array( $this->person_greeting_order_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_officer_list_order', array( $this->officer_list_order_page, 'handle_save' ) );
 	}
 
 	/**
@@ -192,151 +202,46 @@ class Admin {
 			26
 		);
 
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( 'ダッシュボード', 'alumni-core' ),
-			__( 'ダッシュボード', 'alumni-core' ),
-			self::CAPABILITY,
-			self::MENU_SLUG,
-			array( $this->dashboard_page, 'render' )
-		);
+		add_submenu_page( self::MENU_SLUG, __( 'ダッシュボード', 'alumni-core' ), __( 'ダッシュボード', 'alumni-core' ), self::CAPABILITY, self::MENU_SLUG, array( $this->dashboard_page, 'render' ) );
+		$this->settings_hook = add_submenu_page( self::MENU_SLUG, __( '基本設定', 'alumni-core' ), __( '基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
+		$this->school_photos_hook = add_submenu_page( self::MENU_SLUG, __( '学校写真', 'alumni-core' ), __( '学校写真', 'alumni-core' ), self::CAPABILITY, School_Photos_Page::SLUG, array( $this->school_photos_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'トップページ設定', 'alumni-core' ), __( 'トップページ設定', 'alumni-core' ), self::CAPABILITY, Homepage_Page::SLUG, array( $this->homepage_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'メニュー構成', 'alumni-core' ), __( 'メニュー構成', 'alumni-core' ), self::CAPABILITY, Menu_Page::SLUG, array( $this->menu_page, 'render' ) );
 
-		$this->settings_hook = add_submenu_page(
-			self::MENU_SLUG,
-			__( '基本設定', 'alumni-core' ),
-			__( '基本設定', 'alumni-core' ),
-			self::CAPABILITY,
-			Settings_Page::SLUG,
-			array( $this->settings_page, 'render' )
-		);
+		// WordPress が自動追加する CPT サブメニューを一度外し、管理者に
+		// 分かりやすい機能単位の順序で再登録する。
+		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=' . Content_Post_Type::SLUG );
+		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=' . Content_Post_Type::SLUG );
+		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=alumni_news_event' );
+		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=alumni_news_event' );
+		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=alumni_form' );
+		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=alumni_form' );
 
-		// 卒業期早見表 is placed right after 基本設定 (its actual data
-		// source — 学校創立年／第1期卒業年／卒業期カラー all live there),
-		// deliberately NOT adjacent to the コンテンツ / 人物挨拶 entries
-		// below. 卒業期早見表 has no relationship to 人物挨拶: it's an
-		// independent, always-available system page (see
-		// Graduation_Lookup_Shortcode), not "a kind of content" — this
-		// menu ordering, and the flat (non-indented) labels on the コンテ
-		// ンツ shortcuts further down, both exist so the admin screen
-		// doesn't visually suggest a parent/child relationship that
-		// doesn't exist in the data or the URL structure (/graduation-lookup/
-		// vs /contents/...  are completely independent).
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '卒業期早見表', 'alumni-core' ),
-			__( '卒業期早見表', 'alumni-core' ),
-			self::CAPABILITY,
-			Graduation_Lookup_Page::SLUG,
-			array( $this->graduation_lookup_page, 'render' )
-		);
+		add_submenu_page( self::MENU_SLUG, __( '自由コンテンツを追加', 'alumni-core' ), __( '自由コンテンツを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE );
+		add_submenu_page( self::MENU_SLUG, __( 'すべてのコンテンツ', 'alumni-core' ), __( 'すべてのコンテンツ', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG );
 
-		$this->school_photos_hook = add_submenu_page(
-			self::MENU_SLUG,
-			__( '学校写真', 'alumni-core' ),
-			__( '学校写真', 'alumni-core' ),
-			self::CAPABILITY,
-			School_Photos_Page::SLUG,
-			array( $this->school_photos_page, 'render' )
-		);
+		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベント', 'alumni-core' ), __( 'ニュース・イベント', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_news_event' );
+		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベントを追加', 'alumni-core' ), __( '├ ニュース・イベントを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_news_event' );
+		add_submenu_page( self::MENU_SLUG, __( 'すべてのニュース・イベント', 'alumni-core' ), __( '└ すべてのニュース・イベント', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_news_event' );
 
-		$this->officers_hook = add_submenu_page(
-			self::MENU_SLUG,
-			__( '役員・理事紹介', 'alumni-core' ),
-			__( '役員・理事紹介', 'alumni-core' ),
-			self::CAPABILITY,
-			Officers_Page::SLUG,
-			array( $this->officers_page, 'render' )
-		);
+		add_submenu_page( self::MENU_SLUG, __( '人物挨拶', 'alumni-core' ), __( '人物挨拶', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
+		add_submenu_page( self::MENU_SLUG, __( '人物挨拶を追加', 'alumni-core' ), __( '├ 人物挨拶を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
+		$this->person_greeting_order_hook = add_submenu_page( self::MENU_SLUG, __( '人物挨拶の並び順', 'alumni-core' ), __( '└ 人物挨拶の並び順', 'alumni-core' ), self::CAPABILITY, Person_Greeting_Order_Page::SLUG, array( $this->person_greeting_order_page, 'render' ) );
 
-		// WordPress already adds a generic 「すべてのコンテンツ」/「新規追加」
-		// pair for the alumni_content CPT (via its show_in_menu => self::MENU_SLUG),
-		// but nothing there hints that this single CPT is how 校長挨拶・
-		// 会長挨拶 etc. (人物挨拶) or 沿革・お問い合わせ等 (自由コンテンツ)
-		// get created. These two shortcuts link straight to the 新規追加
-		// screen with the intended種別 pre-selected — see
-		// Content_Meta_Box::render()'s use of $_GET[Content_Post_Type::QUERY_VAR_KIND].
-		// No new post type or admin screen is introduced: both still save
-		// through the same alumni_content CPT + _alumni_content_kind meta.
-		// Labels are flat siblings (no tree-drawing indentation) — they
-		// relate only to "すべてのコンテンツ" above them, not to 卒業期早見表.
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '人物挨拶を追加', 'alumni-core' ),
-			__( '人物挨拶を追加', 'alumni-core' ),
-			self::CAPABILITY,
-			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING
-		);
+		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '役員・理事紹介', 'alumni-core' ), __( '役員・理事紹介', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '役員・理事紹介を追加', 'alumni-core' ), __( '├ 役員・理事紹介を追加', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG );
+		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '役員・理事紹介の並び順', 'alumni-core' ), __( '└ 役員・理事紹介の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
 
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '自由コンテンツを追加', 'alumni-core' ),
-			__( '自由コンテンツを追加', 'alumni-core' ),
-			self::CAPABILITY,
-			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE
-		);
+		add_submenu_page( self::MENU_SLUG, __( '規約類', 'alumni-core' ), __( '規約類', 'alumni-core' ), self::CAPABILITY, Terms_Page::SLUG, array( $this->terms_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '規約類を追加', 'alumni-core' ), __( '├ 規約類を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS );
+		add_submenu_page( self::MENU_SLUG, __( 'すべての規約', 'alumni-core' ), __( '└ すべての規約', 'alumni-core' ), self::CAPABILITY, Terms_Page::SLUG );
 
-		// 規約類一覧を先に配置し、その直下に新規作成入口を配置する。
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '規約類', 'alumni-core' ),
-			__( '規約類', 'alumni-core' ),
-			self::CAPABILITY,
-			Terms_Page::SLUG,
-			array( $this->terms_page, 'render' )
-		);
+		add_submenu_page( self::MENU_SLUG, __( 'フォーム', 'alumni-core' ), __( 'フォーム', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_form' );
+		add_submenu_page( self::MENU_SLUG, __( 'フォームを追加', 'alumni-core' ), __( '├ フォームを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_form' );
+		add_submenu_page( self::MENU_SLUG, __( 'すべてのフォーム', 'alumni-core' ), __( '└ すべてのフォーム', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_form' );
 
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '規約類を追加', 'alumni-core' ),
-			__( '規約類を追加', 'alumni-core' ),
-			self::CAPABILITY,
-			'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS
-		);
+		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
 
-		$this->person_greeting_order_hook = add_submenu_page(
-			self::MENU_SLUG,
-			__( '人物挨拶の並び順', 'alumni-core' ),
-			__( '人物挨拶の並び順', 'alumni-core' ),
-			self::CAPABILITY,
-			Person_Greeting_Order_Page::SLUG,
-			array( $this->person_greeting_order_page, 'render' )
-		);
-
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( 'トップページ設定', 'alumni-core' ),
-			__( 'トップページ設定', 'alumni-core' ),
-			self::CAPABILITY,
-			Homepage_Page::SLUG,
-			array( $this->homepage_page, 'render' )
-		);
-
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( 'メニュー構成', 'alumni-core' ),
-			__( 'メニュー構成', 'alumni-core' ),
-			self::CAPABILITY,
-			Menu_Page::SLUG,
-			array( $this->menu_page, 'render' )
-		);
-
-		add_submenu_page(
-			self::MENU_SLUG,
-			__( '同窓会組織図', 'alumni-core' ),
-			__( '同窓会組織図', 'alumni-core' ),
-			self::CAPABILITY,
-			Org_Chart_Page::SLUG,
-			array( $this->org_chart_page, 'render' )
-		);
-
-		/**
-		 * Fires after Alumni Core's own submenus are registered, so future
-		 * modules (名簿, メールマガジン, Voices, その他管理) can add their
-		 * own submenu pages under self::MENU_SLUG without modifying this
-		 * class.
-		 *
-		 * @param string $menu_slug Parent menu slug ('alumni-core').
-		 */
 		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
 	}
 
@@ -371,8 +276,9 @@ class Admin {
 		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
 		$is_officers_page      = $this->officers_hook === $hook_suffix;
 		$is_person_greeting_order_page = $this->person_greeting_order_hook === $hook_suffix;
+		$is_officer_list_order_page = $this->officer_list_order_hook === $hook_suffix;
 
-		if ( $is_person_greeting_order_page ) {
+		if ( $is_person_greeting_order_page || $is_officer_list_order_page ) {
 			wp_enqueue_script(
 				'alumni-core-person-greeting-order-admin',
 				ALUMNI_CORE_URL . 'admin/assets/js/person-greeting-order-admin.js',
