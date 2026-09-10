@@ -98,7 +98,7 @@ class Officers_Page {
 					<thead>
 						<tr>
 							<th><?php esc_html_e( '一覧名', 'alumni-core' ); ?></th>
-							<th><?php esc_html_e( '役員数', 'alumni-core' ); ?></th>
+							<th><?php esc_html_e( '登録者数', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '公開グループ', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '状態', 'alumni-core' ); ?></th>
 							<th><?php esc_html_e( '公開URL', 'alumni-core' ); ?></th>
