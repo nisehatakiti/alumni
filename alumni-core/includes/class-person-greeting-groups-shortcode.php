@@ -53,7 +53,7 @@ class Person_Greeting_Groups_Shortcode {
 	}
 
 	/**
-	 * Creates any group's page that doesn't exist yet. Idempotent.
+	 * Creates each fixed preset page that doesn't exist yet. Idempotent.
 	 */
 	public static function maybe_create_pages() {
 		foreach ( Person_Greeting_Groups::instance()->get_all() as $group ) {
