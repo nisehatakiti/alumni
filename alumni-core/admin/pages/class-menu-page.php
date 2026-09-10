@@ -10,6 +10,7 @@ namespace AlumniCore\Admin\Pages;
 use AlumniCore\Admin\Admin;
 use AlumniCore\Includes\Menu_Structure;
 use AlumniCore\Includes\Officer_Lists;
+use AlumniCore\Includes\Officer_List_Groups;
 use AlumniCore\Includes\Person_Greeting_Groups;
 use AlumniCore\Includes\Homepage_Sections;
 use AlumniCore\Includes\Content_Hierarchy;
@@ -435,6 +436,12 @@ class Menu_Page {
 			<?php endif; ?>
 			<?php $greeting_groups = Person_Greeting_Groups::instance()->get_all(); ?>
 			<?php if ( ! empty( $greeting_groups ) ) : ?>
+				<optgroup label="<?php echo esc_attr__( '役員・理事紹介グループ', 'alumni-core' ); ?>">
+					<?php foreach ( Officer_List_Groups::instance()->get_all() as $group ) : ?>
+						<?php $value = 'officer_list_group:' . $group['group_id']; ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $selected_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+					<?php endforeach; ?>
+				</optgroup>
 				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
 					<?php foreach ( $greeting_groups as $group ) : ?>
 						<?php $value = 'person_greeting_group:' . $group['group_id']; ?>
