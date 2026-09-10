@@ -112,11 +112,20 @@ class Admin {
 	/** @var Officer_List_Order_Page */
 	private $officer_list_order_page;
 
+	/** @var Org_Chart_Group_Page */
+	private $org_chart_group_page;
+
+	/** @var Org_Chart_Order_Page */
+	private $org_chart_order_page;
+
 	/** @var string */
 	private $person_greeting_order_hook = '';
 
 	/** @var string */
 	private $officer_list_order_hook = '';
+
+	/** @var string */
+	private $org_chart_order_hook = '';
 
 	/**
 	 * Hook suffix for 基本設定, as returned by add_submenu_page(). Used to
@@ -157,6 +166,8 @@ class Admin {
 		$this->org_chart_page           = new Org_Chart_Page();
 		$this->person_greeting_order_page = new Person_Greeting_Order_Page();
 		$this->officer_list_order_page = new Officer_List_Order_Page();
+		$this->org_chart_group_page = new Org_Chart_Group_Page();
+		$this->org_chart_order_page = new Org_Chart_Order_Page();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_person_greeting_list' ) );
@@ -182,6 +193,13 @@ class Admin {
 		add_action( 'admin_post_alumni_core_outdent_menu_item', array( $this->menu_page, 'handle_outdent' ) );
 		add_action( 'admin_post_alumni_core_apply_standard_menu_preset', array( $this->menu_page, 'handle_apply_standard_preset' ) );
 		add_action( 'admin_post_alumni_core_save_org_chart_display_settings', array( $this->org_chart_page, 'handle_save_display_settings' ) );
+		add_action( 'admin_post_alumni_core_create_org_chart', array( $this->org_chart_page, 'handle_create_chart' ) );
+		add_action( 'admin_post_alumni_core_update_org_chart', array( $this->org_chart_page, 'handle_update_chart' ) );
+		add_action( 'admin_post_alumni_core_delete_org_chart', array( $this->org_chart_page, 'handle_delete_chart' ) );
+		add_action( 'admin_post_alumni_core_create_org_chart_group', array( $this->org_chart_group_page, 'handle_create' ) );
+		add_action( 'admin_post_alumni_core_update_org_chart_group', array( $this->org_chart_group_page, 'handle_update' ) );
+		add_action( 'admin_post_alumni_core_delete_org_chart_group', array( $this->org_chart_group_page, 'handle_delete' ) );
+		add_action( 'admin_post_alumni_core_save_org_chart_order', array( $this->org_chart_order_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_org_chart_node', array( $this->org_chart_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_update_org_chart_node', array( $this->org_chart_page, 'handle_update' ) );
 		add_action( 'admin_post_alumni_core_delete_org_chart_node', array( $this->org_chart_page, 'handle_delete' ) );
@@ -285,6 +303,9 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( 'フォーム', 'alumni-core' ), __( 'フォーム', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_form' );
 		add_submenu_page( self::MENU_SLUG, __( 'フォームを追加', 'alumni-core' ), __( '└ フォームを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_form' );
 		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '└ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG . '&new=1', array( $this->org_chart_page, 'render' ) );
+		$this->org_chart_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織図の並び順', 'alumni-core' ), __( '└ 組織図の並び順', 'alumni-core' ), self::CAPABILITY, Org_Chart_Order_Page::SLUG, array( $this->org_chart_order_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '└ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
 
 		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
 	}
@@ -321,8 +342,9 @@ class Admin {
 		$is_officers_page      = $this->officers_hook === $hook_suffix;
 		$is_person_greeting_order_page = $this->person_greeting_order_hook === $hook_suffix;
 		$is_officer_list_order_page = $this->officer_list_order_hook === $hook_suffix;
+		$is_org_chart_order_page = $this->org_chart_order_hook === $hook_suffix;
 
-		if ( $is_person_greeting_order_page || $is_officer_list_order_page ) {
+		if ( $is_person_greeting_order_page || $is_officer_list_order_page || $is_org_chart_order_page ) {
 			wp_enqueue_script(
 				'alumni-core-person-greeting-order-admin',
 				ALUMNI_CORE_URL . 'admin/assets/js/person-greeting-order-admin.js',
