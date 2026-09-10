@@ -164,7 +164,7 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 										<?php endif; ?>
 									</p>
 								<?php endif; ?>
-								<?php if ( $alumni_hp_content_excerpt ) : ?>
+								<?php if ( $alumni_hp_content_excerpt && ! $alumni_hp_content_terms ) : ?>
 									<p class="alumni-homepage-slot-content-excerpt"><?php echo esc_html( $alumni_hp_content_excerpt ); ?></p>
 								<?php endif; ?>
 							</div>
@@ -200,7 +200,7 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 										<?php endif; ?>
 									</p>
 								<?php endif; ?>
-								<?php if ( $alumni_hp_content_excerpt ) : ?>
+								<?php if ( $alumni_hp_content_excerpt && ! $alumni_hp_content_terms ) : ?>
 									<p class="alumni-homepage-slot-content-excerpt"><?php echo esc_html( $alumni_hp_content_excerpt ); ?></p>
 								<?php endif; ?>
 							</div>
