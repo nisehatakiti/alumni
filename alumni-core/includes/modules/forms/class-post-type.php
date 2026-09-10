@@ -19,6 +19,11 @@ class Post_Type {
 	const META_MAIL_SUBJECT       = '_alumni_form_mail_subject';
 	const META_SUCCESS_MESSAGE    = '_alumni_form_success_message';
 	const META_AUTO_REPLY_ENABLED = '_alumni_form_auto_reply_enabled';
+	const META_FROM_NAME          = '_alumni_form_from_name';
+	const META_FROM_EMAIL         = '_alumni_form_from_email';
+	const META_REPLY_TO_MODE      = '_alumni_form_reply_to_mode';
+	const META_REPLY_TO_EMAIL     = '_alumni_form_reply_to_email';
+	const META_REPLY_TO_FIELD_KEY = '_alumni_form_reply_to_field_key';
 	const META_FIELDS             = '_alumni_form_fields';
 
 	public static function register() {
@@ -66,8 +71,43 @@ class Post_Type {
 		return (string) get_post_meta( $post_id, self::META_DESCRIPTION, true );
 	}
 
+	public static function get_recipient_emails( $post_id ) {
+		$raw = (string) get_post_meta( $post_id, self::META_RECIPIENT_EMAIL, true );
+		$parts = preg_split( '/[\\r\\n,;]+/', $raw );
+		$emails = array();
+		foreach ( (array) $parts as $part ) {
+			$email = sanitize_email( trim( $part ) );
+			if ( $email && is_email( $email ) ) $emails[] = $email;
+		}
+		return array_values( array_unique( $emails ) );
+	}
+
 	public static function get_recipient_email( $post_id ) {
-		return sanitize_email( (string) get_post_meta( $post_id, self::META_RECIPIENT_EMAIL, true ) );
+		$emails = self::get_recipient_emails( $post_id );
+		return $emails ? $emails[0] : '';
+	}
+
+	public static function get_from_name( $post_id ) {
+		return sanitize_text_field( (string) get_post_meta( $post_id, self::META_FROM_NAME, true ) );
+	}
+
+	public static function get_from_email( $post_id ) {
+		$email = sanitize_email( (string) get_post_meta( $post_id, self::META_FROM_EMAIL, true ) );
+		return is_email( $email ) ? $email : '';
+	}
+
+	public static function get_reply_to_mode( $post_id ) {
+		$mode = sanitize_key( (string) get_post_meta( $post_id, self::META_REPLY_TO_MODE, true ) );
+		return in_array( $mode, array( 'none', 'fixed', 'form_field' ), true ) ? $mode : 'none';
+	}
+
+	public static function get_reply_to_email( $post_id ) {
+		$email = sanitize_email( (string) get_post_meta( $post_id, self::META_REPLY_TO_EMAIL, true ) );
+		return is_email( $email ) ? $email : '';
+	}
+
+	public static function get_reply_to_field_key( $post_id ) {
+		return sanitize_key( (string) get_post_meta( $post_id, self::META_REPLY_TO_FIELD_KEY, true ) );
 	}
 
 	public static function get_mail_subject( $post_id ) {
