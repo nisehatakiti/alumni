@@ -1099,15 +1099,20 @@ body.admin-bar.alumni-nav-layout-top .site-header {
    考え方を踏襲する。 */
 .alumni-officers-listing-table {
 	width: 100%;
+	max-width: 100%;
+	table-layout: fixed;
 	border-collapse: collapse;
 	margin: 1em 0;
 }
 
 .alumni-officers-listing-table th,
 .alumni-officers-listing-table td {
+	box-sizing: border-box;
 	padding: 0.5em 0.75em;
 	border: 1px solid #e2e2e2;
 	text-align: left;
+	vertical-align: top;
+	overflow-wrap: anywhere;
 }
 
 @media (max-width: 600px) {
