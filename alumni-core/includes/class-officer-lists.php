@@ -164,6 +164,23 @@ class Officer_Lists {
 			$list['term_label'] = '';
 		}
 
+		// 公開側の列表示設定。既存一覧にはキーが存在しないため、従来どおり
+		// 全列表示を既定値として読み込み時に補完する。氏名は一覧の最低限の
+		// 識別情報なので常に表示する。
+		$default_display_columns = array(
+			'title'     => true,
+			'name'      => true,
+			'term'      => true,
+			'committee' => true,
+			'remarks'   => true,
+		);
+		if ( ! isset( $list['display_columns'] ) || ! is_array( $list['display_columns'] ) ) {
+			$list['display_columns'] = $default_display_columns;
+		} else {
+			$list['display_columns'] = array_merge( $default_display_columns, $list['display_columns'] );
+			$list['display_columns']['name'] = true;
+		}
+
 		return $list;
 	}
 
@@ -405,6 +422,13 @@ class Officer_Lists {
 			'term_start'    => '',
 			'term_end'      => '',
 			'term_label'    => '',
+			'display_columns' => array(
+				'title'     => true,
+				'name'      => true,
+				'term'      => true,
+				'committee' => true,
+				'remarks'   => true,
+			),
 			'rows'          => array(),
 		);
 
@@ -465,6 +489,42 @@ class Officer_Lists {
 			$list['title']         = '' !== $title ? $title : $list['name'];
 			$list['title_heading'] = '' !== $title_heading ? $title_heading : self::DEFAULT_TITLE_HEADING;
 
+			$found = $list;
+		}
+		unset( $list );
+
+		$this->save_lists( $lists );
+
+		return $found;
+	}
+
+
+	/**
+	 * Saves which columns are displayed on the public table for one list.
+	 *
+	 * 氏名は常に表示する。その他は一覧ごとに表示／非表示を選択できるため、
+	 * 役員構成の異なる学校・同窓会でも不要な空列を出さずに済む。
+	 *
+	 * @param string $list_id
+	 * @param array  $columns Submitted visibility map.
+	 * @return array|null
+	 */
+	public function save_list_display_columns( $list_id, array $columns ) {
+		$lists = $this->get_all();
+		$found = null;
+		$allowed = array( 'title', 'name', 'term', 'committee', 'remarks' );
+
+		$normalized = array();
+		foreach ( $allowed as $column ) {
+			$normalized[ $column ] = 'name' === $column ? true : ! empty( $columns[ $column ] );
+		}
+
+		foreach ( $lists as &$list ) {
+			if ( $list['list_id'] !== $list_id ) {
+				continue;
+			}
+
+			$list['display_columns'] = $normalized;
 			$found = $list;
 		}
 		unset( $list );
