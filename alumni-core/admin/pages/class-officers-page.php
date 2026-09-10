@@ -210,6 +210,7 @@ class Officers_Page {
 	private function render_list_editor( array $list ) {
 		$greeting_options = self::person_greeting_options();
 		$title_heading    = $list['title_heading'] ? $list['title_heading'] : Officer_Lists::DEFAULT_TITLE_HEADING;
+		$display_columns  = isset( $list['display_columns'] ) && is_array( $list['display_columns'] ) ? $list['display_columns'] : array();
 		?>
 		<div class="wrap alumni-core-officers">
 			<h1>
@@ -260,6 +261,18 @@ class Officers_Page {
 						<td>
 							<input type="text" id="alumni-officer-list-title-heading" name="list_title_heading" class="regular-text" value="<?php echo esc_attr( $title_heading ); ?>" placeholder="<?php echo esc_attr__( '例：肩書、役職、役名、ポジション', 'alumni-core' ); ?>" />
 							<p class="description"><?php esc_html_e( '下の入力表・公開ページの両方で「肩書」列の見出しとして使われます。', 'alumni-core' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( '表示カスタマイズ', 'alumni-core' ); ?></th>
+						<td>
+							<p><?php esc_html_e( '公開ページの表に表示する列を一覧ごとに選択できます。', 'alumni-core' ); ?></p>
+							<label><input type="checkbox" checked="checked" disabled="disabled" /> <?php esc_html_e( '氏名（必須）', 'alumni-core' ); ?></label><br />
+							<label><input type="checkbox" name="list_display_columns[title]" value="1" <?php checked( ! empty( $display_columns['title'] ) ); ?> /> <?php echo esc_html( $title_heading ); ?></label><br />
+							<label><input type="checkbox" name="list_display_columns[term]" value="1" <?php checked( ! empty( $display_columns['term'] ) ); ?> /> <?php esc_html_e( '卒業期', 'alumni-core' ); ?></label><br />
+							<label><input type="checkbox" name="list_display_columns[committee]" value="1" <?php checked( ! empty( $display_columns['committee'] ) ); ?> /> <?php esc_html_e( '委員会', 'alumni-core' ); ?></label><br />
+							<label><input type="checkbox" name="list_display_columns[remarks]" value="1" <?php checked( ! empty( $display_columns['remarks'] ) ); ?> /> <?php esc_html_e( '備考', 'alumni-core' ); ?></label>
+							<p class="description"><?php esc_html_e( 'チェックを外した列は公開ページには表示されません。入力データ自体は保持されるため、後から再表示できます。', 'alumni-core' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -698,8 +711,11 @@ class Officers_Page {
 		$term_end      = isset( $_POST['list_term_end'] ) ? wp_unslash( $_POST['list_term_end'] ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$term_label    = isset( $_POST['list_term_label'] ) ? wp_unslash( $_POST['list_term_label'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified above; keys are whitelisted by save_list_display_columns().
+		$display_columns = isset( $_POST['list_display_columns'] ) && is_array( $_POST['list_display_columns'] ) ? wp_unslash( $_POST['list_display_columns'] ) : array();
 
 		Officer_Lists::instance()->save_list_meta( $list_id, $list_name, $list_title, $title_heading );
+		Officer_Lists::instance()->save_list_display_columns( $list_id, $display_columns );
 		Officer_Lists::instance()->save_list_rows( $list_id, $raw_rows );
 		Officer_Lists::instance()->save_list_structure( $list_id, $parent_id, $audience, $enabled );
 		Officer_Lists::instance()->save_list_group( $list_id, $group_id );
