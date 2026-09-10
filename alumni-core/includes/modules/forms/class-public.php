@@ -98,9 +98,9 @@ class Public_Form {
 		if(!$form_id||Post_Type::SLUG!==get_post_type($form_id)||'publish'!==get_post_status($form_id)) self::redirect($redirect,'invalid');
 		if(!isset($_POST['alumni_form_nonce'])||!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['alumni_form_nonce'])),self::NONCE_ACTION.':'.$form_id)) self::redirect($redirect,'security');
 		if(!empty($_POST['alumni_form_website'])) self::redirect($redirect,'invalid');
-		$recipient=Post_Type::get_recipient_email($form_id); if(!$recipient||!is_email($recipient)) self::redirect($redirect,'invalid');
+		$recipients=Post_Type::get_recipient_emails($form_id); if(!$recipients) self::redirect($redirect,'invalid');
 		$input=isset($_POST['alumni_form_field'])&&is_array($_POST['alumni_form_field'])?wp_unslash($_POST['alumni_form_field']):array();
-		$values=array(); $attachments=array(); $temporary=array(); $errors=false; $error_code='validation'; $reply_to='';
+		$values=array(); $submitted_values=array(); $attachments=array(); $temporary=array(); $errors=false; $error_code='validation';
 		foreach(Post_Type::get_fields($form_id) as $field) {
 			$key=$field['key'];
 			if('file'===$field['type']) {
@@ -124,15 +124,33 @@ class Public_Form {
 				if(in_array($field['type'],array('select','radio'),true)&&!in_array($raw,$options,true)){$errors=true;continue;}
 			}
 			if('textarea'===$field['type'])$value=sanitize_textarea_field($raw); elseif('email'===$field['type'])$value=sanitize_email($raw); elseif('checkbox'===$field['type'])$value='1'===$raw?'1':''; else $value=sanitize_text_field($raw);
-			$values[]=array('label'=>$field['label'],'value'=>$value); if('email'===$field['type']&&is_email($value)&&!$reply_to)$reply_to=$value;
+			$values[]=array('label'=>$field['label'],'value'=>$value); $submitted_values[$key]=$value;
 		}
 		if($errors){self::cleanup_files($temporary);self::redirect($redirect,$error_code);}
 		$lines=array(get_the_title($form_id),'',__('送信日時: ','alumni-core').current_time('Y-m-d H:i:s')); foreach($values as $row)$lines[]=$row['label'].': '.$row['value'];
-		$headers=array('Content-Type: text/plain; charset=UTF-8');if($reply_to)$headers[]='Reply-To: '.$reply_to;
-		$sent=wp_mail($recipient,Post_Type::get_mail_subject($form_id),implode("\n",$lines),$headers,$attachments); self::cleanup_files($temporary);
+		$reply_to=self::resolve_reply_to($form_id,$submitted_values);
+		$headers=self::mail_headers($form_id,$reply_to);
+		$sent=wp_mail($recipients,Post_Type::get_mail_subject($form_id),implode("\n",$lines),$headers,$attachments); self::cleanup_files($temporary);
 		if(!$sent)self::redirect($redirect,'mail');
-		if(Post_Type::is_auto_reply_enabled($form_id)&&$reply_to)wp_mail($reply_to,Post_Type::get_mail_subject($form_id),Post_Type::get_success_message($form_id),array('Content-Type: text/plain; charset=UTF-8'));
+		$auto_reply_to=self::find_submitted_email($form_id,$submitted_values);
+		if(Post_Type::is_auto_reply_enabled($form_id)&&$auto_reply_to)wp_mail($auto_reply_to,Post_Type::get_mail_subject($form_id),Post_Type::get_success_message($form_id),self::mail_headers($form_id,''));
 		wp_safe_redirect(add_query_arg('alumni_form_submitted','1',$redirect));exit;
+	}
+	private static function resolve_reply_to($form_id,$submitted_values){
+		$mode=Post_Type::get_reply_to_mode($form_id);
+		if('fixed'===$mode)return Post_Type::get_reply_to_email($form_id);
+		if('form_field'===$mode){$key=Post_Type::get_reply_to_field_key($form_id);$value=isset($submitted_values[$key])?$submitted_values[$key]:'';$email=sanitize_email((string)$value);return is_email($email)?$email:'';}
+		return '';
+	}
+	private static function find_submitted_email($form_id,$submitted_values){
+		foreach(Post_Type::get_fields($form_id) as $field){if('email'!==($field['type']??''))continue;$key=(string)($field['key']??'');$email=sanitize_email((string)($submitted_values[$key]??''));if(is_email($email))return $email;}
+		return '';
+	}
+	private static function mail_headers($form_id,$reply_to=''){
+		$headers=array('Content-Type: text/plain; charset=UTF-8');$from_email=Post_Type::get_from_email($form_id);$from_name=Post_Type::get_from_name($form_id);
+		if($from_email)$headers[]=$from_name?'From: '.$from_name.' <'.$from_email.'>':'From: '.$from_email;
+		if($reply_to&&is_email($reply_to))$headers[]='Reply-To: '.$reply_to;
+		return $headers;
 	}
 	private static function normalize_uploaded_file($key){if(empty($_FILES['alumni_form_file'])||!is_array($_FILES['alumni_form_file']))return array('name'=>'','error'=>UPLOAD_ERR_NO_FILE);$f=$_FILES['alumni_form_file'];return array('name'=>(string)($f['name'][$key]??''),'type'=>(string)($f['type'][$key]??''),'tmp_name'=>(string)($f['tmp_name'][$key]??''),'error'=>(int)($f['error'][$key]??UPLOAD_ERR_NO_FILE),'size'=>(int)($f['size'][$key]??0));}
 	private static function validate_uploaded_file($file,$field){if(UPLOAD_ERR_OK!==(int)$file['error'])return new \WP_Error('upload_error','Upload failed.');if(empty($file['tmp_name'])||!is_uploaded_file($file['tmp_name']))return new \WP_Error('upload_invalid','Invalid upload.');$max=self::field_max_file_size_mb($field)*1024*1024;if($max&&(int)$file['size']>$max)return new \WP_Error('file_size','File is too large.');$ext=self::allowed_extensions($field);$mimes=self::allowed_mimes($ext);if(empty($mimes))return new \WP_Error('file_type','No allowed file types.');$checked=wp_check_filetype_and_ext($file['tmp_name'],$file['name'],$mimes);if(empty($checked['ext'])||empty($checked['type'])||!in_array(strtolower($checked['ext']),$ext,true))return new \WP_Error('file_type','File type is not allowed.');return array('mimes'=>$mimes);}
