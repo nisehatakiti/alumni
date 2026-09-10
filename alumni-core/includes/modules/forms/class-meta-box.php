@@ -139,7 +139,7 @@ class Meta_Box {
 			});
 			const templates={
 				person_greeting:[['name','氏名','text',1],['title','肩書','text',1],['body','挨拶本文','textarea',1],['photo','写真','file',0]],
-				news_event:[['title','タイトル','text',1],['content','本文','textarea',1],['event_date','開催日','text',0],['photo','画像','file',0]]
+				news_event:[['title','タイトル','text',1],['content','本文','textarea',1],['event_date','開催日','date',0],['photo','画像','file',0]]
 			};
 			const applyTemplate=document.getElementById('alumni-form-apply-template');
 			if(applyTemplate){applyTemplate.addEventListener('click',function(){const target=document.getElementById('alumni_form_target').value;if(!templates[target])return;wrap.innerHTML='';templates[target].forEach((f,n)=>{const i='tpl_'+Date.now()+'_'+n;let html=tpl.innerHTML.replace(/__INDEX__/g,i);const holder=document.createElement('div');holder.innerHTML=html;const row=holder.firstElementChild;row.querySelector('[name$="[label]"]').value=f[1];row.querySelector('[name$="[key]"]').value=f[0];row.querySelector('[name$="[type]"]').value=f[2];const req=row.querySelector('[name$="[required]"]');if(req)req.checked=!!f[3];wrap.appendChild(row);});});}
@@ -159,7 +159,7 @@ class Meta_Box {
 		) );
 		$types = array(
 			'text' => __( '1行テキスト', 'alumni-core' ), 'email' => __( 'メールアドレス', 'alumni-core' ),
-			'tel' => __( '電話番号', 'alumni-core' ), 'number' => __( '数値', 'alumni-core' ),
+			'tel' => __( '電話番号', 'alumni-core' ), 'number' => __( '数値', 'alumni-core' ), 'date' => __( '年月日（カレンダー）', 'alumni-core' ),
 			'textarea' => __( '複数行テキスト', 'alumni-core' ), 'select' => __( 'セレクトボックス', 'alumni-core' ),
 			'radio' => __( 'ラジオボタン', 'alumni-core' ), 'checkbox' => __( 'チェックボックス', 'alumni-core' ), 'file' => __( 'ファイル添付', 'alumni-core' ),
 		);
@@ -240,7 +240,7 @@ class Meta_Box {
 		update_post_meta( $post_id, Post_Type::META_AUTO_REPLY_ENABLED, isset( $_POST['alumni_form_auto_reply_enabled'] ) ? '1' : '0' );
 
 		$raw = isset( $_POST['alumni_form_fields'] ) && is_array( $_POST['alumni_form_fields'] ) ? wp_unslash( $_POST['alumni_form_fields'] ) : array();
-		$allowed = array('text','email','tel','number','textarea','select','radio','checkbox','file');
+		$allowed = array('text','email','tel','number','date','textarea','select','radio','checkbox','file');
 		$fields = array(); $used = array(); $position = 0;
 		foreach ( $raw as $row ) {
 			$label = isset($row['label']) ? sanitize_text_field($row['label']) : '';
