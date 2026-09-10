@@ -235,7 +235,7 @@ class Officers_Shortcode {
 		<div class="alumni-officers-listing">
 			<?php if ( null === $list ) : ?>
 				<p class="alumni-notice">
-					<?php esc_html_e( 'この役員・理事一覧は見つかりませんでした。', 'alumni-core' ); ?>
+					<?php esc_html_e( 'この組織名簿は見つかりませんでした。', 'alumni-core' ); ?>
 				</p>
 			<?php else : ?>
 				<?php $term_text = Officer_Lists::format_term( $list ); ?>
