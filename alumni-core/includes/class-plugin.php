@@ -96,6 +96,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-content-hierarchy.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-homepage-sections.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-menu-structure.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart-groups.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-org-chart-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
@@ -116,6 +117,8 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-homepage-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-menu-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-order-page.php';
+		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-group-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-person-greeting-order-page.php';
 
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
