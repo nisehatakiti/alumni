@@ -114,17 +114,29 @@ class School_Enrollment_Years_Shortcode {
 		}
 
 		$blocks = array();
+
+		/*
+		 * 表は「年度」で固定分割せず、「卒業期」を10期単位で分割する。
+		 *
+		 * 例（3年制）:
+		 * 01期～10期の表は、01期の1年生開始年度から10期の3年生年度まで。
+		 * したがって10期分を完全に収めるには12年度分が必要になり、
+		 * 次の11期～20期の表とは年度が2年度重複する。
+		 */
 		for ( $from_term = 1; $from_term <= $last_term; $from_term += self::TERMS_PER_TABLE ) {
 			$to_term = min( $last_term, $from_term + self::TERMS_PER_TABLE - 1 );
 			$terms   = range( $from_term, $to_term );
 			$rows    = array();
 
-			for ( $year = $start_year; $year <= $end_year; $year++ ) {
+			$block_start_year = $first_entry_year + $from_term - 1;
+			$block_end_year   = $first_entry_year + $to_term - 1 + ( self::SCHOOL_YEARS - 1 );
+
+			for ( $year = $block_start_year; $year <= $block_end_year; $year++ ) {
 				$cells = array();
 
 				foreach ( $terms as $term ) {
-					$entry_year = $first_entry_year + $term - 1;
-					$grade      = $year - $entry_year + 1;
+					$entry_year   = $first_entry_year + $term - 1;
+					$grade        = $year - $entry_year + 1;
 					$cells[ $term ] = ( $grade >= 1 && $grade <= self::SCHOOL_YEARS ) ? $grade : 0;
 				}
 
