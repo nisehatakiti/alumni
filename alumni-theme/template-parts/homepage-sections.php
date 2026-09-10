@@ -176,6 +176,20 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 							</div>
 						<?php endif; ?>
 
+					<?php elseif ( 'form' === $alumni_hp_slot['type'] ) : ?>
+
+						<?php
+						$alumni_hp_form_post = alumni_theme_get_form( $alumni_hp_slot['form_id'] );
+						$alumni_hp_form_url  = alumni_theme_get_form_url( $alumni_hp_slot['form_id'] );
+						?>
+						<?php if ( $alumni_hp_form_post && $alumni_hp_form_url ) : ?>
+							<div class="alumni-homepage-slot-form">
+								<h3 class="alumni-homepage-slot-title">
+									<a href="<?php echo esc_url( $alumni_hp_form_url ); ?>"><?php echo esc_html( $alumni_hp_form_post->post_title ); ?></a>
+								</h3>
+							</div>
+						<?php endif; ?>
+
 					<?php elseif ( 'content' === $alumni_hp_slot['type'] ) : ?>
 
 						<?php
