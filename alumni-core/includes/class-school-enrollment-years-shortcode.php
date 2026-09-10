@@ -100,7 +100,7 @@ class School_Enrollment_Years_Shortcode {
 			return null;
 		}
 
-		$first_entry_year = $first_graduation_year - ( self::SCHOOL_YEARS - 1 );
+		$first_entry_year = $first_graduation_year - self::SCHOOL_YEARS;
 		$start_year       = min( $school_founded_year, $first_entry_year );
 		$end_year         = self::current_academic_year();
 
@@ -124,9 +124,10 @@ class School_Enrollment_Years_Shortcode {
 		 * 次の11期～20期の表とは年度が2年度重複する。
 		 */
 		for ( $from_term = 1; $from_term <= $last_term; $from_term += self::TERMS_PER_TABLE ) {
-			$to_term = min( $last_term, $from_term + self::TERMS_PER_TABLE - 1 );
-			$terms   = range( $from_term, $to_term );
-			$rows    = array();
+			$to_term       = min( $last_term, $from_term + self::TERMS_PER_TABLE - 1 );
+			$terms         = range( $from_term, $to_term );
+			$display_terms = range( $from_term, $from_term + self::TERMS_PER_TABLE - 1 );
+			$rows          = array();
 
 			$block_start_year = $first_entry_year + $from_term - 1;
 			$block_end_year   = $first_entry_year + $to_term - 1 + ( self::SCHOOL_YEARS - 1 );
@@ -152,8 +153,9 @@ class School_Enrollment_Years_Shortcode {
 			$blocks[] = array(
 				'from_term' => $from_term,
 				'to_term'   => $to_term,
-				'terms'     => $terms,
-				'rows'      => $rows,
+				'terms'         => $terms,
+				'display_terms' => $display_terms,
+				'rows'          => $rows,
 			);
 		}
 
@@ -175,7 +177,7 @@ class School_Enrollment_Years_Shortcode {
 	public static function format_era_year( $year ) {
 		$era = self::era_for_date( (int) $year, 4, 1 );
 
-		return $era['name'] . $era['year'] . __( '年度', 'alumni-core' );
+		return $era['name'] . self::format_era_number( $era['year'] ) . __( '年度', 'alumni-core' );
 	}
 
 	/**
@@ -189,12 +191,22 @@ class School_Enrollment_Years_Shortcode {
 		$end   = self::era_for_date( (int) $year + 1, 3, 31 );
 
 		return sprintf(
-			'%s%d年4月～%s%d年3月',
+			'%s%s年4月～%s%s年3月',
 			$start['name'],
-			$start['year'],
+			self::format_era_number( $start['year'] ),
 			$end['name'],
-			$end['year']
+			self::format_era_number( $end['year'] )
 		);
+	}
+
+	/**
+	 * 元号1年を「1」ではなく「元」と表示する。
+	 *
+	 * @param int $year 元号年.
+	 * @return string
+	 */
+	private static function format_era_number( $year ) {
+		return 1 === (int) $year ? '元' : (string) (int) $year;
 	}
 
 	/**
@@ -241,13 +253,18 @@ class School_Enrollment_Years_Shortcode {
 		ob_start();
 		?>
 		<style>
-			.alumni-school-years-wrap{overflow-x:auto;margin:1.5em 0}
-			.alumni-school-years-table{border-collapse:collapse;width:100%;min-width:980px;font-size:16px}
-			.alumni-school-years-table th,.alumni-school-years-table td{border:1px solid #d6dbe1;padding:.45em .55em;text-align:center;white-space:nowrap}
+			.alumni-school-years-wrap{width:100%;margin:1.5em 0}
+			.alumni-school-years-table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:clamp(12px,1.05vw,16px)}
+			.alumni-school-years-table th,.alumni-school-years-table td{border:1px solid #d6dbe1;padding:.45em .2em;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 			.alumni-school-years-table thead th,.alumni-school-years-label{background:#8fc0d8;color:#22313b;font-weight:700}
-			.alumni-school-years-table .alumni-school-years-term{min-width:68px}
-			.alumni-school-years-table .alumni-school-years-period{min-width:220px}
+			.alumni-school-years-table .alumni-school-years-label{width:9%}
+			.alumni-school-years-table .alumni-school-years-term{width:5.2%}
+			.alumni-school-years-table .alumni-school-years-period{width:19.5%;font-size:.95em}
 			.alumni-school-years-table tbody tr:nth-child(even) td{background-color:#f8fafb}
+			@media (max-width: 900px){
+				.alumni-school-years-wrap{overflow-x:auto}
+				.alumni-school-years-table{min-width:980px;font-size:14px}
+			}
 		</style>
 		<?php
 		if ( null === $data ) {
@@ -262,12 +279,13 @@ class School_Enrollment_Years_Shortcode {
 					<thead>
 						<tr>
 							<th scope="col"><?php echo esc_html__( '在校年度', 'alumni-core' ); ?></th>
-							<?php foreach ( $block['terms'] as $term ) : ?>
+							<?php foreach ( $block['display_terms'] as $term ) : ?>
 								<?php
-								$color = function_exists( 'alumni_core_term_to_color' ) ? alumni_core_term_to_color( $term ) : null;
-								$style = $color ? 'background-color:' . esc_attr( $color ) . ';color:' . ( Term_Calculator::is_dark_color( $color ) ? '#fff' : '#22313b' ) . ';' : '';
+								$is_active = $term <= $block['to_term'];
+								$color     = $is_active && function_exists( 'alumni_core_term_to_color' ) ? alumni_core_term_to_color( $term ) : null;
+								$style     = $color ? 'background-color:' . esc_attr( $color ) . ';color:' . ( Term_Calculator::is_dark_color( $color ) ? '#fff' : '#22313b' ) . ';' : '';
 								?>
-								<th scope="col" class="alumni-school-years-term" style="<?php echo $style; ?>"><?php echo esc_html( sprintf( '%02d期生', $term ) ); ?></th>
+								<th scope="col" class="alumni-school-years-term" style="<?php echo $style; ?>"><?php echo $is_active ? esc_html( sprintf( '%02d期生', $term ) ) : ''; ?></th>
 							<?php endforeach; ?>
 							<th scope="col" class="alumni-school-years-period"><?php echo esc_html__( '在校年・月（元号）', 'alumni-core' ); ?></th>
 							<th scope="col" class="alumni-school-years-period"><?php echo esc_html__( '在校年・月（西暦）', 'alumni-core' ); ?></th>
@@ -277,8 +295,8 @@ class School_Enrollment_Years_Shortcode {
 						<?php foreach ( $block['rows'] as $row ) : ?>
 							<tr>
 								<th scope="row" class="alumni-school-years-label"><?php echo esc_html( $row['era_year'] ); ?></th>
-								<?php foreach ( $block['terms'] as $term ) : ?>
-									<td><?php echo $row['cells'][ $term ] ? esc_html( $row['cells'][ $term ] . '年生' ) : ''; ?></td>
+								<?php foreach ( $block['display_terms'] as $term ) : ?>
+									<td><?php echo ! empty( $row['cells'][ $term ] ) ? esc_html( $row['cells'][ $term ] . '年生' ) : ''; ?></td>
 								<?php endforeach; ?>
 								<td><?php echo esc_html( $row['era_range'] ); ?></td>
 								<td><?php echo esc_html( $row['greg_range'] ); ?></td>
