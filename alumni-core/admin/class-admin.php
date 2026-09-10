@@ -18,6 +18,8 @@ use AlumniCore\Admin\Pages\Menu_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Page;
 use AlumniCore\Admin\Pages\Person_Greeting_Order_Page;
 use AlumniCore\Admin\Pages\Officer_List_Order_Page;
+use AlumniCore\Admin\Pages\Org_Chart_Group_Page;
+use AlumniCore\Admin\Pages\Org_Chart_Order_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
