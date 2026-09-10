@@ -151,6 +151,9 @@ class Officer_Lists {
 		if ( ! isset( $list['enabled'] ) ) {
 			$list['enabled'] = true;
 		}
+		if ( ! isset( $list['group_id'] ) ) {
+			$list['group_id'] = '';
+		}
 		if ( ! isset( $list['term_start'] ) ) {
 			$list['term_start'] = '';
 		}
@@ -284,6 +287,58 @@ class Officer_Lists {
 	}
 
 	/**
+	 * Lists belonging to one public group, in the exact saved order.
+	 *
+	 * @param string $group_id
+	 * @return array[]
+	 */
+	public function get_group_members( $group_id ) {
+		$members = array_values( array_filter( $this->get_all(), function ( $list ) use ( $group_id ) {
+			return $group_id === (string) $list['group_id'] && ! empty( $list['enabled'] );
+		} ) );
+		usort( $members, function ( $a, $b ) { return (int) $a['order'] <=> (int) $b['order']; } );
+		return $members;
+	}
+
+	/**
+	 * Assigns a list to an officer-list group. Empty string detaches it.
+	 */
+	public function save_list_group( $list_id, $group_id ) {
+		$lists = $this->get_all();
+		$found = null;
+		$group_id = sanitize_text_field( $group_id );
+		foreach ( $lists as &$list ) {
+			if ( $list['list_id'] !== $list_id ) { continue; }
+			$list['group_id'] = $group_id;
+			$found = $list;
+		}
+		unset( $list );
+		$this->save_lists( $lists );
+		return $found;
+	}
+
+	/**
+	 * Saves one group's member order using the existing list order field.
+	 */
+	public function save_group_order( $group_id, $ordered_ids ) {
+		$allowed = array_flip( array_column( $this->get_group_members( $group_id ), 'list_id' ) );
+		$lists = $this->get_all();
+		$position = 1;
+		foreach ( $ordered_ids as $raw_id ) {
+			$list_id = sanitize_text_field( $raw_id );
+			if ( ! isset( $allowed[ $list_id ] ) ) { continue; }
+			foreach ( $lists as &$list ) {
+				if ( $list['list_id'] === $list_id && (string) $list['group_id'] === (string) $group_id ) {
+					$list['order'] = $position++;
+					break;
+				}
+			}
+			unset( $list );
+		}
+		$this->save_lists( $lists );
+	}
+
+	/**
 	 * Persists the full lists array as-is (every mutation method below
 	 * funnels through this single write path).
 	 *
@@ -336,6 +391,7 @@ class Officer_Lists {
 			'page_id'       => 0,
 			'order'         => count( $lists ) + 1,
 			'parent_id'     => 0,
+			'group_id'      => '',
 			'audience'      => self::AUDIENCE_COMMON,
 			'enabled'       => true,
 			'term_start'    => '',
