@@ -343,6 +343,11 @@ class Menu_Page {
 			return $list ? ( $list['title'] ? $list['title'] : $list['name'] ) : __( '（見つかりません）', 'alumni-core' );
 		}
 
+		if ( Menu_Structure::REF_OFFICER_LIST_GROUP === $item['ref_type'] ) {
+			$group = Officer_List_Groups::instance()->get_group( $item['ref_id'] );
+			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
+		}
+
 		if ( Menu_Structure::REF_PERSON_GREETING_GROUP === $item['ref_type'] ) {
 			$group = Person_Greeting_Groups::instance()->get_group( $item['ref_id'] );
 			return $group ? $group['name'] : __( '（見つかりません）', 'alumni-core' );
@@ -439,7 +444,7 @@ class Menu_Page {
 				<optgroup label="<?php echo esc_attr__( '役員・理事紹介グループ', 'alumni-core' ); ?>">
 					<?php foreach ( Officer_List_Groups::instance()->get_all() as $group ) : ?>
 						<?php $value = 'officer_list_group:' . $group['group_id']; ?>
-						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $selected_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $group['name'] ); ?></option>
 					<?php endforeach; ?>
 				</optgroup>
 				<optgroup label="<?php echo esc_attr__( '人物挨拶グループ', 'alumni-core' ); ?>">
@@ -502,7 +507,7 @@ class Menu_Page {
 	 * @return array{0:string,1:string}
 	 */
 	private static function parse_reference_value( $raw_value ) {
-		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_PERSON_GREETING_GROUP, Menu_Structure::REF_CONTENT ) as $ref_type ) {
+		foreach ( array( Menu_Structure::REF_SYSTEM, Menu_Structure::REF_OFFICER_LIST, Menu_Structure::REF_OFFICER_LIST_GROUP, Menu_Structure::REF_PERSON_GREETING_GROUP, Menu_Structure::REF_CONTENT ) as $ref_type ) {
 			$prefix = $ref_type . ':';
 			if ( 0 === strpos( $raw_value, $prefix ) ) {
 				return array( $ref_type, substr( $raw_value, strlen( $prefix ) ) );
