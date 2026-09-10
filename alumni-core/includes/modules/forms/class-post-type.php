@@ -25,6 +25,8 @@ class Post_Type {
 	const META_REPLY_TO_EMAIL     = '_alumni_form_reply_to_email';
 	const META_REPLY_TO_FIELD_KEY = '_alumni_form_reply_to_field_key';
 	const META_FIELDS             = '_alumni_form_fields';
+	const META_MODE               = '_alumni_form_mode';
+	const META_TARGET             = '_alumni_form_target';
 
 	public static function register() {
 		register_post_type(
@@ -122,6 +124,20 @@ class Post_Type {
 
 	public static function is_auto_reply_enabled( $post_id ) {
 		return '1' === (string) get_post_meta( $post_id, self::META_AUTO_REPLY_ENABLED, true );
+	}
+
+	public static function get_mode( $post_id ) {
+		$mode = sanitize_key( (string) get_post_meta( $post_id, self::META_MODE, true ) );
+		return in_array( $mode, array( 'standard', 'content_submission' ), true ) ? $mode : 'standard';
+	}
+
+	public static function get_target( $post_id ) {
+		$target = sanitize_key( (string) get_post_meta( $post_id, self::META_TARGET, true ) );
+		return in_array( $target, array( 'person_greeting', 'news_event' ), true ) ? $target : '';
+	}
+
+	public static function is_content_submission( $post_id ) {
+		return 'content_submission' === self::get_mode( $post_id ) && '' !== self::get_target( $post_id );
 	}
 
 	public static function get_fields( $post_id ) {
