@@ -20,6 +20,30 @@
 	padding: 1.75em 0;
 }
 
+/* 上部メニュー配置では、通常のヘッダー全体（校章・サイト名・メインメニューを
+   含む）をスクロール追従させる。ページを下へスクロールしてヘッダーが画面上端に
+   到達した時点で sticky になり、常に画面上部からメニュー操作へ戻れるようにする。
+   leftサイドメニュー配置には適用しない。 */
+.alumni-nav-layout-top .site-header {
+	position: sticky;
+	top: 0;
+	z-index: 1000;
+	background: #fff;
+}
+
+/* ログイン中のWordPress管理バーと重ならないよう、管理バーがある場合は
+   stickyヘッダーの開始位置をその直下へずらす。WordPress標準の管理バーは
+   デスクトップ32px、モバイルでは46pxになる。 */
+body.admin-bar.alumni-nav-layout-top .site-header {
+	top: 32px;
+}
+
+@media (max-width: 782px) {
+	body.admin-bar.alumni-nav-layout-top .site-header {
+		top: 46px;
+	}
+}
+
 .alumni-header-inner {
 	display: flex;
 	flex-wrap: wrap;
