@@ -164,6 +164,8 @@ class Admin {
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list_group', array( $this->officers_page, 'handle_create_group' ) );
+		add_action( 'admin_post_alumni_core_update_officer_list_group', array( $this->officers_page, 'handle_update_group' ) );
+		add_action( 'admin_post_alumni_core_delete_officer_list_group', array( $this->officers_page, 'handle_delete_group' ) );
 		add_action( 'admin_post_alumni_core_delete_officer_list', array( $this->officers_page, 'handle_delete' ) );
 		add_action( 'admin_post_alumni_core_save_officer_list', array( $this->officers_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_homepage_section', array( $this->homepage_page, 'handle_create' ) );
