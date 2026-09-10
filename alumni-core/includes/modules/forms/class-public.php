@@ -98,9 +98,9 @@ class Public_Form {
 		if(!$form_id||Post_Type::SLUG!==get_post_type($form_id)||'publish'!==get_post_status($form_id)) self::redirect($redirect,'invalid');
 		if(!isset($_POST['alumni_form_nonce'])||!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['alumni_form_nonce'])),self::NONCE_ACTION.':'.$form_id)) self::redirect($redirect,'security');
 		if(!empty($_POST['alumni_form_website'])) self::redirect($redirect,'invalid');
-		$recipients=Post_Type::get_recipient_emails($form_id); if(!$recipients) self::redirect($redirect,'invalid');
+		$recipients=Post_Type::get_recipient_emails($form_id); if(!Post_Type::is_content_submission($form_id)&&!$recipients) self::redirect($redirect,'invalid');
 		$input=isset($_POST['alumni_form_field'])&&is_array($_POST['alumni_form_field'])?wp_unslash($_POST['alumni_form_field']):array();
-		$values=array(); $submitted_values=array(); $attachments=array(); $temporary=array(); $errors=false; $error_code='validation';
+		$values=array(); $submitted_values=array(); $attachments=array(); $temporary=array(); $uploaded_files=array(); $errors=false; $error_code='validation';
 		foreach(Post_Type::get_fields($form_id) as $field) {
 			$key=$field['key'];
 			if('file'===$field['type']) {
@@ -110,7 +110,7 @@ class Public_Form {
 				if(is_wp_error($valid)){ $errors=true;$error_code='file';continue; }
 				$uploaded=self::store_upload($file,$valid['mimes']);
 				if(is_wp_error($uploaded)){ $errors=true;$error_code='file';continue; }
-				$attachments[]=$uploaded['file'];$temporary[]=$uploaded['file'];
+				$attachments[]=$uploaded['file'];$temporary[]=$uploaded['file'];$uploaded_files[$key]=array('file'=>$uploaded['file'],'url'=>isset($uploaded['url'])?$uploaded['url']:'','type'=>isset($uploaded['type'])?$uploaded['type']:'');
 				$values[]=array('label'=>$field['label'],'value'=>sanitize_file_name(basename($uploaded['file'])));continue;
 			}
 			$raw=isset($input[$key])?$input[$key]:''; if(is_array($raw)){$errors=true;continue;} $raw=is_string($raw)?trim($raw):'';
@@ -127,14 +127,50 @@ class Public_Form {
 			$values[]=array('label'=>$field['label'],'value'=>$value); $submitted_values[$key]=$value;
 		}
 		if($errors){self::cleanup_files($temporary);self::redirect($redirect,$error_code);}
+		$created_draft=0;
+		if(Post_Type::is_content_submission($form_id)){
+			$created_draft=self::create_content_draft($form_id,$submitted_values,$uploaded_files);
+			if(is_wp_error($created_draft)){self::cleanup_files($temporary);self::redirect($redirect,'draft');}
+			// Uploaded files attached to the new draft are now managed by WordPress.
+			$temporary=array();
+		}
 		$lines=array(get_the_title($form_id),'',__('送信日時: ','alumni-core').current_time('Y-m-d H:i:s')); foreach($values as $row)$lines[]=$row['label'].': '.$row['value'];
-		$reply_to=self::resolve_reply_to($form_id,$submitted_values);
-		$headers=self::mail_headers($form_id,$reply_to);
-		$sent=wp_mail($recipients,Post_Type::get_mail_subject($form_id),implode("\n",$lines),$headers,$attachments); self::cleanup_files($temporary);
-		if(!$sent)self::redirect($redirect,'mail');
+		if($recipients){$reply_to=self::resolve_reply_to($form_id,$submitted_values);$headers=self::mail_headers($form_id,$reply_to);$sent=wp_mail($recipients,Post_Type::get_mail_subject($form_id),implode("\n",$lines),$headers,$attachments);if(!$sent){self::cleanup_files($temporary);self::redirect($redirect,'mail');}}
+		self::cleanup_files($temporary);
 		$auto_reply_to=self::find_submitted_email($form_id,$submitted_values);
 		if(Post_Type::is_auto_reply_enabled($form_id)&&$auto_reply_to)wp_mail($auto_reply_to,Post_Type::get_mail_subject($form_id),Post_Type::get_success_message($form_id),self::mail_headers($form_id,''));
 		wp_safe_redirect(add_query_arg('alumni_form_submitted','1',$redirect));exit;
+	}
+	private static function create_content_draft($form_id,$values,$files){
+		$target=Post_Type::get_target($form_id);
+		if('person_greeting'===$target){
+			$post_id=wp_insert_post(array('post_type'=>'alumni_content','post_status'=>'draft','post_title'=>sanitize_text_field((string)($values['name']??$values['title']??get_the_title($form_id))),'post_content'=>sanitize_textarea_field((string)($values['body']??''))),true);
+			if(is_wp_error($post_id))return $post_id;
+			update_post_meta($post_id,'_alumni_content_kind','person_greeting');
+			update_post_meta($post_id,'_alumni_person_name',sanitize_text_field((string)($values['name']??'')));
+			update_post_meta($post_id,'_alumni_person_title',sanitize_text_field((string)($values['title']??'')));
+			if(!empty($files['photo']))self::attach_upload_to_draft($files['photo'],$post_id,true);
+			return $post_id;
+		}
+		if('news_event'===$target){
+			$post_id=wp_insert_post(array('post_type'=>'alumni_news_event','post_status'=>'draft','post_title'=>sanitize_text_field((string)($values['title']??get_the_title($form_id))),'post_content'=>sanitize_textarea_field((string)($values['content']??''))),true);
+			if(is_wp_error($post_id))return $post_id;
+			$event_date=sanitize_text_field((string)($values['event_date']??''));
+			if($event_date){update_post_meta($post_id,'_alumni_content_type','event');update_post_meta($post_id,'_alumni_event_date',$event_date);}else update_post_meta($post_id,'_alumni_content_type','news');
+			if(!empty($files['photo']))self::attach_upload_to_draft($files['photo'],$post_id,true);
+			return $post_id;
+		}
+		return new \WP_Error('invalid_target','Invalid content target.');
+	}
+	private static function attach_upload_to_draft($upload,$post_id,$featured=false){
+		if(empty($upload['file'])||!file_exists($upload['file']))return 0;
+		$filename=wp_basename($upload['file']);$filetype=wp_check_filetype($filename,null);
+		$attachment=array('post_mime_type'=>$filetype['type']??'','post_title'=>sanitize_file_name(pathinfo($filename,PATHINFO_FILENAME)),'post_status'=>'inherit');
+		$attachment_id=wp_insert_attachment($attachment,$upload['file'],$post_id);
+		if(is_wp_error($attachment_id))return 0;
+		require_once ABSPATH.'wp-admin/includes/image.php';$metadata=wp_generate_attachment_metadata($attachment_id,$upload['file']);if($metadata)wp_update_attachment_metadata($attachment_id,$metadata);
+		if($featured)set_post_thumbnail($post_id,$attachment_id);
+		return $attachment_id;
 	}
 	private static function resolve_reply_to($form_id,$submitted_values){
 		$mode=Post_Type::get_reply_to_mode($form_id);
@@ -164,6 +200,6 @@ class Public_Form {
 	private static function length_attributes($min,$max){$s='';if($min)$s.=' minlength="'.esc_attr($min).'"';if($max)$s.=' maxlength="'.esc_attr($max).'"';return $s;}
 	private static function string_length($value){return function_exists('mb_strlen')?mb_strlen($value):strlen($value);}
 	private static function cleanup_files($files){foreach($files as $file)if(is_string($file)&&$file&&file_exists($file))@unlink($file);}
-	private static function error_message($error){$map=array('file'=>__('添付ファイルを確認して、もう一度送信してください。','alumni-core'),'mail'=>__('メール送信に失敗しました。時間をおいてもう一度お試しください。','alumni-core'),'security'=>__('送信を確認できませんでした。もう一度お試しください。','alumni-core'));return $map[$error]??__('入力内容を確認して、もう一度送信してください。','alumni-core');}
+	private static function error_message($error){$map=array('file'=>__('添付ファイルを確認して、もう一度送信してください。','alumni-core'),'mail'=>__('メール送信に失敗しました。時間をおいてもう一度お試しください。','alumni-core'),'security'=>__('送信を確認できませんでした。もう一度お試しください。','alumni-core'),'draft'=>__('下書きの作成に失敗しました。もう一度お試しください。','alumni-core'));return $map[$error]??__('入力内容を確認して、もう一度送信してください。','alumni-core');}
 	private static function redirect($url,$error){wp_safe_redirect(add_query_arg('alumni_form_error',sanitize_key($error),$url));exit;}
 }
