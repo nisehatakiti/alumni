@@ -307,7 +307,7 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '├ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::ADD_SLUG, array( $this->org_chart_page, 'render_add' ) );
 		$this->org_chart_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織図の並び順', 'alumni-core' ), __( '├ 組織図の並び順', 'alumni-core' ), self::CAPABILITY, Org_Chart_Order_Page::SLUG, array( $this->org_chart_order_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '├ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '└ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
 
 		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
 	}
