@@ -70,6 +70,11 @@ class Person_Greeting_Groups_Shortcode {
 		$page_id = (int) get_option( $option, 0 );
 
 		if ( $page_id && 'page' === get_post_type( $page_id ) ) {
+			// Preset names are canonical; keep the existing page/URL but update
+			// the visible title when migrating from older preset names.
+			if ( get_the_title( $page_id ) !== $name ) {
+				wp_update_post( array( 'ID' => $page_id, 'post_title' => $name ) );
+			}
 			return;
 		}
 
