@@ -179,13 +179,21 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 					<?php elseif ( 'form' === $alumni_hp_slot['type'] ) : ?>
 
 						<?php
+						// フォームは独立した公開投稿なので、通常のコンテンツURL解決に
+						// 依存せずフォーム投稿自身のパーマリンクを直接使用する。
+						// これによりトップページのスロットでフォームを選択した場合も、
+						// 確実にクリック可能な公開リンクとして表示される。
 						$alumni_hp_form_post = alumni_theme_get_form( $alumni_hp_slot['form_id'] );
-						$alumni_hp_form_url  = alumni_theme_get_form_url( $alumni_hp_slot['form_id'] );
+						$alumni_hp_form_url  = $alumni_hp_form_post ? (string) get_permalink( $alumni_hp_form_post->ID ) : '';
 						?>
-						<?php if ( $alumni_hp_form_post && $alumni_hp_form_url ) : ?>
+						<?php if ( $alumni_hp_form_post ) : ?>
 							<div class="alumni-homepage-slot-form">
 								<h3 class="alumni-homepage-slot-title">
-									<a href="<?php echo esc_url( $alumni_hp_form_url ); ?>"><?php echo esc_html( $alumni_hp_form_post->post_title ); ?></a>
+									<?php if ( $alumni_hp_form_url ) : ?>
+										<a class="alumni-homepage-slot-form-link" href="<?php echo esc_url( $alumni_hp_form_url ); ?>"><?php echo esc_html( $alumni_hp_form_post->post_title ); ?></a>
+									<?php else : ?>
+										<?php echo esc_html( $alumni_hp_form_post->post_title ); ?>
+									<?php endif; ?>
 								</h3>
 							</div>
 						<?php endif; ?>
