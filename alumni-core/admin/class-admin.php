@@ -10,6 +10,7 @@ namespace AlumniCore\Admin;
 use AlumniCore\Admin\Pages\Dashboard_Page;
 use AlumniCore\Admin\Pages\Settings_Page;
 use AlumniCore\Admin\Pages\School_Photos_Page;
+use AlumniCore\Admin\Pages\School_Song_Motto_Page;
 use AlumniCore\Admin\Pages\Officers_Page;
 use AlumniCore\Admin\Pages\Graduation_Lookup_Page;
 use AlumniCore\Admin\Pages\School_Enrollment_Years_Page;
@@ -66,6 +67,9 @@ class Admin {
 	 * @var School_Photos_Page
 	 */
 	private $school_photos_page;
+
+	/** @var School_Song_Motto_Page */
+	private $school_song_motto_page;
 
 	/**
 	 * 役員・理事紹介 screen handler.
@@ -149,6 +153,9 @@ class Admin {
 	 */
 	private $school_photos_hook = '';
 
+	/** @var string */
+	private $school_song_motto_hook = '';
+
 	/**
 	 * Hook suffix for 役員・理事紹介, as returned by add_submenu_page().
 	 * Used to scope its admin JS to just this screen.
@@ -164,6 +171,7 @@ class Admin {
 		$this->dashboard_page         = new Dashboard_Page();
 		$this->settings_page          = new Settings_Page();
 		$this->school_photos_page     = new School_Photos_Page();
+		$this->school_song_motto_page = new School_Song_Motto_Page();
 		$this->officers_page          = new Officers_Page();
 		$this->graduation_lookup_page = new Graduation_Lookup_Page();
 		$this->school_enrollment_years_page = new School_Enrollment_Years_Page();
@@ -181,6 +189,7 @@ class Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_school_song_motto', array( $this->school_song_motto_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list_group', array( $this->officers_page, 'handle_create_group' ) );
 		add_action( 'admin_post_alumni_core_update_officer_list_group', array( $this->officers_page, 'handle_update_group' ) );
@@ -278,6 +287,7 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( 'ダッシュボード', 'alumni-core' ), __( 'ダッシュボード', 'alumni-core' ), self::CAPABILITY, self::MENU_SLUG, array( $this->dashboard_page, 'render' ) );
 		$this->settings_hook = add_submenu_page( self::MENU_SLUG, __( '基本設定', 'alumni-core' ), __( '基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
 		$this->school_photos_hook = add_submenu_page( self::MENU_SLUG, __( '学校写真', 'alumni-core' ), __( '学校写真', 'alumni-core' ), self::CAPABILITY, School_Photos_Page::SLUG, array( $this->school_photos_page, 'render' ) );
+		$this->school_song_motto_hook = add_submenu_page( self::MENU_SLUG, __( '校歌・校訓', 'alumni-core' ), __( '校歌・校訓', 'alumni-core' ), self::CAPABILITY, School_Song_Motto_Page::SLUG, array( $this->school_song_motto_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( 'トップページ設定', 'alumni-core' ), __( 'トップページ設定', 'alumni-core' ), self::CAPABILITY, Homepage_Page::SLUG, array( $this->homepage_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '在校年度一覧', 'alumni-core' ), __( '在校年度一覧', 'alumni-core' ), self::CAPABILITY, School_Enrollment_Years_Page::SLUG, array( $this->school_enrollment_years_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( 'メニュー構成', 'alumni-core' ), __( 'メニュー構成', 'alumni-core' ), self::CAPABILITY, Menu_Page::SLUG, array( $this->menu_page, 'render' ) );
@@ -347,6 +357,7 @@ class Admin {
 
 		$is_settings_page      = $this->settings_hook === $hook_suffix;
 		$is_school_photos_page = $this->school_photos_hook === $hook_suffix;
+		$is_school_song_motto_page = $this->school_song_motto_hook === $hook_suffix;
 		$is_officers_page      = $this->officers_hook === $hook_suffix;
 		$is_person_greeting_order_page = $this->person_greeting_order_hook === $hook_suffix;
 		$is_officer_list_order_page = $this->officer_list_order_hook === $hook_suffix;
@@ -374,7 +385,7 @@ class Admin {
 			);
 		}
 
-		if ( ! $is_settings_page && ! $is_school_photos_page ) {
+		if ( ! $is_settings_page && ! $is_school_photos_page && ! $is_school_song_motto_page ) {
 			return;
 		}
 
@@ -390,6 +401,10 @@ class Admin {
 				ALUMNI_CORE_VERSION,
 				true
 			);
+		}
+
+		if ( $is_school_song_motto_page ) {
+			wp_enqueue_script( 'alumni-core-school-song-motto-admin', ALUMNI_CORE_URL . 'admin/assets/js/school-song-motto-admin.js', array(), ALUMNI_CORE_VERSION, true );
 		}
 
 		if ( $is_school_photos_page ) {
