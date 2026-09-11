@@ -312,14 +312,17 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( '人物挨拶を追加', 'alumni-core' ), __( '├ 人物挨拶を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
 		$this->person_greeting_order_hook = add_submenu_page( self::MENU_SLUG, __( '人物挨拶の並び順', 'alumni-core' ), __( '└ 人物挨拶の並び順', 'alumni-core' ), self::CAPABILITY, Person_Greeting_Order_Page::SLUG, array( $this->person_greeting_order_page, 'render' ) );
 
-		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
-		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿の並び順', 'alumni-core' ), __( '└ 組織名簿の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
-
 		add_submenu_page( self::MENU_SLUG, __( '規約類', 'alumni-core' ), __( '規約類', 'alumni-core' ), self::CAPABILITY, Terms_Page::SLUG, array( $this->terms_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '規約類を追加', 'alumni-core' ), __( '└ 規約類を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS );
 
 		add_submenu_page( self::MENU_SLUG, __( 'フォーム', 'alumni-core' ), __( 'フォーム', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_form' );
 		add_submenu_page( self::MENU_SLUG, __( 'フォームを追加', 'alumni-core' ), __( '└ フォームを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_form' );
+
+		// 「組織」カテゴリ。WordPress 標準の管理メニューは三階層を
+		// 持てないため、カテゴリ見出しを挟んで関連画面を連続配置する。
+		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '── 組織 ──', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
+		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG . '-list', array( $this->officers_page, 'render' ) );
+		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿の並び順', 'alumni-core' ), __( '└ 組織名簿の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '├ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::ADD_SLUG, array( $this->org_chart_page, 'render_add' ) );
 		$this->org_chart_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織図の並び順', 'alumni-core' ), __( '├ 組織図の並び順', 'alumni-core' ), self::CAPABILITY, Org_Chart_Order_Page::SLUG, array( $this->org_chart_order_page, 'render' ) );
