@@ -29,7 +29,7 @@ class Form_Schema_Provider {
 				'title' => 'name',
 				'content' => 'body',
 				'meta' => array(
-					'_alumni_content_kind' => '__person_greeting',
+					'_alumni_content_kind' => 'person_greeting',
 					'_alumni_person_title' => 'title',
 				),
 			),
