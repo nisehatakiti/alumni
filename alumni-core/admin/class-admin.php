@@ -341,15 +341,14 @@ class Admin {
 		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>トップ画面・メニュー</h1><p>公開サイトのトップページとメニュー構成を設定します。</p><div class="alumni-core-hub-grid"><?php
 		$this->render_hub_card( 'トップページ設定', 'トップページに表示する内容や表示順を設定します。', array( array( 'label' => 'トップページ設定', 'url' => admin_url( 'admin.php?page=' . Homepage_Page::SLUG ), 'primary' => true ) ), array( '表示するコンテンツ', '表示数', '見出し・インデント' ) );
 		$this->render_hub_card( 'メニュー構成', '公開サイトのメニュー項目、順番、階層を設定します。', array( array( 'label' => 'メニュー構成', 'url' => admin_url( 'admin.php?page=' . Menu_Page::SLUG ), 'primary' => true ) ), array( 'メニュー項目', '表示順', '階層・インデント' ) );
+		$this->render_hub_card( '学校写真', 'トップ画面など公開サイトで使用する学校の写真を登録・管理します。', array( array( 'label' => '学校写真を管理', 'url' => admin_url( 'admin.php?page=' . School_Photos_Page::SLUG ), 'primary' => true ) ) );
 		?></div></div><?php
 	}
 
 	public function render_basic_hub() {
 		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>基本情報</h1><p>学校および同窓会に関する基本情報を設定します。</p><div class="alumni-core-hub-grid"><?php
 		$this->render_hub_card( '基本設定', '同窓会と学校の基本情報を設定します。', array( array( 'label' => '基本設定', 'url' => admin_url( 'admin.php?page=' . Settings_Page::SLUG ), 'primary' => true ) ), array( '同窓会名称', '学校名称', '創立年・第1期卒業年' ) );
-		$this->render_hub_card( '学校写真', '学校に関する写真を登録・管理します。', array( array( 'label' => '学校写真を管理', 'url' => admin_url( 'admin.php?page=' . School_Photos_Page::SLUG ), 'primary' => true ) ) );
 		$this->render_hub_card( '校歌・校訓', '校歌と校訓を登録し、公開方法を設定します。', array( array( 'label' => '校歌・校訓設定', 'url' => admin_url( 'admin.php?page=' . School_Song_Motto_Page::SLUG ), 'primary' => true ) ), array( '校歌', '校訓・説明文', '校訓画像・表示形式' ) );
-		$this->render_hub_card( '在校年度一覧', '卒業期ごとの在校年度を確認・再生成します。', array( array( 'label' => '在校年度一覧', 'url' => admin_url( 'admin.php?page=' . School_Enrollment_Years_Page::SLUG ), 'primary' => true ) ), array( '卒業期', '和暦・西暦', '年度一覧の再生成' ) );
 		?></div></div><?php
 	}
 
