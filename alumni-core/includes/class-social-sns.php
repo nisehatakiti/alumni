@@ -115,22 +115,34 @@ class Social_SNS {
 				break;
 
 			case self::FACEBOOK:
+				/*
+				 * Keep this URL structure aligned with Facebook's Page Plugin
+				 * markup confirmed to work on the live alumni site. In particular,
+				 * the plugin's internal render width is 340px while the surrounding
+				 * iframe may be shown at a different CSS size; using the previous
+				 * 500px/adapt-container combination produced only the plugin shell
+				 * in this site's layout.
+				 */
+				$facebook_width  = 340;
+				$facebook_height = 720;
 				$iframe_url = add_query_arg(
 					array(
 						'href'                  => $url,
 						'tabs'                  => 'timeline',
-						'width'                 => 500,
-						'height'                => $height,
+						'width'                 => $facebook_width,
+						'height'                => $facebook_height,
 						'small_header'          => 'true',
-						'adapt_container_width' => 'true',
-						'hide_cover'            => 'false',
-						'show_facepile'         => 'false',
+						'adapt_container_width' => 'false',
+						'hide_cover'            => 'true',
+						'show_facepile'         => 'true',
+						'appId'                 => '185738782028798',
 					),
 					'https://www.facebook.com/plugins/page.php'
 				);
 				$html = sprintf(
-					'<iframe class="alumni-sns-facebook-frame" src="%1$s" width="500" height="%2$d" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen="true" title="%3$s"></iframe>',
+					'<iframe class="alumni-sns-facebook-frame" src="%1$s" width="%2$d" height="%3$d" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" title="%4$s"></iframe>',
 					esc_url( $iframe_url ),
+					$facebook_width,
 					$height,
 					esc_attr( sprintf( __( '%s タイムライン', 'alumni-core' ), $label ) )
 				);
