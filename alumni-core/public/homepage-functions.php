@@ -57,6 +57,26 @@ if ( ! function_exists( 'alumni_core_get_system_slot_label' ) ) {
 	}
 }
 
+if ( ! function_exists( 'alumni_core_get_system_slot_embed_html' ) ) {
+	/**
+	 * Provider-specific embeddable HTML for a system SNS slot.
+	 *
+	 * Non-SNS system keys intentionally return an empty string so themes can
+	 * keep their existing link/card rendering.
+	 *
+	 * @param string $system_key
+	 * @param array  $args
+	 * @return string
+	 */
+	function alumni_core_get_system_slot_embed_html( $system_key, array $args = array() ) {
+		if ( ! \AlumniCore\Includes\Social_SNS::is_sns_key( $system_key ) ) {
+			return '';
+		}
+
+		return \AlumniCore\Includes\Social_SNS::render_embed( $system_key, $args );
+	}
+}
+
 if ( ! function_exists( 'alumni_core_get_system_slot_url' ) ) {
 	/**
 	 * The public URL a type=system slot should link to.
