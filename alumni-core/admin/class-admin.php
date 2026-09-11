@@ -319,7 +319,15 @@ class Admin {
 		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=alumni_form' );
 		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=alumni_form' );
 
-		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
+		/**
+		 * Lets extension plugins register admin pages after Alumni Core has
+		 * created its compact top-level navigation. The top-level menu slug is
+		 * passed for extensions that intentionally integrate into this area.
+		 *
+		 * Extensions should normally keep their own detailed screens hidden and
+		 * expose entry points from their own hub page, matching Alumni Core's UI.
+		 */
+		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG, self::CAPABILITY );
 	}
 
 	private function render_hub_card( $title, $description, $actions, $features = array() ) {
