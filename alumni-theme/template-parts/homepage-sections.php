@@ -72,12 +72,27 @@ foreach ( $alumni_hp_visible_sections as $alumni_hp_section_index => $alumni_hp_
 						$alumni_hp_system_url   = alumni_theme_get_system_slot_url( $alumni_hp_system_key );
 						?>
 						<?php if ( $alumni_hp_system_label && $alumni_hp_system_url ) : ?>
+							<?php
+							$alumni_hp_system_embed_html = function_exists( 'alumni_core_get_system_slot_embed_html' )
+								? alumni_core_get_system_slot_embed_html( $alumni_hp_system_key, array( 'height' => 520 ) )
+								: '';
+							?>
 							<div class="alumni-homepage-slot-system alumni-homepage-slot-system-<?php echo esc_attr( $alumni_hp_system_key ); ?>">
 								<h3 class="alumni-homepage-slot-title">
-									<a href="<?php echo esc_url( $alumni_hp_system_url ); ?>"><?php echo esc_html( $alumni_hp_system_label ); ?></a>
+									<a href="<?php echo esc_url( $alumni_hp_system_url ); ?>"<?php echo $alumni_hp_system_embed_html ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>><?php echo esc_html( $alumni_hp_system_label ); ?></a>
 								</h3>
 
-								<?php if ( 'news' === $alumni_hp_system_key ) : ?>
+								<?php if ( $alumni_hp_system_embed_html ) : ?>
+									<div class="alumni-homepage-sns-window alumni-homepage-sns-window-<?php echo esc_attr( $alumni_hp_system_key ); ?>">
+										<div class="alumni-homepage-sns-window-header">
+											<span class="alumni-homepage-sns-window-brand"><?php echo esc_html( $alumni_hp_system_label ); ?></span>
+											<a class="alumni-homepage-sns-window-open" href="<?php echo esc_url( $alumni_hp_system_url ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( '別窓で開く', 'alumni-theme' ); ?></a>
+										</div>
+										<div class="alumni-homepage-sns-window-body">
+											<?php echo $alumni_hp_system_embed_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Core returns provider embed markup. ?>
+										</div>
+									</div>
+								<?php elseif ( 'news' === $alumni_hp_system_key ) : ?>
 									<?php $alumni_hp_teaser = alumni_theme_get_news_teaser( 3 ); ?>
 									<?php if ( $alumni_hp_teaser && $alumni_hp_teaser->have_posts() ) : ?>
 										<div class="alumni-homepage-slot-teaser-list">
