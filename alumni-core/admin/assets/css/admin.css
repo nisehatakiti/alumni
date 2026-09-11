@@ -338,3 +338,64 @@
 	margin-left: auto;
 	color: #646970;
 }
+
+
+/* Alumni Core category hub pages */
+.alumni-core-hub {
+	max-width: 1200px;
+}
+.alumni-core-hub-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+	margin: 20px 0 32px;
+}
+.alumni-core-hub-full {
+	margin: 20px 0 28px;
+}
+.alumni-core-hub-card {
+	box-sizing: border-box;
+	min-height: 190px;
+	padding: 22px 24px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+	display: flex;
+	flex-direction: column;
+}
+.alumni-core-hub-card h2 {
+	margin: 0 0 10px;
+	font-size: 1.2em;
+}
+.alumni-core-hub-card p {
+	margin: 0 0 10px;
+	color: #50575e;
+}
+.alumni-core-hub-card ul {
+	margin: 0 0 16px 1.2em;
+	color: #50575e;
+}
+.alumni-core-hub-card li {
+	margin: 4px 0;
+}
+.alumni-core-hub-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: auto;
+	padding-top: 12px;
+}
+.alumni-core-hub-section-title {
+	margin-top: 32px;
+	padding-top: 24px;
+	border-top: 1px solid #dcdcde;
+}
+@media (max-width: 782px) {
+	.alumni-core-hub-grid {
+		grid-template-columns: 1fr;
+	}
+	.alumni-core-hub-card {
+		min-height: 0;
+	}
+}
