@@ -66,6 +66,9 @@ class Homepage_Sections {
 	const SYSTEM_SCHOOL_SONG_MOTTO = 'school_song_motto';
 	const SYSTEM_SCHOOL_SONG       = 'school_song';
 	const SYSTEM_SCHOOL_MOTTO      = 'school_motto';
+	const SYSTEM_SNS_X             = 'sns_x';
+	const SYSTEM_SNS_INSTAGRAM     = 'sns_instagram';
+	const SYSTEM_SNS_FACEBOOK      = 'sns_facebook';
 	const SLOT_PERSON_GREETING_GROUP = 'person_greeting_group';
 	const SLOT_HEADING               = 'heading';
 	const MAX_INDENT_LEVEL           = 3;
@@ -120,6 +123,10 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_MOTTO,
 		);
 
+		// SNS is a standard Core category, but each SNS becomes selectable only
+		// when it is enabled and has a configured account URL.
+		$keys = array_merge( $keys, \AlumniCore\Includes\Social_SNS::active_keys() );
+
 		/**
 		 * Allows Alumni Core extensions to expose their own public pages as
 		 * selectable system content in homepage/menu configuration.
@@ -148,6 +155,10 @@ class Homepage_Sections {
 			$groups[ $system_key ] = __( 'システムページ', 'alumni-core' );
 		}
 
+		foreach ( \AlumniCore\Includes\Social_SNS::active_keys() as $system_key ) {
+			$groups[ $system_key ] = __( 'SNS', 'alumni-core' );
+		}
+
 		/**
 		 * Allows Alumni Core extensions to place their public pages in their
 		 * own optgroup within the homepage/menu content picker.
@@ -168,6 +179,9 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_SONG_MOTTO => __( '校歌・校訓', 'alumni-core' ),
 			self::SYSTEM_SCHOOL_SONG => __( '校歌', 'alumni-core' ),
 			self::SYSTEM_SCHOOL_MOTTO => __( '校訓', 'alumni-core' ),
+			self::SYSTEM_SNS_X => __( 'X', 'alumni-core' ),
+			self::SYSTEM_SNS_INSTAGRAM => __( 'Instagram', 'alumni-core' ),
+			self::SYSTEM_SNS_FACEBOOK => __( 'Facebook', 'alumni-core' ),
 		);
 
 		/**
@@ -210,6 +224,10 @@ class Homepage_Sections {
 				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'song' );
 			case self::SYSTEM_SCHOOL_MOTTO:
 				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'motto' );
+			case self::SYSTEM_SNS_X:
+			case self::SYSTEM_SNS_INSTAGRAM:
+			case self::SYSTEM_SNS_FACEBOOK:
+				return \AlumniCore\Includes\Social_SNS::url( $system_key );
 			default:
 				return (string) apply_filters( 'alumni_core_system_content_url', '', $system_key );
 		}
