@@ -320,8 +320,8 @@ class Admin {
 
 		// 「組織」カテゴリ。WordPress 標準の管理メニューは三階層を
 		// 持てないため、カテゴリ見出しを挟んで関連画面を連続配置する。
-		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '── 組織 ──', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
-		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG . '-list', array( $this->officers_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '── 組織 ──', 'alumni-core' ), self::CAPABILITY, 'alumni-core-organization', array( $this, 'render_organization_overview' ) );
+		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
 		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿の並び順', 'alumni-core' ), __( '└ 組織名簿の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
 		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '├ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::ADD_SLUG, array( $this->org_chart_page, 'render_add' ) );
@@ -329,6 +329,29 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '└ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
 
 		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
+	}
+
+	/**
+	 * Renders the organization category landing page.
+	 *
+	 * WordPress core only supports one submenu depth. This landing page makes
+	 * 「組織」 a real category while keeping 組織名簿 and 同窓会組織図 grouped
+	 * directly beneath it in the Alumni Core menu.
+	 */
+	public function render_organization_overview() {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'この画面を表示する権限がありません。', 'alumni-core' ) );
+		}
+		?>
+		<div class="wrap alumni-core-wrap">
+			<h1><?php esc_html_e( '組織', 'alumni-core' ); ?></h1>
+			<p><?php esc_html_e( '組織名簿と同窓会組織図を管理します。', 'alumni-core' ); ?></p>
+			<p>
+				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=' . Officers_Page::SLUG ) ); ?>"><?php esc_html_e( '組織名簿', 'alumni-core' ); ?></a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=' . Org_Chart_Page::SLUG ) ); ?>"><?php esc_html_e( '同窓会組織図', 'alumni-core' ); ?></a>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
