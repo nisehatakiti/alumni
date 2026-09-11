@@ -8,6 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Social_SNS {
 	const OPTION_NAME = 'alumni_core_sns_settings';
+	const FACEBOOK_APP_ID = '185738782028798';
 	const X = 'sns_x';
 	const INSTAGRAM = 'sns_instagram';
 	const FACEBOOK = 'sns_facebook';
@@ -135,15 +136,18 @@ class Social_SNS {
 						'adapt_container_width' => 'false',
 						'hide_cover'            => 'true',
 						'show_facepile'         => 'true',
-						'appId'                 => '185738782028798',
+						'appId'                 => self::FACEBOOK_APP_ID,
 					),
 					'https://www.facebook.com/plugins/page.php'
 				);
+				// Use the exact outer dimensions from the verified live embed.
+				// The previous responsive CSS stretched the iframe to a width that
+				// did not match the Page Plugin's own width parameter, which can
+				// leave the shell visible while the timeline itself remains blank.
 				$html = sprintf(
-					'<iframe class="alumni-sns-facebook-frame" src="%1$s" width="%2$d" height="%3$d" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" title="%4$s"></iframe>',
+					'<iframe class="alumni-sns-facebook-frame" src="%1$s" width="%2$d" height="540" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" title="%3$s"></iframe>',
 					esc_url( $iframe_url ),
 					$facebook_width,
-					$height,
 					esc_attr( sprintf( __( '%s タイムライン', 'alumni-core' ), $label ) )
 				);
 				break;
