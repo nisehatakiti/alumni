@@ -61,6 +61,13 @@ final class Plugin {
 
 		$this->load_dependencies();
 
+		/**
+		 * Fires after Alumni Core has loaded its public APIs and before WordPress
+		 * runtime registration begins. Official extension plugins can use this
+		 * to register integrations without reaching into Core internals.
+		 */
+		do_action( 'alumni_core_loaded' );
+
 		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
@@ -112,6 +119,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-form-schema-provider.php';
 
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
+		require_once ALUMNI_CORE_PATH . 'public/extension-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/org-chart-functions.php';
 
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
