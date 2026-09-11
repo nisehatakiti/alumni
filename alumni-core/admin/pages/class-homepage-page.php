@@ -281,12 +281,31 @@ class Homepage_Page {
 				<?php esc_html_e( 'コンテンツ', 'alumni-core' ); ?><br />
 				<select name="<?php echo esc_attr( $name ); ?>[value]">
 					<option value="none" <?php selected( 'none', $current_value ); ?>><?php esc_html_e( '（未設定）', 'alumni-core' ); ?></option>
-					<optgroup label="<?php echo esc_attr__( 'システムページ', 'alumni-core' ); ?>">
-						<?php foreach ( Homepage_Sections::system_key_labels() as $system_key => $label ) : ?>
-							<?php $value = 'system:' . $system_key; ?>
-							<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
-						<?php endforeach; ?>
-					</optgroup>
+					<?php
+					$system_groups = array();
+					$system_labels = Homepage_Sections::system_key_labels();
+					$system_key_groups = Homepage_Sections::system_key_groups();
+
+					foreach ( $system_labels as $system_key => $label ) {
+						$group_label = isset( $system_key_groups[ $system_key ] ) && '' !== $system_key_groups[ $system_key ]
+							? (string) $system_key_groups[ $system_key ]
+							: __( 'システムページ', 'alumni-core' );
+
+						if ( ! isset( $system_groups[ $group_label ] ) ) {
+							$system_groups[ $group_label ] = array();
+						}
+
+						$system_groups[ $group_label ][ $system_key ] = $label;
+					}
+					?>
+					<?php foreach ( $system_groups as $group_label => $group_items ) : ?>
+						<optgroup label="<?php echo esc_attr( $group_label ); ?>">
+							<?php foreach ( $group_items as $system_key => $label ) : ?>
+								<?php $value = 'system:' . $system_key; ?>
+								<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $current_value ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</optgroup>
+					<?php endforeach; ?>
 					<?php
 					$form_posts = get_posts(
 						array(
