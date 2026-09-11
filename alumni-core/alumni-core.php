@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Basic plugin constants. Prefixed to avoid collisions with other plugins/themes.
-define( 'ALUMNI_CORE_VERSION', '0.1.14' );
+define( 'ALUMNI_CORE_VERSION', '0.1.15' );
 define( 'ALUMNI_CORE_DB_VERSION', '1' );
 define( 'ALUMNI_CORE_FILE', __FILE__ );
 define( 'ALUMNI_CORE_PATH', plugin_dir_path( __FILE__ ) );
