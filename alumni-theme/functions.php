@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ALUMNI_THEME_VERSION', '0.1.3' );
+define( 'ALUMNI_THEME_VERSION', '0.1.4' );
 define( 'ALUMNI_THEME_DIR', get_template_directory() );
 define( 'ALUMNI_THEME_URI', get_template_directory_uri() );
 
@@ -69,10 +69,21 @@ function alumni_theme_enqueue_assets() {
 		true
 	);
 
+	// Load the official X widget SDK through WordPress rather than injecting it
+	// dynamically at runtime. This gives WordPress a deterministic dependency
+	// order: the SDK is parsed before our initializer runs.
+	wp_enqueue_script(
+		'alumni-x-widgets',
+		'https://platform.x.com/widgets.js',
+		array(),
+		null,
+		true
+	);
+
 	wp_enqueue_script(
 		'alumni-theme-sns-embeds',
 		ALUMNI_THEME_URI . '/assets/js/sns-embeds.js',
-		array(),
+		array( 'alumni-x-widgets' ),
 		ALUMNI_THEME_VERSION,
 		true
 	);
