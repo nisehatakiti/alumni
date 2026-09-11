@@ -2,7 +2,7 @@
 /**
  * Plugin Name: HATAKITI Form
  * Description: 汎用フォームエディタ。通常フォームとWordPress投稿の下書き作成フォームを提供し、外部プラグインの投稿スキーマ連携に対応します。
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires at least: 5.9
  * Requires PHP: 7.4
  * Author: nisehatakiti
@@ -10,7 +10,7 @@
  * Text Domain: hatakiti-form
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
-define( 'HATAKITI_FORM_VERSION', '0.1.0' );
+define( 'HATAKITI_FORM_VERSION', '0.2.0' );
 define( 'HATAKITI_FORM_PATH', plugin_dir_path( __FILE__ ) );
 require_once HATAKITI_FORM_PATH . 'includes/class-schema-registry.php';
 require_once HATAKITI_FORM_PATH . 'includes/class-form-post-type.php';
