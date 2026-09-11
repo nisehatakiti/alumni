@@ -207,49 +207,6 @@ class Post_Type {
 	}
 
 
-	/**
-	 * Removes WordPress's built-in editor support only on 人物挨拶 edit
-	 * screens, so the dedicated 「本文」 textarea in Content_Meta_Box is
-	 * the single and unambiguous place to enter a greeting.
-	 *
-	 * The post type keeps 'editor' support in its base registration because
-	 * 規約類 still needs it for the block editor. This request-scoped removal
-	 * happens after the post type has been registered and only for a
-	 * person_greeting request, so it does not affect 規約類 or any other
-	 * content kind.
-	 *
-	 * Existing post_content is preserved: Content_Meta_Box continues to load
-	 * it into and save it from the dedicated textarea, so no data migration
-	 * is required.
-	 *
-	 * Hooked to load-post.php and load-post-new.php by Module::register().
-	 *
-	 * @return void
-	 */
-	public static function maybe_hide_person_greeting_editor() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only decision about which admin UI to render; no data is written.
-		$post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
-
-		if ( $post_id ) {
-			if ( self::SLUG !== get_post_type( $post_id ) || self::KIND_PERSON_GREETING !== self::get_kind( $post_id ) ) {
-				return;
-			}
-		} else {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only UI routing for the current admin request.
-			$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : '';
-			if ( self::SLUG !== $post_type ) {
-				return;
-			}
-
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only UI routing for the current admin request.
-			$requested_kind = isset( $_GET[ self::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_GET[ self::QUERY_VAR_KIND ] ) ) : '';
-			if ( self::KIND_PERSON_GREETING !== $requested_kind ) {
-				return;
-			}
-		}
-
-		remove_post_type_support( self::SLUG, 'editor' );
-	}
 
 	/**
 	 * Whether the current request should show WordPress's own block editor
