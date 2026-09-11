@@ -47,6 +47,11 @@ class Admin {
 	 */
 	const CAPABILITY = 'manage_options';
 
+	const TOP_HUB_SLUG = 'alumni-core-top';
+	const BASIC_HUB_SLUG = 'alumni-core-basic';
+	const CONTENT_HUB_SLUG = 'alumni-core-content';
+	const ORGANIZATION_HUB_SLUG = 'alumni-core-organization';
+
 	/**
 	 * Dashboard screen handler.
 	 *
@@ -285,15 +290,17 @@ class Admin {
 		);
 
 		add_submenu_page( self::MENU_SLUG, __( 'ダッシュボード', 'alumni-core' ), __( 'ダッシュボード', 'alumni-core' ), self::CAPABILITY, self::MENU_SLUG, array( $this->dashboard_page, 'render' ) );
-		$this->settings_hook = add_submenu_page( self::MENU_SLUG, __( '基本設定', 'alumni-core' ), __( '基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
-		$this->school_photos_hook = add_submenu_page( self::MENU_SLUG, __( '学校写真', 'alumni-core' ), __( '学校写真', 'alumni-core' ), self::CAPABILITY, School_Photos_Page::SLUG, array( $this->school_photos_page, 'render' ) );
-		$this->school_song_motto_hook = add_submenu_page( self::MENU_SLUG, __( '校歌・校訓', 'alumni-core' ), __( '校歌・校訓', 'alumni-core' ), self::CAPABILITY, School_Song_Motto_Page::SLUG, array( $this->school_song_motto_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( 'トップページ設定', 'alumni-core' ), __( 'トップページ設定', 'alumni-core' ), self::CAPABILITY, Homepage_Page::SLUG, array( $this->homepage_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '在校年度一覧', 'alumni-core' ), __( '在校年度一覧', 'alumni-core' ), self::CAPABILITY, School_Enrollment_Years_Page::SLUG, array( $this->school_enrollment_years_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( 'メニュー構成', 'alumni-core' ), __( 'メニュー構成', 'alumni-core' ), self::CAPABILITY, Menu_Page::SLUG, array( $this->menu_page, 'render' ) );
 
-		// WordPress が自動追加する CPT サブメニューを一度外し、管理者に
-		// 分かりやすい機能単位の順序で再登録する。
+		add_submenu_page( self::MENU_SLUG, __( 'トップ画面・メニュー', 'alumni-core' ), __( 'トップ画面・メニュー', 'alumni-core' ), self::CAPABILITY, self::TOP_HUB_SLUG, array( $this, 'render_top_hub' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'トップページ設定', 'alumni-core' ), __( '├ トップページ設定', 'alumni-core' ), self::CAPABILITY, Homepage_Page::SLUG, array( $this->homepage_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'メニュー構成', 'alumni-core' ), __( '└ メニュー構成', 'alumni-core' ), self::CAPABILITY, Menu_Page::SLUG, array( $this->menu_page, 'render' ) );
+
+		add_submenu_page( self::MENU_SLUG, __( '基本情報', 'alumni-core' ), __( '基本情報', 'alumni-core' ), self::CAPABILITY, self::BASIC_HUB_SLUG, array( $this, 'render_basic_hub' ) );
+		$this->settings_hook = add_submenu_page( self::MENU_SLUG, __( '基本設定', 'alumni-core' ), __( '├ 基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
+		$this->school_photos_hook = add_submenu_page( self::MENU_SLUG, __( '学校写真', 'alumni-core' ), __( '├ 学校写真', 'alumni-core' ), self::CAPABILITY, School_Photos_Page::SLUG, array( $this->school_photos_page, 'render' ) );
+		$this->school_song_motto_hook = add_submenu_page( self::MENU_SLUG, __( '校歌・校訓', 'alumni-core' ), __( '├ 校歌・校訓', 'alumni-core' ), self::CAPABILITY, School_Song_Motto_Page::SLUG, array( $this->school_song_motto_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '在校年度一覧', 'alumni-core' ), __( '└ 在校年度一覧', 'alumni-core' ), self::CAPABILITY, School_Enrollment_Years_Page::SLUG, array( $this->school_enrollment_years_page, 'render' ) );
+
 		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=' . Content_Post_Type::SLUG );
 		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=' . Content_Post_Type::SLUG );
 		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=alumni_news_event' );
@@ -301,34 +308,70 @@ class Admin {
 		remove_submenu_page( self::MENU_SLUG, 'edit.php?post_type=alumni_form' );
 		remove_submenu_page( self::MENU_SLUG, 'post-new.php?post_type=alumni_form' );
 
-		add_submenu_page( self::MENU_SLUG, __( 'すべてのコンテンツ', 'alumni-core' ), __( 'すべてのコンテンツ', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG );
-		add_submenu_page( self::MENU_SLUG, __( '自由コンテンツ', 'alumni-core' ), __( '自由コンテンツ', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE );
-		add_submenu_page( self::MENU_SLUG, __( '自由コンテンツを追加', 'alumni-core' ), __( '└ 自由コンテンツを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE );
+		add_submenu_page( self::MENU_SLUG, __( 'コンテンツ', 'alumni-core' ), __( 'コンテンツ', 'alumni-core' ), self::CAPABILITY, self::CONTENT_HUB_SLUG, array( $this, 'render_content_hub' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'すべてのコンテンツ', 'alumni-core' ), __( '├ すべてのコンテンツ', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG );
+		add_submenu_page( self::MENU_SLUG, __( '自由コンテンツ', 'alumni-core' ), __( '├ 自由コンテンツ', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE );
+		add_submenu_page( self::MENU_SLUG, __( '自由コンテンツを追加', 'alumni-core' ), __( '　└ 自由コンテンツを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE );
+		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベント', 'alumni-core' ), __( '├ ニュース・イベント', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_news_event' );
+		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベントを追加', 'alumni-core' ), __( '　└ ニュース・イベントを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_news_event' );
+		add_submenu_page( self::MENU_SLUG, __( '人物挨拶', 'alumni-core' ), __( '├ 人物挨拶', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
+		add_submenu_page( self::MENU_SLUG, __( '人物挨拶を追加', 'alumni-core' ), __( '　├ 人物挨拶を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
+		$this->person_greeting_order_hook = add_submenu_page( self::MENU_SLUG, __( '人物挨拶の並び順', 'alumni-core' ), __( '　└ 人物挨拶の並び順', 'alumni-core' ), self::CAPABILITY, Person_Greeting_Order_Page::SLUG, array( $this->person_greeting_order_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '規約類', 'alumni-core' ), __( '├ 規約類', 'alumni-core' ), self::CAPABILITY, Terms_Page::SLUG, array( $this->terms_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '規約類を追加', 'alumni-core' ), __( '　└ 規約類を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS );
 
-		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベント', 'alumni-core' ), __( 'ニュース・イベント', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_news_event' );
-		add_submenu_page( self::MENU_SLUG, __( 'ニュース・イベントを追加', 'alumni-core' ), __( '└ ニュース・イベントを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_news_event' );
-
-		add_submenu_page( self::MENU_SLUG, __( '人物挨拶', 'alumni-core' ), __( '人物挨拶', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
-		add_submenu_page( self::MENU_SLUG, __( '人物挨拶を追加', 'alumni-core' ), __( '├ 人物挨拶を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING );
-		$this->person_greeting_order_hook = add_submenu_page( self::MENU_SLUG, __( '人物挨拶の並び順', 'alumni-core' ), __( '└ 人物挨拶の並び順', 'alumni-core' ), self::CAPABILITY, Person_Greeting_Order_Page::SLUG, array( $this->person_greeting_order_page, 'render' ) );
-
-		add_submenu_page( self::MENU_SLUG, __( '規約類', 'alumni-core' ), __( '規約類', 'alumni-core' ), self::CAPABILITY, Terms_Page::SLUG, array( $this->terms_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '規約類を追加', 'alumni-core' ), __( '└ 規約類を追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS );
-
-		add_submenu_page( self::MENU_SLUG, __( 'フォーム', 'alumni-core' ), __( 'フォーム', 'alumni-core' ), self::CAPABILITY, 'edit.php?post_type=alumni_form' );
-		add_submenu_page( self::MENU_SLUG, __( 'フォームを追加', 'alumni-core' ), __( '└ フォームを追加', 'alumni-core' ), self::CAPABILITY, 'post-new.php?post_type=alumni_form' );
-
-		// 「組織」カテゴリ。WordPress 標準の管理メニューは三階層を
-		// 持てないため、カテゴリ見出しを挟んで関連画面を連続配置する。
-		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '── 組織 ──', 'alumni-core' ), self::CAPABILITY, 'alumni-core-organization', array( $this, 'render_organization_overview' ) );
-		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
-		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿の並び順', 'alumni-core' ), __( '└ 組織名簿の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '├ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::ADD_SLUG, array( $this->org_chart_page, 'render_add' ) );
-		$this->org_chart_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織図の並び順', 'alumni-core' ), __( '├ 組織図の並び順', 'alumni-core' ), self::CAPABILITY, Org_Chart_Order_Page::SLUG, array( $this->org_chart_order_page, 'render' ) );
-		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '└ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '組織', 'alumni-core' ), self::CAPABILITY, self::ORGANIZATION_HUB_SLUG, array( $this, 'render_organization_overview' ) );
+		$this->officers_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿', 'alumni-core' ), __( '├ 組織名簿', 'alumni-core' ), self::CAPABILITY, Officers_Page::SLUG, array( $this->officers_page, 'render' ) );
+		$this->officer_list_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織名簿の並び順', 'alumni-core' ), __( '　└ 組織名簿の並び順', 'alumni-core' ), self::CAPABILITY, Officer_List_Order_Page::SLUG, array( $this->officer_list_order_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '同窓会組織図', 'alumni-core' ), __( '├ 同窓会組織図', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::SLUG, array( $this->org_chart_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織図を追加', 'alumni-core' ), __( '　├ 組織図を追加', 'alumni-core' ), self::CAPABILITY, Org_Chart_Page::ADD_SLUG, array( $this->org_chart_page, 'render_add' ) );
+		$this->org_chart_order_hook = add_submenu_page( self::MENU_SLUG, __( '組織図の並び順', 'alumni-core' ), __( '　├ 組織図の並び順', 'alumni-core' ), self::CAPABILITY, Org_Chart_Order_Page::SLUG, array( $this->org_chart_order_page, 'render' ) );
+		add_submenu_page( self::MENU_SLUG, __( '組織図グループ管理', 'alumni-core' ), __( '　└ 組織図グループ管理', 'alumni-core' ), self::CAPABILITY, Org_Chart_Group_Page::SLUG, array( $this->org_chart_group_page, 'render' ) );
 
 		do_action( 'alumni_core_register_admin_pages', self::MENU_SLUG );
+	}
+
+	private function render_hub_card( $title, $description, $actions, $features = array() ) {
+		?>
+		<div class="alumni-core-hub-card">
+			<h2><?php echo esc_html( $title ); ?></h2>
+			<p><?php echo esc_html( $description ); ?></p>
+			<?php if ( ! empty( $features ) ) : ?><ul><?php foreach ( $features as $feature ) : ?><li><?php echo esc_html( $feature ); ?></li><?php endforeach; ?></ul><?php endif; ?>
+			<div class="alumni-core-hub-actions">
+				<?php foreach ( $actions as $action ) : ?>
+					<a class="button <?php echo ! empty( $action['primary'] ) ? 'button-primary' : ''; ?>" href="<?php echo esc_url( $action['url'] ); ?>"><?php echo esc_html( $action['label'] ); ?></a>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	public function render_top_hub() {
+		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>トップ画面・メニュー</h1><p>公開サイトのトップページとメニュー構成を設定します。</p><div class="alumni-core-hub-grid"><?php
+		$this->render_hub_card( 'トップページ設定', 'トップページに表示する内容や表示順を設定します。', array( array( 'label' => 'トップページ設定', 'url' => admin_url( 'admin.php?page=' . Homepage_Page::SLUG ), 'primary' => true ) ), array( '表示するコンテンツ', '表示数', '見出し・インデント' ) );
+		$this->render_hub_card( 'メニュー構成', '公開サイトのメニュー項目、順番、階層を設定します。', array( array( 'label' => 'メニュー構成', 'url' => admin_url( 'admin.php?page=' . Menu_Page::SLUG ), 'primary' => true ) ), array( 'メニュー項目', '表示順', '階層・インデント' ) );
+		?></div></div><?php
+	}
+
+	public function render_basic_hub() {
+		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>基本情報</h1><p>学校および同窓会に関する基本情報を設定します。</p><div class="alumni-core-hub-grid"><?php
+		$this->render_hub_card( '基本設定', '同窓会と学校の基本情報を設定します。', array( array( 'label' => '基本設定', 'url' => admin_url( 'admin.php?page=' . Settings_Page::SLUG ), 'primary' => true ) ), array( '同窓会名称', '学校名称', '創立年・第1期卒業年' ) );
+		$this->render_hub_card( '学校写真', '学校に関する写真を登録・管理します。', array( array( 'label' => '学校写真を管理', 'url' => admin_url( 'admin.php?page=' . School_Photos_Page::SLUG ), 'primary' => true ) ) );
+		$this->render_hub_card( '校歌・校訓', '校歌と校訓を登録し、公開方法を設定します。', array( array( 'label' => '校歌・校訓設定', 'url' => admin_url( 'admin.php?page=' . School_Song_Motto_Page::SLUG ), 'primary' => true ) ), array( '校歌', '校訓・説明文', '校訓画像・表示形式' ) );
+		$this->render_hub_card( '在校年度一覧', '卒業期ごとの在校年度を確認・再生成します。', array( array( 'label' => '在校年度一覧', 'url' => admin_url( 'admin.php?page=' . School_Enrollment_Years_Page::SLUG ), 'primary' => true ) ), array( '卒業期', '和暦・西暦', '年度一覧の再生成' ) );
+		?></div></div><?php
+	}
+
+	public function render_content_hub() {
+		$base = admin_url( 'edit.php?post_type=' . Content_Post_Type::SLUG );
+		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>コンテンツ</h1><p>Webサイトに掲載するコンテンツを作成・管理します。</p><div class="alumni-core-hub-full"><?php
+		$this->render_hub_card( 'すべてのコンテンツ', '登録されているコンテンツを横断して確認・管理します。', array( array( 'label' => 'すべてのコンテンツ', 'url' => $base, 'primary' => true ) ) );
+		?></div><h2 class="alumni-core-hub-section-title">コンテンツを追加</h2><div class="alumni-core-hub-grid"><?php
+		$this->render_hub_card( '自由コンテンツ', '任意のページを作成します。', array( array( 'label' => '追加する', 'url' => admin_url( 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE ), 'primary' => true ), array( 'label' => '一覧', 'url' => $base . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_FREE ) ) );
+		$this->render_hub_card( 'ニュース・イベント', 'ニュースやイベントを登録します。', array( array( 'label' => '追加する', 'url' => admin_url( 'post-new.php?post_type=alumni_news_event' ), 'primary' => true ), array( 'label' => '一覧', 'url' => admin_url( 'edit.php?post_type=alumni_news_event' ) ) ) );
+		$this->render_hub_card( '人物挨拶', '人物の挨拶を登録・管理します。', array( array( 'label' => '追加する', 'url' => admin_url( 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING ), 'primary' => true ), array( 'label' => '一覧', 'url' => $base . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_PERSON_GREETING ), array( 'label' => '並び順', 'url' => admin_url( 'admin.php?page=' . Person_Greeting_Order_Page::SLUG ) ) ) );
+		$this->render_hub_card( '規約類', '規約や規程を登録します。', array( array( 'label' => '追加する', 'url' => admin_url( 'post-new.php?post_type=' . Content_Post_Type::SLUG . '&' . Content_Post_Type::QUERY_VAR_KIND . '=' . Content_Post_Type::KIND_TERMS ), 'primary' => true ), array( 'label' => '一覧', 'url' => admin_url( 'admin.php?page=' . Terms_Page::SLUG ) ) ) );
+		?></div></div><?php
 	}
 
 	/**
@@ -339,19 +382,11 @@ class Admin {
 	 * directly beneath it in the Alumni Core menu.
 	 */
 	public function render_organization_overview() {
-		if ( ! current_user_can( self::CAPABILITY ) ) {
-			wp_die( esc_html__( 'この画面を表示する権限がありません。', 'alumni-core' ) );
-		}
-		?>
-		<div class="wrap alumni-core-wrap">
-			<h1><?php esc_html_e( '組織', 'alumni-core' ); ?></h1>
-			<p><?php esc_html_e( '組織名簿と同窓会組織図を管理します。', 'alumni-core' ); ?></p>
-			<p>
-				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'admin.php?page=' . Officers_Page::SLUG ) ); ?>"><?php esc_html_e( '組織名簿', 'alumni-core' ); ?></a>
-				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=' . Org_Chart_Page::SLUG ) ); ?>"><?php esc_html_e( '同窓会組織図', 'alumni-core' ); ?></a>
-			</p>
-		</div>
-		<?php
+		if ( ! current_user_can( self::CAPABILITY ) ) { wp_die( esc_html__( 'この画面を表示する権限がありません。', 'alumni-core' ) ); }
+		?><div class="wrap alumni-core-wrap alumni-core-hub"><h1>組織</h1><p>同窓会の組織構成、組織名簿、組織図を管理します。</p><div class="alumni-core-hub-grid"><?php
+		$this->render_hub_card( '組織名簿', '役員・理事・委員などの登録情報を管理します。', array( array( 'label' => '組織名簿を管理', 'url' => admin_url( 'admin.php?page=' . Officers_Page::SLUG ), 'primary' => true ), array( 'label' => '並び順を変更', 'url' => admin_url( 'admin.php?page=' . Officer_List_Order_Page::SLUG ) ) ), array( '公開グループ', '役職・所属情報', '人物情報' ) );
+		$this->render_hub_card( '同窓会組織図', '複数の組織図を作成・管理します。', array( array( 'label' => '組織図を管理', 'url' => admin_url( 'admin.php?page=' . Org_Chart_Page::SLUG ), 'primary' => true ), array( 'label' => '組織図を追加', 'url' => admin_url( 'admin.php?page=' . Org_Chart_Page::ADD_SLUG ) ), array( 'label' => '並び順を変更', 'url' => admin_url( 'admin.php?page=' . Org_Chart_Order_Page::SLUG ) ), array( 'label' => 'グループ管理', 'url' => admin_url( 'admin.php?page=' . Org_Chart_Group_Page::SLUG ) ) ), array( '複数組織図', '公開グループ', '表示順' ) );
+		?></div></div><?php
 	}
 
 	/**
