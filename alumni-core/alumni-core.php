@@ -3,7 +3,7 @@
  * Plugin Name:       Alumni Core
  * Plugin URI:         https://nisehatakiti.online/alumni/
  * Description:       同窓会ホームページパッケージの共通データ基盤。設定管理、卒業期計算などの基盤機能を提供します。
- * Version:            0.1.14
+ * Version:            0.1.15
  * Requires at least: 5.9
  * Requires PHP:       7.4
  * Author:              nisehatakiti
