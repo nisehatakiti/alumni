@@ -107,7 +107,7 @@ class Social_SNS {
 		switch ( $key ) {
 			case self::X:
 				$html = sprintf(
-					'<a class="twitter-timeline" data-height="%1$d" data-dnt="true" href="%2$s">%3$s</a><script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>',
+					'<a class="twitter-timeline" data-height="%1$d" data-dnt="true" data-theme="light" href="%2$s">%3$s</a>',
 					$height,
 					esc_url( $url ),
 					esc_html( sprintf( __( '%s の投稿', 'alumni-core' ), $label ) )
