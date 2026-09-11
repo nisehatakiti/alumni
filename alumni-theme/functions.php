@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ALUMNI_THEME_VERSION', '0.1.4' );
+define( 'ALUMNI_THEME_VERSION', '0.1.5' );
 define( 'ALUMNI_THEME_DIR', get_template_directory() );
 define( 'ALUMNI_THEME_URI', get_template_directory_uri() );
 

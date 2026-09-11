@@ -1203,9 +1203,12 @@ body.admin-bar.alumni-nav-layout-top .site-header {
 
 .alumni-sns-facebook-frame {
 	display: block;
-	width: 100% !important;
-	max-width: 500px;
-	margin: 0 auto;
+	/* Facebook Page Plugin requires the iframe's rendered width to match
+	 * the width value in its provider URL. Do not stretch this iframe with
+	 * width:100%, otherwise the Page Plugin can show only its shell. */
+	width: 340px !important;
+	max-width: none;
+	margin: 0;
 }
 
 .alumni-sns-instagram-fallback {
