@@ -106,7 +106,7 @@ class Homepage_Sections {
 	 * @return string[]
 	 */
 	public static function system_keys() {
-		return array(
+		$keys = array(
 			self::SYSTEM_NEWS,
 			self::SYSTEM_EVENTS,
 			self::SYSTEM_OFFICERS_INDEX,
@@ -119,6 +119,12 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_SONG,
 			self::SYSTEM_SCHOOL_MOTTO,
 		);
+
+		/**
+		 * Allows Alumni Core extensions to expose their own public pages as
+		 * selectable system content in homepage/menu configuration.
+		 */
+		return array_values( array_unique( apply_filters( 'alumni_core_system_content_keys', $keys ) ) );
 	}
 
 	/**
@@ -127,7 +133,7 @@ class Homepage_Sections {
 	 * @return array<string,string>
 	 */
 	public static function system_key_labels() {
-		return array(
+		$labels = array(
 			self::SYSTEM_NEWS              => __( 'ニュース一覧', 'alumni-core' ),
 			self::SYSTEM_EVENTS            => __( 'イベント一覧', 'alumni-core' ),
 			self::SYSTEM_OFFICERS_INDEX    => __( '役員・理事紹介', 'alumni-core' ),
@@ -140,6 +146,12 @@ class Homepage_Sections {
 			self::SYSTEM_SCHOOL_SONG => __( '校歌', 'alumni-core' ),
 			self::SYSTEM_SCHOOL_MOTTO => __( '校訓', 'alumni-core' ),
 		);
+
+		/**
+		 * Extensions can append label => public page pairs without Core
+		 * knowing the extension in advance.
+		 */
+		return apply_filters( 'alumni_core_system_content_labels', $labels );
 	}
 
 	/**
@@ -176,7 +188,7 @@ class Homepage_Sections {
 			case self::SYSTEM_SCHOOL_MOTTO:
 				return \AlumniCore\Includes\School_Song_Motto_Shortcode::get_url( 'motto' );
 			default:
-				return '';
+				return (string) apply_filters( 'alumni_core_system_content_url', '', $system_key );
 		}
 	}
 
