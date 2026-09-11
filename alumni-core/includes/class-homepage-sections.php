@@ -132,6 +132,29 @@ class Homepage_Sections {
 	 *
 	 * @return array<string,string>
 	 */
+	/**
+	 * Human-readable group labels for system keys in the admin picker.
+	 *
+	 * Core-owned pages remain under the existing "システムページ" group.
+	 * Extensions may assign only their own keys to a separate group via
+	 * alumni_core_system_content_groups.
+	 *
+	 * @return array<string,string> System key => group label.
+	 */
+	public static function system_key_groups() {
+		$groups = array();
+
+		foreach ( self::system_keys() as $system_key ) {
+			$groups[ $system_key ] = __( 'システムページ', 'alumni-core' );
+		}
+
+		/**
+		 * Allows Alumni Core extensions to place their public pages in their
+		 * own optgroup within the homepage/menu content picker.
+		 */
+		return apply_filters( 'alumni_core_system_content_groups', $groups );
+	}
+
 	public static function system_key_labels() {
 		$labels = array(
 			self::SYSTEM_NEWS              => __( 'ニュース一覧', 'alumni-core' ),
