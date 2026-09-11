@@ -57,8 +57,6 @@ class Module {
 		// 上のフィルターでブロックエディターを使い続けるため、CPT全体では
 		// editor supportを残したまま、人物挨拶の編集リクエストだけで
 		// WordPress標準エディターを外す。
-		add_action( 'load-post.php', array( Post_Type::class, 'maybe_hide_person_greeting_editor' ) );
-		add_action( 'load-post-new.php', array( Post_Type::class, 'maybe_hide_person_greeting_editor' ) );
 
 		$meta_box = new Content_Meta_Box();
 		add_action( 'add_meta_boxes', array( $meta_box, 'register' ) );
