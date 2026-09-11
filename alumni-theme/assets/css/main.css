@@ -1152,3 +1152,110 @@ body.admin-bar.alumni-nav-layout-top .site-header {
 .alumni-school-motto-text { font-size: 1.25em; font-weight: 700; margin: 1em 0; }
 .alumni-school-motto-image img { max-width: 100%; height: auto; }
 .alumni-school-song-audio audio { width: min(100%, 520px); }
+
+
+/* SNS content windows ---------------------------------------------------- */
+.alumni-homepage-sns-window {
+	margin-top: 0.75rem;
+	border: 1px solid #d9dee5;
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+	overflow: hidden;
+}
+
+.alumni-homepage-sns-window-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.7rem 0.9rem;
+	border-bottom: 1px solid #e7ebef;
+	background: #f7f9fb;
+}
+
+.alumni-homepage-sns-window-brand {
+	font-weight: 700;
+	color: #26384a;
+}
+
+.alumni-homepage-sns-window-open {
+	font-size: 0.84rem;
+	white-space: nowrap;
+}
+
+.alumni-homepage-sns-window-body {
+	min-height: 520px;
+	padding: 0;
+}
+
+.alumni-homepage-sns-window-body .twitter-timeline {
+	display: block;
+	width: 100% !important;
+	max-width: none !important;
+}
+
+.alumni-homepage-sns-window-body .twitter-timeline-rendered {
+	margin: 0 !important;
+	max-width: none !important;
+	width: 100% !important;
+}
+
+.alumni-sns-facebook-frame {
+	display: block;
+	width: 100% !important;
+	max-width: 500px;
+	margin: 0 auto;
+}
+
+.alumni-sns-instagram-fallback {
+	min-height: 520px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	padding: 2rem;
+	text-align: center;
+	background:
+		linear-gradient(135deg, rgba(255, 220, 128, 0.16), rgba(221, 42, 123, 0.08) 45%, rgba(81, 91, 212, 0.14));
+}
+
+.alumni-sns-instagram-fallback-icon {
+	font-size: 3rem;
+	line-height: 1;
+}
+
+.alumni-sns-instagram-fallback-text {
+	margin: 0;
+	color: #4d5a66;
+}
+
+.alumni-sns-instagram-fallback-button {
+	display: inline-block;
+	padding: 0.65rem 1rem;
+	border-radius: 999px;
+	background: #c13584;
+	color: #fff;
+	text-decoration: none;
+	font-weight: 700;
+}
+
+.alumni-sns-instagram-fallback-button:hover,
+.alumni-sns-instagram-fallback-button:focus {
+	color: #fff;
+	text-decoration: none;
+	filter: brightness(0.95);
+}
+
+@media (max-width: 640px) {
+	.alumni-homepage-sns-window-body,
+	.alumni-sns-instagram-fallback {
+		min-height: 440px;
+	}
+
+	.alumni-homepage-sns-window-header {
+		padding: 0.6rem 0.7rem;
+	}
+}
