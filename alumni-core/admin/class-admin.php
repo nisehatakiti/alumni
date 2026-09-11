@@ -22,6 +22,7 @@ use AlumniCore\Admin\Pages\Person_Greeting_Order_Page;
 use AlumniCore\Admin\Pages\Officer_List_Order_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Group_Page;
 use AlumniCore\Admin\Pages\Org_Chart_Order_Page;
+use AlumniCore\Admin\Pages\SNS_Page;
 use AlumniCore\Includes\Modules\Content\Post_Type as Content_Post_Type;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -65,6 +66,9 @@ class Admin {
 	 * @var Settings_Page
 	 */
 	private $settings_page;
+
+	/** @var SNS_Page */
+	private $sns_page;
 
 	/**
 	 * 学校写真 screen handler.
@@ -175,6 +179,7 @@ class Admin {
 	public function run() {
 		$this->dashboard_page         = new Dashboard_Page();
 		$this->settings_page          = new Settings_Page();
+		$this->sns_page               = new SNS_Page();
 		$this->school_photos_page     = new School_Photos_Page();
 		$this->school_song_motto_page = new School_Song_Motto_Page();
 		$this->officers_page          = new Officers_Page();
@@ -193,6 +198,7 @@ class Admin {
 		add_action( 'pre_get_posts', array( $this, 'filter_person_greeting_list' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_alumni_core_save_settings', array( $this->settings_page, 'handle_save' ) );
+		add_action( 'admin_post_alumni_core_save_sns', array( $this->sns_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_photos', array( $this->school_photos_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_save_school_song_motto', array( $this->school_song_motto_page, 'handle_save' ) );
 		add_action( 'admin_post_alumni_core_create_officer_list', array( $this->officers_page, 'handle_create' ) );
@@ -295,6 +301,7 @@ class Admin {
 		add_submenu_page( self::MENU_SLUG, __( '基本情報', 'alumni-core' ), __( '基本情報', 'alumni-core' ), self::CAPABILITY, self::BASIC_HUB_SLUG, array( $this, 'render_basic_hub' ) );
 		add_submenu_page( self::MENU_SLUG, __( 'コンテンツ', 'alumni-core' ), __( 'コンテンツ', 'alumni-core' ), self::CAPABILITY, self::CONTENT_HUB_SLUG, array( $this, 'render_content_hub' ) );
 		add_submenu_page( self::MENU_SLUG, __( '組織', 'alumni-core' ), __( '組織', 'alumni-core' ), self::CAPABILITY, self::ORGANIZATION_HUB_SLUG, array( $this, 'render_organization_overview' ) );
+		add_submenu_page( self::MENU_SLUG, __( 'SNS', 'alumni-core' ), __( 'SNS', 'alumni-core' ), self::CAPABILITY, SNS_Page::SLUG, array( $this->sns_page, 'render' ) );
 
 		// Register existing admin pages without exposing them in the compact left menu.
 		$this->settings_hook = add_submenu_page( null, __( '基本設定', 'alumni-core' ), __( '基本設定', 'alumni-core' ), self::CAPABILITY, Settings_Page::SLUG, array( $this->settings_page, 'render' ) );
