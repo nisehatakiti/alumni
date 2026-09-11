@@ -1,6 +1,6 @@
 <?php
 /**
- * コンテンツ種別・本文・人物挨拶用フィールドのメタボックス.
+ * コンテンツ種別・対象者・人物挨拶用フィールドのメタボックス.
  *
  * @package AlumniCore
  */
@@ -16,9 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Renders and saves the alumni_content post type's fixed input form:
- * コンテンツ種別 (free/person_greeting/terms/folder), 本文 (plain textarea,
- * saved to post_content — for every kind except 規約類), and —
- * kind-specific — 氏名／ふりがな／肩書／人物挨拶グループ／任期／卒業期／
+ * コンテンツ種別 (free/person_greeting/terms/folder) and kind-specific — 氏名／ふりがな／肩書／人物挨拶グループ／任期／卒業期／
  * 顔写真 (人物挨拶) or 公開タイトル／施行日／改定履歴／文字サイズ／表示順
  * (規約類).
  *
@@ -264,24 +262,6 @@ class Content_Meta_Box {
 				</p>
 			</div>
 
-			<?php if ( Post_Type::KIND_TERMS === $kind ) : ?>
-				<p class="description alumni-terms-editor-note">
-					<?php esc_html_e( '規約類の本文は、この上の「タイトルを追加」欄の下にあるブロックエディターで編集します。段落ごとに太字や文字サイズ（小・標準・大・特大）を指定できます。', 'alumni-core' ); ?>
-				</p>
-			<?php else : ?>
-				<p>
-					<label for="alumni_content_body">
-						<strong>
-							<?php
-							echo Post_Type::KIND_FOLDER === $kind
-								? esc_html__( '本文（任意）', 'alumni-core' )
-								: esc_html__( '本文（必須）', 'alumni-core' );
-							?>
-						</strong>
-					</label><br />
-					<textarea id="alumni_content_body" name="alumni_content_body" rows="12" class="large-text"><?php echo esc_textarea( $post->post_content ); ?></textarea>
-				</p>
-			<?php endif; ?>
 		</div>
 		<?php
 	}
@@ -553,28 +533,16 @@ class Content_Meta_Box {
 			return $data;
 		}
 
+		// 本文は全コンテンツ種別で上側のWordPress標準エディターが唯一の
+		// 入力元。ここで post_content を独自フィールドから再代入しないため、
+		// 「メディアを追加」で挿入した画像HTMLを含む本文が更新時に消えない。
+		//
+		// 規約類だけは表示順をこの段階で標準の menu_order カラムへ反映する。
 		$kind = isset( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ? sanitize_key( wp_unslash( $_POST[ Post_Type::QUERY_VAR_KIND ] ) ) : Post_Type::KIND_FREE;
-
-		// 規約類は本文をWordPress標準のブロックエディターで編集する
-		// (Post_Type::maybe_use_block_editor()参照)ため、この
-		// リクエストにはalumni_content_bodyテキストエリア自体が存在しない
-		// （render()が規約類の場合は描画しない）。$dataのpost_contentには
-		// すでにWordPress自身がブロックエディターの送信値を正しく入れて
-		// いるので、ここで空文字などに上書きしない。
-		if ( Post_Type::KIND_TERMS !== $kind ) {
-			// 自由コンテンツ／人物挨拶の本文はクラシックエディターから送信されるため、
-			// テキストだけに限定する sanitize_textarea_field() ではなく、WordPress標準投稿本文と
-			// 同じ安全な許可HTMLセットを使う wp_kses_post() で保存する。これにより「メディアを追加」
-			// から挿入した <img> などの画像HTMLを保持できる。
-			$content = isset( $_POST['alumni_content_body'] ) ? wp_kses_post( wp_unslash( $_POST['alumni_content_body'] ) ) : '';
-
-			$data['post_content'] = wp_slash( $content );
-		}
 
 		if ( Post_Type::KIND_TERMS === $kind && isset( $_POST['alumni_terms_menu_order'] ) ) {
 			$data['menu_order'] = max( 0, (int) wp_unslash( $_POST['alumni_terms_menu_order'] ) );
 		}
-
 
 		return $data;
 	}
