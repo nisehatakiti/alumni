@@ -12,7 +12,7 @@ class SNS_Page {
 	public function render() {
 		if ( ! current_user_can( Admin::CAPABILITY ) ) return;
 		$settings = Social_SNS::get_all();
-		$instagram = isset( $settings[ Social_SNS::INSTAGRAM ] ) ? $settings[ Social_SNS::INSTAGRAM ] : array();
+		$instagram = Instagram_Feed::connection();
 		?>
 		<div class="wrap alumni-core-settings">
 			<h1>SNS</h1>
