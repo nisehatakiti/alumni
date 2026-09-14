@@ -60,15 +60,15 @@ class Social_SNS {
 	private static function sanitize_x_embed_code( $code ) {
 		$allowed = array(
 			'a' => array(
-				'class' => true,
-				href   => true,
-				target => true,
-				rel    => true,
+				'class'  => true,
+				'href'   => true,
+				'target' => true,
+				'rel'    => true,
 			),
 			'script' => array(
-				'async'    => true,
-				'src'      => true,
-				'charset'  => true,
+				'async'   => true,
+				'src'     => true,
+				'charset' => true,
 			),
 		);
 		$sanitized = wp_kses( (string) $code, $allowed );
