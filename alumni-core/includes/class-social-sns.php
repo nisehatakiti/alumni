@@ -102,10 +102,11 @@ class Social_SNS {
 		switch ( $key ) {
 			case self::X:
 				/*
-				 * Use the current public X hostname for the official widgets.js
-				 * timeline. The older twitter.com workaround is no longer reliable
-				 * with the current widget implementation. Remove query strings and
-				 * fragments because they are not part of the profile identity.
+				 * Follow the current X Publish embed markup as closely as possible.
+				 * In particular, keep the public x.com hostname and add the same
+				 * ref_src parameter used by X's generated code. Do not substitute
+				 * twitter.com here; that was only an older workaround for legacy
+				 * versions of the widget.
 				 */
 				$x_parts = wp_parse_url( $url );
 				$x_embed_url = $url;
@@ -116,12 +117,21 @@ class Social_SNS {
 						$x_embed_url = 'https://x.com' . $x_path;
 					}
 				}
+				$x_embed_url = add_query_arg( 'ref_src', 'twsrc^tfw', $x_embed_url );
+
+				$handle = '';
+				if ( is_array( $x_parts ) && ! empty( $x_parts['path'] ) ) {
+					$path_parts = array_values( array_filter( explode( '/', trim( $x_parts['path'], '/' ) ) ) );
+					if ( ! empty( $path_parts ) ) {
+						$handle = end( $path_parts );
+					}
+				}
+				$link_text = $handle ? sprintf( 'Posts by %s', $handle ) : sprintf( '%s', $label );
 
 				$html = sprintf(
-					'<a class="twitter-timeline" data-height="%1$d" data-dnt="true" data-theme="light" href="%2$s">%3$s</a>',
-					$height,
+					'<a class="twitter-timeline" href="%1$s">%2$s</a>',
 					esc_url( $x_embed_url ),
-					esc_html( sprintf( __( '%s の投稿', 'alumni-core' ), $label ) )
+					esc_html( $link_text )
 				);
 				break;
 
