@@ -17,59 +17,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  * instance.
  */
 final class Plugin {
-
-	/**
-	 * Singleton instance.
-	 *
-	 * @var Plugin|null
-	 */
 	private static $instance = null;
-
-	/**
-	 * Whether run() has already executed, so repeated calls are harmless.
-	 *
-	 * @var bool
-	 */
 	private $has_run = false;
 
-	/**
-	 * Returns the singleton instance.
-	 *
-	 * @return Plugin
-	 */
 	public static function instance() {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-
+		if ( null === self::$instance ) self::$instance = new self();
 		return self::$instance;
 	}
 
-	/**
-	 * Use instance() instead.
-	 */
 	private function __construct() {}
 
-	/**
-	 * Loads dependencies and registers hooks. Safe to call multiple times.
-	 */
 	public function run() {
-		if ( $this->has_run ) {
-			return;
-		}
+		if ( $this->has_run ) return;
 		$this->has_run = true;
-
 		$this->load_dependencies();
-
-		/**
-		 * Fires after Alumni Core has loaded its public APIs and before WordPress
-		 * runtime registration begins. Official extension plugins can use this
-		 * to register integrations without reaching into Core internals.
-		 */
 		do_action( 'alumni_core_loaded' );
-
 		add_action( 'init', array( $this, 'load_textdomain' ) );
-
 		\AlumniCore\Includes\Modules\NewsEvents\Module::register();
 		\AlumniCore\Includes\Modules\Content\Module::register();
 		\AlumniCore\Includes\Modules\Forms\Module::register();
@@ -84,16 +47,13 @@ final class Plugin {
 		\AlumniCore\Includes\School_Photos_Shortcode::register();
 		\AlumniCore\Includes\School_Song_Motto_Shortcode::register();
 		\AlumniCore\Includes\Form_Schema_Provider::register();
-
+		\AlumniCore\Includes\Instagram_Feed::register();
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( '\AlumniCore\Includes\Installer', 'maybe_upgrade' ) );
 			( new \AlumniCore\Admin\Admin() )->run();
 		}
 	}
 
-	/**
-	 * Requires the classes that make up the plugin.
-	 */
 	private function load_dependencies() {
 		require_once ALUMNI_CORE_PATH . 'includes/class-installer.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-settings.php';
@@ -118,11 +78,10 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-school-song-motto-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-form-schema-provider.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-social-sns.php';
-
+		require_once ALUMNI_CORE_PATH . 'includes/class-instagram-feed.php';
 		require_once ALUMNI_CORE_PATH . 'public/functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/extension-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/org-chart-functions.php';
-
 		require_once ALUMNI_CORE_PATH . 'admin/class-admin.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-dashboard-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-settings-page.php';
@@ -140,27 +99,22 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-org-chart-group-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-person-greeting-order-page.php';
 		require_once ALUMNI_CORE_PATH . 'admin/pages/class-sns-page.php';
-
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-listing-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-meta-box.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-admin-columns.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-required-fields.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/news-events/class-module.php';
-
 		require_once ALUMNI_CORE_PATH . 'public/news-events-functions.php';
-
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-meta-box.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-admin-columns.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-required-fields.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/content/class-module.php';
-
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-post-type.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-meta-box.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-public.php';
 		require_once ALUMNI_CORE_PATH . 'includes/modules/forms/class-module.php';
-
 		require_once ALUMNI_CORE_PATH . 'public/content-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/officers-functions.php';
 		require_once ALUMNI_CORE_PATH . 'public/hierarchy-functions.php';
@@ -168,9 +122,6 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'public/menu-functions.php';
 	}
 
-	/**
-	 * Loads plugin translations.
-	 */
 	public function load_textdomain() {
 		load_plugin_textdomain( 'alumni-core', false, dirname( ALUMNI_CORE_BASENAME ) . '/languages' );
 	}
