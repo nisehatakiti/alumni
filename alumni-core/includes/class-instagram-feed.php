@@ -65,6 +65,7 @@ class Instagram_Feed {
 		$url = 'https://www.instagram.com/' . rawurlencode( $connection['username'] ) . '/';
 		$settings[ Social_SNS::INSTAGRAM ]['url'] = $url;
 		$settings[ Social_SNS::INSTAGRAM ]['enabled'] = true;
+		if ( isset( $settings[ Social_SNS::INSTAGRAM ]['embed_code'] ) ) $settings[ Social_SNS::INSTAGRAM ]['embed_code'] = '';
 		$running = true;
 		update_option( Social_SNS::OPTION_NAME, $settings );
 		$running = false;
@@ -93,15 +94,29 @@ class Instagram_Feed {
 	public static function feed() {
 		$connection = get_option( self::CONNECTION_OPTION, array() );
 		if ( empty( $connection['access_token'] ) || empty( $connection['user_id'] ) ) return array();
+		self::refresh_token_if_needed( $connection );
+		$connection = get_option( self::CONNECTION_OPTION, array() );
 		if ( ! empty( $connection['feed'] ) && ! empty( $connection['feed_updated'] ) && (int) $connection['feed_updated'] > time() - 6 * HOUR_IN_SECONDS ) return $connection['feed'];
 		self::refresh_feed();
 		$connection = get_option( self::CONNECTION_OPTION, array() );
 		return isset( $connection['feed'] ) && is_array( $connection['feed'] ) ? $connection['feed'] : array();
 	}
 
+	private static function refresh_token_if_needed( $connection ) {
+		if ( empty( $connection['token_expires'] ) || (int) $connection['token_expires'] > time() + 7 * DAY_IN_SECONDS ) return;
+		$response = wp_remote_get( add_query_arg( array( 'grant_type' => 'ig_refresh_token', 'access_token' => $connection['access_token'] ), self::API_BASE . '/refresh_access_token' ), array( 'timeout' => 20 ) );
+		$data = is_wp_error( $response ) ? array() : json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $data ) || empty( $data['access_token'] ) ) return;
+		$connection['access_token'] = sanitize_text_field( $data['access_token'] );
+		$connection['token_expires'] = time() + ( isset( $data['expires_in'] ) ? absint( $data['expires_in'] ) : 60 * DAY_IN_SECONDS );
+		update_option( self::CONNECTION_OPTION, $connection, false );
+	}
+
 	public static function refresh_feed( $force = false ) {
 		$connection = get_option( self::CONNECTION_OPTION, array() );
 		if ( empty( $connection['access_token'] ) || empty( $connection['user_id'] ) ) return false;
+		self::refresh_token_if_needed( $connection );
+		$connection = get_option( self::CONNECTION_OPTION, array() );
 		if ( ! $force && ! empty( $connection['feed_updated'] ) && (int) $connection['feed_updated'] > time() - 6 * HOUR_IN_SECONDS ) return true;
 		$response = wp_remote_get( add_query_arg( array( 'fields' => 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp', 'limit' => 12, 'access_token' => $connection['access_token'] ), self::API_BASE . '/' . rawurlencode( $connection['user_id'] ) . '/media' ), array( 'timeout' => 20 ) );
 		if ( is_wp_error( $response ) ) return false;
