@@ -10,7 +10,6 @@ class Instagram_Feed {
 	const OAUTH_URL = 'https://www.instagram.com/oauth/authorize';
 	const TOKEN_URL = 'https://api.instagram.com/oauth/access_token';
 	const SCOPE = 'instagram_business_basic';
-	const FEED_CACHE_KEY = 'alumni_core_instagram_feed';
 
 	public static function register() {
 		add_action( 'admin_post_' . self::AUTH_ACTION, array( __CLASS__, 'callback' ) );
@@ -19,10 +18,7 @@ class Instagram_Feed {
 	}
 
 	public static function redirect_uri() { return admin_url( 'admin-post.php?action=' . self::AUTH_ACTION ); }
-
-	public static function is_configured() {
-		return defined( 'ALUMNI_INSTAGRAM_APP_ID' ) && defined( 'ALUMNI_INSTAGRAM_APP_SECRET' ) && ALUMNI_INSTAGRAM_APP_ID && ALUMNI_INSTAGRAM_APP_SECRET;
-	}
+	public static function is_configured() { return defined( 'ALUMNI_INSTAGRAM_APP_ID' ) && defined( 'ALUMNI_INSTAGRAM_APP_SECRET' ) && ALUMNI_INSTAGRAM_APP_ID && ALUMNI_INSTAGRAM_APP_SECRET; }
 
 	public static function connect_url() {
 		if ( ! self::is_configured() ) return '';
@@ -50,16 +46,7 @@ class Instagram_Feed {
 		$user = wp_remote_get( add_query_arg( array( 'fields' => 'id,username,account_type,profile_picture_url', 'access_token' => $token ), self::API_BASE . '/me' ), array( 'timeout' => 20 ) );
 		$user_data = is_wp_error( $user ) ? array() : json_decode( wp_remote_retrieve_body( $user ), true );
 		if ( ! is_array( $user_data ) || empty( $user_data['id'] ) ) self::fail( 'Instagramアカウント情報を取得できませんでした。' );
-		$connection = array(
-			'access_token' => $token,
-			'user_id' => sanitize_text_field( $user_data['id'] ),
-			'username' => isset( $user_data['username'] ) ? sanitize_text_field( $user_data['username'] ) : '',
-			'account_type' => isset( $user_data['account_type'] ) ? sanitize_text_field( $user_data['account_type'] ) : '',
-			'profile_picture_url' => isset( $user_data['profile_picture_url'] ) ? esc_url_raw( $user_data['profile_picture_url'] ) : '',
-			'token_expires' => time() + ( isset( $long_data['expires_in'] ) ? absint( $long_data['expires_in'] ) : 60 * DAY_IN_SECONDS ),
-			'feed' => array(),
-			'feed_updated' => 0,
-		);
+		$connection = array( 'access_token' => $token, 'user_id' => sanitize_text_field( $user_data['id'] ), 'username' => isset( $user_data['username'] ) ? sanitize_text_field( $user_data['username'] ) : '', 'account_type' => isset( $user_data['account_type'] ) ? sanitize_text_field( $user_data['account_type'] ) : '', 'profile_picture_url' => isset( $user_data['profile_picture_url'] ) ? esc_url_raw( $user_data['profile_picture_url'] ) : '', 'token_expires' => time() + ( isset( $long_data['expires_in'] ) ? absint( $long_data['expires_in'] ) : 60 * DAY_IN_SECONDS ), 'feed' => array(), 'feed_updated' => 0 );
 		update_option( self::CONNECTION_OPTION, $connection, false );
 		self::restore_url();
 		self::refresh_feed( true );
@@ -76,8 +63,8 @@ class Instagram_Feed {
 		if ( ! is_array( $settings ) ) return;
 		if ( ! isset( $settings[ Social_SNS::INSTAGRAM ] ) || ! is_array( $settings[ Social_SNS::INSTAGRAM ] ) ) $settings[ Social_SNS::INSTAGRAM ] = array();
 		$url = 'https://www.instagram.com/' . rawurlencode( $connection['username'] ) . '/';
-		if ( isset( $settings[ Social_SNS::INSTAGRAM ]['url'] ) && $settings[ Social_SNS::INSTAGRAM ]['url'] === $url ) return;
 		$settings[ Social_SNS::INSTAGRAM ]['url'] = $url;
+		$settings[ Social_SNS::INSTAGRAM ]['enabled'] = true;
 		$running = true;
 		update_option( Social_SNS::OPTION_NAME, $settings );
 		$running = false;
@@ -130,6 +117,8 @@ class Instagram_Feed {
 		$connection = get_option( self::CONNECTION_OPTION, array() );
 		return ! empty( $connection['access_token'] ) && ! empty( $connection['user_id'] );
 	}
+
+	public static function connection() { return get_option( self::CONNECTION_OPTION, array() ); }
 
 	private static function fail( $message ) {
 		wp_safe_redirect( add_query_arg( array( 'page' => 'alumni-core-sns', 'instagram_error' => rawurlencode( wp_strip_all_tags( $message ) ) ), admin_url( 'admin.php' ) ) );
