@@ -19,7 +19,6 @@ class Instagram_Feed {
 
 	public static function redirect_uri() { return admin_url( 'admin-post.php?action=' . self::AUTH_ACTION ); }
 	public static function is_configured() { return defined( 'ALUMNI_INSTAGRAM_APP_ID' ) && defined( 'ALUMNI_INSTAGRAM_APP_SECRET' ) && ALUMNI_INSTAGRAM_APP_ID && ALUMNI_INSTAGRAM_APP_SECRET; }
-
 	public static function connect_url() {
 		if ( ! self::is_configured() ) return '';
 		$state = wp_generate_password( 32, false, false );
@@ -48,6 +47,11 @@ class Instagram_Feed {
 		if ( ! is_array( $user_data ) || empty( $user_data['id'] ) ) self::fail( 'Instagramアカウント情報を取得できませんでした。' );
 		$connection = array( 'access_token' => $token, 'user_id' => sanitize_text_field( $user_data['id'] ), 'username' => isset( $user_data['username'] ) ? sanitize_text_field( $user_data['username'] ) : '', 'account_type' => isset( $user_data['account_type'] ) ? sanitize_text_field( $user_data['account_type'] ) : '', 'profile_picture_url' => isset( $user_data['profile_picture_url'] ) ? esc_url_raw( $user_data['profile_picture_url'] ) : '', 'token_expires' => time() + ( isset( $long_data['expires_in'] ) ? absint( $long_data['expires_in'] ) : 60 * DAY_IN_SECONDS ), 'feed' => array(), 'feed_updated' => 0 );
 		update_option( self::CONNECTION_OPTION, $connection, false );
+		$settings = get_option( Social_SNS::OPTION_NAME, array() );
+		if ( ! is_array( $settings ) ) $settings = array();
+		if ( ! isset( $settings[ Social_SNS::INSTAGRAM ] ) || ! is_array( $settings[ Social_SNS::INSTAGRAM ] ) ) $settings[ Social_SNS::INSTAGRAM ] = array();
+		$settings[ Social_SNS::INSTAGRAM ]['enabled'] = true;
+		update_option( Social_SNS::OPTION_NAME, $settings );
 		self::restore_url();
 		self::refresh_feed( true );
 		wp_safe_redirect( add_query_arg( array( 'page' => 'alumni-core-sns', 'updated' => 'true', 'instagram_connected' => 'true' ), admin_url( 'admin.php' ) ) );
@@ -63,9 +67,8 @@ class Instagram_Feed {
 		if ( ! is_array( $settings ) ) return;
 		if ( ! isset( $settings[ Social_SNS::INSTAGRAM ] ) || ! is_array( $settings[ Social_SNS::INSTAGRAM ] ) ) $settings[ Social_SNS::INSTAGRAM ] = array();
 		$url = 'https://www.instagram.com/' . rawurlencode( $connection['username'] ) . '/';
+		if ( isset( $settings[ Social_SNS::INSTAGRAM ]['url'] ) && $settings[ Social_SNS::INSTAGRAM ]['url'] === $url ) return;
 		$settings[ Social_SNS::INSTAGRAM ]['url'] = $url;
-		$settings[ Social_SNS::INSTAGRAM ]['enabled'] = true;
-		if ( isset( $settings[ Social_SNS::INSTAGRAM ]['embed_code'] ) ) $settings[ Social_SNS::INSTAGRAM ]['embed_code'] = '';
 		$running = true;
 		update_option( Social_SNS::OPTION_NAME, $settings );
 		$running = false;
@@ -128,11 +131,7 @@ class Instagram_Feed {
 		return true;
 	}
 
-	public static function connected() {
-		$connection = get_option( self::CONNECTION_OPTION, array() );
-		return ! empty( $connection['access_token'] ) && ! empty( $connection['user_id'] );
-	}
-
+	public static function connected() { $connection = get_option( self::CONNECTION_OPTION, array() ); return ! empty( $connection['access_token'] ) && ! empty( $connection['user_id'] ); }
 	public static function connection() { return get_option( self::CONNECTION_OPTION, array() ); }
 
 	private static function fail( $message ) {
