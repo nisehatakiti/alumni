@@ -71,39 +71,8 @@ class Social_SNS {
 		return $labels;
 	}
 
-	/**
-	 * True when the given key is one of AlumniCore's standard SNS services.
-	 *
-	 * @param string $key
-	 * @return bool
-	 */
 	public static function is_sns_key( $key ) {
 		return array_key_exists( $key, self::services() );
-	}
-
-	/**
-	 * Normalize an X profile URL for the legacy Twitter widget compatibility
-	 * path. The X widget has historically been more reliable with the
-	 * twitter.com hostname, while the public setting can remain an x.com URL.
-	 * Query strings/fragments are not part of the profile identity and are
-	 * therefore removed.
-	 *
-	 * @param string $url
-	 * @return string
-	 */
-	private static function normalize_x_embed_url( $url ) {
-		$parts = wp_parse_url( $url );
-		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
-			return $url;
-		}
-
-		$host = strtolower( $parts['host'] );
-		if ( ! in_array( $host, array( 'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com' ), true ) ) {
-			return $url;
-		}
-
-		$path = isset( $parts['path'] ) ? (string) $parts['path'] : '';
-		return 'https://twitter.com' . $path;
 	}
 
 	/**
@@ -133,13 +102,21 @@ class Social_SNS {
 		switch ( $key ) {
 			case self::X:
 				/*
-				 * Keep the public setting compatible with both x.com and the
-				 * legacy twitter.com hostname, but feed the official widget a
-				 * clean twitter.com profile URL. This mirrors a long-standing
-				 * workaround for cases where an x.com profile remains a plain
-				 * link instead of being transformed by widgets.js.
+				 * Use the current public X hostname for the official widgets.js
+				 * timeline. The older twitter.com workaround is no longer reliable
+				 * with the current widget implementation. Remove query strings and
+				 * fragments because they are not part of the profile identity.
 				 */
-				$x_embed_url = self::normalize_x_embed_url( $url );
+				$x_parts = wp_parse_url( $url );
+				$x_embed_url = $url;
+				if ( is_array( $x_parts ) && ! empty( $x_parts['host'] ) ) {
+					$x_host = strtolower( $x_parts['host'] );
+					if ( in_array( $x_host, array( 'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com' ), true ) ) {
+						$x_path = isset( $x_parts['path'] ) ? (string) $x_parts['path'] : '';
+						$x_embed_url = 'https://x.com' . $x_path;
+					}
+				}
+
 				$html = sprintf(
 					'<a class="twitter-timeline" data-height="%1$d" data-dnt="true" data-theme="light" href="%2$s">%3$s</a>',
 					$height,
@@ -149,14 +126,6 @@ class Social_SNS {
 				break;
 
 			case self::FACEBOOK:
-				/*
-				 * Keep this URL structure aligned with Facebook's Page Plugin
-				 * markup confirmed to work on the live alumni site. In particular,
-				 * the plugin's internal render width is 340px while the surrounding
-				 * iframe may be shown at a different CSS size; using the previous
-				 * 500px/adapt-container combination produced only the plugin shell
-				 * in this site's layout.
-				 */
 				$facebook_width  = 340;
 				$facebook_height = 720;
 				$iframe_url = add_query_arg(
@@ -173,10 +142,6 @@ class Social_SNS {
 					),
 					'https://www.facebook.com/plugins/page.php'
 				);
-				// Use the exact outer dimensions from the verified live embed.
-				// The previous responsive CSS stretched the iframe to a width that
-				// did not match the Page Plugin's own width parameter, which can
-				// leave the shell visible while the timeline itself remains blank.
 				$html = sprintf(
 					'<iframe class="alumni-sns-facebook-frame" src="%1$s" width="%2$d" height="540" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" title="%3$s"></iframe>',
 					esc_url( $iframe_url ),
@@ -195,11 +160,6 @@ class Social_SNS {
 				break;
 		}
 
-		/**
-		 * Allows a provider plugin or site-specific integration to replace or
-		 * enhance the standard embed. This is especially useful for Instagram
-		 * feeds backed by an authenticated API/widget.
-		 */
 		return (string) apply_filters( 'alumni_core_social_sns_embed_html', $html, $key, $url, $args );
 	}
 }
