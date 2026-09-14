@@ -102,11 +102,11 @@ class Social_SNS {
 		switch ( $key ) {
 			case self::X:
 				/*
-				 * Follow the current X Publish embed markup as closely as possible.
-				 * In particular, keep the public x.com hostname and add the same
-				 * ref_src parameter used by X's generated code. Do not substitute
-				 * twitter.com here; that was only an older workaround for legacy
-				 * versions of the widget.
+				 * Use the exact shape of the current X Publish-generated embed.
+				 * The widgets.js script is deliberately placed immediately after
+				 * the timeline anchor, matching X's own generated snippet. This
+				 * avoids relying on WordPress dependency timing or a second custom
+				 * initializer to discover the anchor after the page has loaded.
 				 */
 				$x_parts = wp_parse_url( $url );
 				$x_embed_url = $url;
@@ -129,7 +129,7 @@ class Social_SNS {
 				$link_text = $handle ? sprintf( 'Posts by %s', $handle ) : sprintf( '%s', $label );
 
 				$html = sprintf(
-					'<a class="twitter-timeline" href="%1$s">%2$s</a>',
+					'<a class="twitter-timeline" href="%1$s">%2$s</a><script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>',
 					esc_url( $x_embed_url ),
 					esc_html( $link_text )
 				);
