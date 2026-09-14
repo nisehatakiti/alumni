@@ -82,6 +82,31 @@ class Social_SNS {
 	}
 
 	/**
+	 * Normalize an X profile URL for the legacy Twitter widget compatibility
+	 * path. The X widget has historically been more reliable with the
+	 * twitter.com hostname, while the public setting can remain an x.com URL.
+	 * Query strings/fragments are not part of the profile identity and are
+	 * therefore removed.
+	 *
+	 * @param string $url
+	 * @return string
+	 */
+	private static function normalize_x_embed_url( $url ) {
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
+			return $url;
+		}
+
+		$host = strtolower( $parts['host'] );
+		if ( ! in_array( $host, array( 'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com' ), true ) ) {
+			return $url;
+		}
+
+		$path = isset( $parts['path'] ) ? (string) $parts['path'] : '';
+		return 'https://twitter.com' . $path;
+	}
+
+	/**
 	 * Return provider-specific front-end markup for the SNS content window.
 	 *
 	 * X and Facebook use their official public embed mechanisms. Instagram
@@ -107,10 +132,18 @@ class Social_SNS {
 
 		switch ( $key ) {
 			case self::X:
+				/*
+				 * Keep the public setting compatible with both x.com and the
+				 * legacy twitter.com hostname, but feed the official widget a
+				 * clean twitter.com profile URL. This mirrors a long-standing
+				 * workaround for cases where an x.com profile remains a plain
+				 * link instead of being transformed by widgets.js.
+				 */
+				$x_embed_url = self::normalize_x_embed_url( $url );
 				$html = sprintf(
 					'<a class="twitter-timeline" data-height="%1$d" data-dnt="true" data-theme="light" href="%2$s">%3$s</a>',
 					$height,
-					esc_url( $url ),
+					esc_url( $x_embed_url ),
 					esc_html( sprintf( __( '%s の投稿', 'alumni-core' ), $label ) )
 				);
 				break;
