@@ -77,7 +77,7 @@ final class Plugin {
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-person-greeting-groups-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-school-photos-shortcode.php';
-		require_once ALUMNI_CORE_PATH . 'includes/class-school-song-motto-page.php';
+		require_once ALUMNI_CORE_PATH . 'includes/class-school-song-motto-shortcode.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-form-schema-provider.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-social-sns.php';
 		require_once ALUMNI_CORE_PATH . 'includes/class-instagram-feed.php';
