@@ -17,7 +17,7 @@
 namespace AlumniCore;
 
 if ( ! defined( 'ABSPATH' ) ) {
-\texit;
+	exit;
 }
 
 define( 'ALUMNI_CORE_VERSION', '0.1.20' );
@@ -33,3 +33,5 @@ require_once ALUMNI_CORE_PATH . 'includes/class-deactivator.php';
 
 register_activation_hook( __FILE__, array( Includes\Activator::class, 'activate' ) );
 register_deactivation_hook( __FILE__, array( Includes\Deactivator::class, 'deactivate' ) );
+
+Includes\Plugin::instance()->run();
