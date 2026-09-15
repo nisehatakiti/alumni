@@ -32,13 +32,13 @@ final class AuthCore_Integration {
 			\\AuthCore\\AuthCore::registerPlugin( ALUMNI_CORE_FILE );
 			\\AuthCore\\AuthCore::registerUserManagementMenu(
 				self::APPLICATION_KEY,
-				'\\AlumniCore\\Admin\\Admin::MENU_SLUG',
+				'alumni-core',
 				__( 'ユーザー', 'alumni-core' ),
 				__( 'AlumniCore ユーザー', 'alumni-core' )
 			);
 			\\AuthCore\\AuthCore::registerOnboardingMenu(
 				self::APPLICATION_KEY,
-				'\\AlumniCore\\Admin\\Admin::MENU_SLUG',
+				'alumni-core',
 				__( '初期設定', 'alumni-core' ),
 				__( 'AlumniCore 管理者の初期設定', 'alumni-core' )
 			);
